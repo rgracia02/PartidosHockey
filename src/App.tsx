@@ -196,40 +196,23 @@ export default function App() {
 
   // Standings calculation for active tournament
   const standings = useMemo(() => {
-    return calculateStandings(currentTournament.teams, currentTournament.matches, currentTournament.config);
-  }, [currentTournament.teams, currentTournament.matches, currentTournament.config]);
-
-  // Sync playoff teams whenever group matches / standings update
-  useEffect(() => {
-    const updated = syncPlayoffMatches(currentTournament.matches, standings, currentTournament.teams);
-    const hasDiff = updated.some(
-      (m, idx) =>
-        m.teamAId !== currentTournament.matches[idx]?.teamAId ||
-        m.teamBId !== currentTournament.matches[idx]?.teamBId
-    );
-    if (hasDiff) {
-      updateCurrentTournament((prev) => ({
-        ...prev,
-        matches: updated,
-        lastUpdated: new Date().toISOString(),
-      }));
-    }
-  }, [standings]);
+    return calculateStandings(currentTournament?.teams || [], currentTournament?.matches || [], currentTournament?.config);
+  }, [currentTournament?.teams, currentTournament?.matches, currentTournament?.config]);
 
   // Scorers calculation
   const topScorers = useMemo(() => {
-    return calculateTopScorers(currentTournament.teams, currentTournament.matches);
-  }, [currentTournament.teams, currentTournament.matches]);
+    return calculateTopScorers(currentTournament?.teams || [], currentTournament?.matches || []);
+  }, [currentTournament?.teams, currentTournament?.matches]);
 
   // Player cards calculation
   const cardStats = useMemo(() => {
-    return calculatePlayerCards(currentTournament.teams, currentTournament.matches);
-  }, [currentTournament.teams, currentTournament.matches]);
+    return calculatePlayerCards(currentTournament?.teams || [], currentTournament?.matches || []);
+  }, [currentTournament?.teams, currentTournament?.matches]);
 
   // Pending matches counter
   const pendingCount = useMemo(() => {
-    return currentTournament.matches.filter((m) => !m.isCompleted).length;
-  }, [currentTournament.matches]);
+    return (currentTournament?.matches || []).filter((m) => !m.isCompleted).length;
+  }, [currentTournament?.matches]);
 
   // Multi-Tournament Handlers
   const handleSelectTournament = (id: string) => {
@@ -313,11 +296,16 @@ export default function App() {
 
   // Match & Config Handlers for Active Tournament
   const handleSaveMatch = (updatedMatch: Match, andShare: boolean = false) => {
-    updateCurrentTournament((prev) => ({
-      ...prev,
-      matches: prev.matches.map((m) => (m.id === updatedMatch.id ? updatedMatch : m)),
-      lastUpdated: new Date().toISOString(),
-    }));
+    updateCurrentTournament((prev) => {
+      const updatedMatches = prev.matches.map((m) => (m.id === updatedMatch.id ? updatedMatch : m));
+      const curStandings = calculateStandings(prev.teams, updatedMatches, prev.config);
+      const syncedMatches = syncPlayoffMatches(updatedMatches, curStandings, prev.teams);
+      return {
+        ...prev,
+        matches: syncedMatches,
+        lastUpdated: new Date().toISOString(),
+      };
+    });
     setSelectedMatch(null);
     showToast('✓ ¡Planilla de partido guardada!');
 
