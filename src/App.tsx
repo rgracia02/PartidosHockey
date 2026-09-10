@@ -76,6 +76,34 @@ export default function App() {
   const [whatsAppRoundFilter, setWhatsAppRoundFilter] = useState<string>('all');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  // Dark / Light Mode state
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    try {
+      const savedTheme = localStorage.getItem('hockey_theme_mode');
+      if (savedTheme) return savedTheme === 'dark';
+      return window.matchMedia?.('(prefers-color-scheme: dark)').matches || false;
+    } catch (e) {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('hockey_theme_mode', isDarkMode ? 'dark' : 'light');
+      if (isDarkMode) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, [isDarkMode]);
+
+  const toggleTheme = () => {
+    setIsDarkMode((prev) => !prev);
+  };
+
   // Active tournament data reference
   const currentTournament = useMemo(() => {
     return tournaments.find((t) => t.config.id === activeTournamentId) || tournaments[0] || INITIAL_DEMO_DATA;
@@ -295,13 +323,15 @@ export default function App() {
   };
 
   return (
-    <div className="max-w-lg mx-auto min-h-screen bg-[#F2F2F7] flex flex-col relative pb-safe-tabbar">
+    <div className="max-w-lg mx-auto min-h-screen bg-[#F2F2F7] dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col relative pb-safe-tabbar transition-colors">
       {/* iOS App Navigation Header */}
       <Header
         tournamentName={currentTournament.config.name}
         category={currentTournament.config.category}
         season={currentTournament.config.season}
         status={currentTournament.config.status}
+        isDark={isDarkMode}
+        onToggleTheme={toggleTheme}
         onShareWhatsApp={() => {
           if (activeTab === 'posiciones') handleOpenShareModal('standings');
           else if (activeTab === 'fixture') handleOpenShareModal('results');

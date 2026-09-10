@@ -19,7 +19,7 @@ export function TabBar({ activeTab, onSelectTab, pendingMatchesCount }: TabBarPr
   return (
     <nav
       id="ios-tab-bar"
-      className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto z-40 bg-white/85 backdrop-blur-xl border-t border-slate-200/80 px-2 pt-1 pb-safe shadow-lg shadow-black/5"
+      className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto z-40 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl border-t border-slate-200/80 dark:border-slate-800 px-2 pt-1 pb-safe shadow-lg shadow-black/5 dark:shadow-black/40 transition-colors"
     >
       <div className="flex items-center justify-around">
         {tabs.map((tab) => {
@@ -31,7 +31,9 @@ export function TabBar({ activeTab, onSelectTab, pendingMatchesCount }: TabBarPr
               id={`tab-${tab.id}`}
               onClick={() => onSelectTab(tab.id)}
               className={`flex flex-col items-center justify-center py-1 px-3 min-w-[70px] min-h-[48px] rounded-xl transition-all duration-150 active:scale-95 ${
-                isActive ? 'text-sky-600 font-bold' : 'text-slate-400 font-medium hover:text-slate-600'
+                isActive
+                  ? 'text-sky-600 dark:text-sky-400 font-bold'
+                  : 'text-slate-400 dark:text-slate-500 font-medium hover:text-slate-600 dark:hover:text-slate-300'
               }`}
             >
               <div className="relative">
@@ -42,7 +44,7 @@ export function TabBar({ activeTab, onSelectTab, pendingMatchesCount }: TabBarPr
                   </span>
                 )}
               </div>
-              <span className={`text-[11px] mt-0.5 tracking-tight ${isActive ? 'font-bold text-sky-600' : 'text-slate-500'}`}>
+              <span className={`text-[11px] mt-0.5 tracking-tight ${isActive ? 'font-bold text-sky-600 dark:text-sky-400' : 'text-slate-500 dark:text-slate-400'}`}>
                 {tab.label}
               </span>
             </button>
