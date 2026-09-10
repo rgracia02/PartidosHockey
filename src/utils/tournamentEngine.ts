@@ -1150,10 +1150,27 @@ export function generateFixture(
  * 4. Fair Play
  */
 export function calculateStandings(
-  teams: Team[],
-  matches: Match[],
-  config: TournamentConfig
+  teams: Team[] = [],
+  matches: Match[] = [],
+  config: TournamentConfig = {
+    id: 'default',
+    name: 'Torneo',
+    category: 'General',
+    season: '2026',
+    status: 'active',
+    courtsCount: 1,
+    format: 'groups_playoffs_semis',
+    pointsWin: 3,
+    pointsDraw: 1,
+    pointsLoss: 0,
+  }
 ): StandingsRow[] {
+  const safeTeams = Array.isArray(teams) ? teams : [];
+  const safeMatches = Array.isArray(matches) ? matches : [];
+  const pointsWin = config?.pointsWin ?? 3;
+  const pointsDraw = config?.pointsDraw ?? 1;
+  const pointsLoss = config?.pointsLoss ?? 0;
+
   const statsMap: Record<string, {
     played: number;
     won: number;
@@ -1167,7 +1184,8 @@ export function calculateStandings(
     redCards: number;
   }> = {};
 
-  teams.forEach((team) => {
+  safeTeams.forEach((team) => {
+    if (!team || !team.id) return;
     statsMap[team.id] = {
       played: 0,
       won: 0,
@@ -1183,9 +1201,10 @@ export function calculateStandings(
   });
 
   // Calculate card counts from ALL completed matches
-  matches.forEach((m) => {
+  safeMatches.forEach((m) => {
+    if (!m) return;
     m.sanctions?.forEach((s) => {
-      if (statsMap[s.teamId]) {
+      if (s && statsMap[s.teamId]) {
         if (s.cardType === 'green') statsMap[s.teamId].greenCards += 1;
         if (s.cardType === 'yellow') statsMap[s.teamId].yellowCards += 1;
         if (s.cardType === 'red') statsMap[s.teamId].redCards += 1;
@@ -1194,8 +1213,8 @@ export function calculateStandings(
   });
 
   // Calculate regular group stage matches only for league standings
-  matches
-    .filter((m) => m.stage === 'group' && m.isCompleted && m.scoreA !== null && m.scoreB !== null)
+  safeMatches
+    .filter((m) => m && m.stage === 'group' && m.isCompleted && m.scoreA !== null && m.scoreB !== null)
     .forEach((m) => {
       const aStats = statsMap[m.teamAId];
       const bStats = statsMap[m.teamBId];
@@ -1214,24 +1233,24 @@ export function calculateStandings(
 
       if (scoreA > scoreB) {
         aStats.won += 1;
-        aStats.points += config.pointsWin;
+        aStats.points += pointsWin;
         bStats.lost += 1;
-        bStats.points += config.pointsLoss;
+        bStats.points += pointsLoss;
       } else if (scoreA < scoreB) {
         bStats.won += 1;
-        bStats.points += config.pointsWin;
+        bStats.points += pointsWin;
         aStats.lost += 1;
-        aStats.points += config.pointsLoss;
+        aStats.points += pointsLoss;
       } else {
         aStats.drawn += 1;
         bStats.drawn += 1;
-        aStats.points += config.pointsDraw;
-        bStats.points += config.pointsDraw;
+        aStats.points += pointsDraw;
+        bStats.points += pointsDraw;
       }
     });
 
-  const rows: StandingsRow[] = teams.map((team) => {
-    const s = statsMap[team.id] || {
+  const rows: StandingsRow[] = safeTeams.map((team) => {
+    const s = (team && statsMap[team.id]) || {
       played: 0,
       won: 0,
       drawn: 0,
@@ -1244,9 +1263,9 @@ export function calculateStandings(
       redCards: 0,
     };
     return {
-      teamId: team.id,
-      teamName: team.name,
-      teamColor: team.color,
+      teamId: team?.id || '',
+      teamName: team?.name || 'Equipo',
+      teamColor: team?.color || '#0284c7',
       rank: 0,
       played: s.played,
       won: s.won,
@@ -1267,7 +1286,7 @@ export function calculateStandings(
     if (b.points !== a.points) return b.points - a.points;
     if (b.goalDiff !== a.goalDiff) return b.goalDiff - a.goalDiff;
     if (b.goalsFor !== a.goalsFor) return b.goalsFor - a.goalsFor;
-    return a.teamName.localeCompare(b.teamName);
+    return (a.teamName || '').localeCompare(b.teamName || '');
   });
 
   // Assign ranks
@@ -1282,17 +1301,18 @@ export function calculateStandings(
  * Updates dynamic playoff match teams based on group stage standings and previous playoff winners
  */
 export function syncPlayoffMatches(
-  matches: Match[],
-  standings: StandingsRow[],
-  teams: Team[]
+  matches: Match[] = [],
+  standings: StandingsRow[] = [],
+  teams: Team[] = []
 ): Match[] {
-  const teamMap = new Map(teams.map((t) => [t.id, t]));
-  const updated = [...matches];
+  const safeMatches = Array.isArray(matches) ? matches : [];
+  const safeStandings = Array.isArray(standings) ? standings : [];
+  const updated = [...safeMatches];
 
   // Map of match winners
   const matchWinners: Record<string, string> = {};
   updated.forEach((m) => {
-    if (m.isCompleted && m.scoreA !== null && m.scoreB !== null) {
+    if (m && m.isCompleted && m.scoreA !== null && m.scoreB !== null) {
       if (m.isShootout && m.shootoutWinnerTeamId) {
         matchWinners[m.id] = m.shootoutWinnerTeamId;
       } else if (m.scoreA > m.scoreB) {
@@ -1304,26 +1324,27 @@ export function syncPlayoffMatches(
   });
 
   updated.forEach((m) => {
+    if (!m) return;
     if (m.stage === 'semi') {
-      if (m.stageLabel.includes('1') && standings.length >= 4) {
-        if (!m.teamAId || m.teamAId !== standings[0]?.teamId) {
-          m.teamAId = standings[0]?.teamId || '';
+      if (m.stageLabel?.includes('1') && safeStandings.length >= 4) {
+        if (!m.teamAId || m.teamAId !== safeStandings[0]?.teamId) {
+          m.teamAId = safeStandings[0]?.teamId || '';
         }
-        if (!m.teamBId || m.teamBId !== standings[3]?.teamId) {
-          m.teamBId = standings[3]?.teamId || '';
+        if (!m.teamBId || m.teamBId !== safeStandings[3]?.teamId) {
+          m.teamBId = safeStandings[3]?.teamId || '';
         }
-      } else if (m.stageLabel.includes('2') && standings.length >= 3) {
-        if (!m.teamAId || m.teamAId !== standings[1]?.teamId) {
-          m.teamAId = standings[1]?.teamId || '';
+      } else if (m.stageLabel?.includes('2') && safeStandings.length >= 3) {
+        if (!m.teamAId || m.teamAId !== safeStandings[1]?.teamId) {
+          m.teamAId = safeStandings[1]?.teamId || '';
         }
-        if (!m.teamBId || m.teamBId !== standings[2]?.teamId) {
-          m.teamBId = standings[2]?.teamId || '';
+        if (!m.teamBId || m.teamBId !== safeStandings[2]?.teamId) {
+          m.teamBId = safeStandings[2]?.teamId || '';
         }
       }
     } else if (m.stage === 'final') {
       // If final is straight from standings (groups_playoffs_final)
-      const semi1 = updated.find((x) => x.stage === 'semi' && x.stageLabel.includes('1'));
-      const semi2 = updated.find((x) => x.stage === 'semi' && x.stageLabel.includes('2'));
+      const semi1 = updated.find((x) => x && x.stage === 'semi' && x.stageLabel?.includes('1'));
+      const semi2 = updated.find((x) => x && x.stage === 'semi' && x.stageLabel?.includes('2'));
 
       if (semi1 && semi2) {
         // Winners from semis
@@ -1331,13 +1352,13 @@ export function syncPlayoffMatches(
         const winner2 = matchWinners[semi2.id];
         if (winner1 && m.teamAId !== winner1) m.teamAId = winner1;
         if (winner2 && m.teamBId !== winner2) m.teamBId = winner2;
-      } else if (standings.length >= 2) {
+      } else if (safeStandings.length >= 2) {
         // 1st vs 2nd direct final
-        if (!m.teamAId || m.teamAId !== standings[0]?.teamId) {
-          m.teamAId = standings[0]?.teamId || '';
+        if (!m.teamAId || m.teamAId !== safeStandings[0]?.teamId) {
+          m.teamAId = safeStandings[0]?.teamId || '';
         }
-        if (!m.teamBId || m.teamBId !== standings[1]?.teamId) {
-          m.teamBId = standings[1]?.teamId || '';
+        if (!m.teamBId || m.teamBId !== safeStandings[1]?.teamId) {
+          m.teamBId = safeStandings[1]?.teamId || '';
         }
       }
     }
@@ -1349,7 +1370,10 @@ export function syncPlayoffMatches(
 /**
  * Computes top scorers from all completed matches
  */
-export function calculateTopScorers(teams: Team[], matches: Match[]): ScorerStat[] {
+export function calculateTopScorers(teams: Team[] = [], matches: Match[] = []): ScorerStat[] {
+  const safeTeams = Array.isArray(teams) ? teams : [];
+  const safeMatches = Array.isArray(matches) ? matches : [];
+
   const scorersMap: Record<string, {
     playerName: string;
     playerId: string;
@@ -1357,13 +1381,14 @@ export function calculateTopScorers(teams: Team[], matches: Match[]): ScorerStat
     goals: number;
   }> = {};
 
-  matches.forEach((m) => {
+  safeMatches.forEach((m) => {
+    if (!m) return;
     m.goals?.forEach((g) => {
-      if (!g.playerId) return;
+      if (!g || !g.playerId) return;
       if (!scorersMap[g.playerId]) {
         scorersMap[g.playerId] = {
           playerId: g.playerId,
-          playerName: g.playerName,
+          playerName: g.playerName || 'Jugador',
           teamId: g.teamId,
           goals: 0,
         };
@@ -1372,11 +1397,14 @@ export function calculateTopScorers(teams: Team[], matches: Match[]): ScorerStat
     });
   });
 
-  const teamMap = new Map(teams.map((t) => [t.id, t]));
+  const teamMap = new Map(safeTeams.map((t) => [t?.id, t]));
   const playerMap = new Map<string, { number: number; name: string }>();
-  teams.forEach((t) => {
+  safeTeams.forEach((t) => {
+    if (!t || !Array.isArray(t.players)) return;
     t.players.forEach((p) => {
-      playerMap.set(p.id, { number: p.number, name: p.name });
+      if (p && p.id) {
+        playerMap.set(p.id, { number: p.number || 0, name: p.name || 'Jugador' });
+      }
     });
   });
 
@@ -1400,7 +1428,10 @@ export function calculateTopScorers(teams: Team[], matches: Match[]): ScorerStat
 /**
  * Computes player fair play card stats
  */
-export function calculatePlayerCards(teams: Team[], matches: Match[]): PlayerCardStat[] {
+export function calculatePlayerCards(teams: Team[] = [], matches: Match[] = []): PlayerCardStat[] {
+  const safeTeams = Array.isArray(teams) ? teams : [];
+  const safeMatches = Array.isArray(matches) ? matches : [];
+
   const cardsMap: Record<string, {
     playerId: string;
     playerName: string;
@@ -1410,13 +1441,14 @@ export function calculatePlayerCards(teams: Team[], matches: Match[]): PlayerCar
     red: number;
   }> = {};
 
-  matches.forEach((m) => {
+  safeMatches.forEach((m) => {
+    if (!m) return;
     m.sanctions?.forEach((s) => {
-      if (!s.playerId) return;
+      if (!s || !s.playerId) return;
       if (!cardsMap[s.playerId]) {
         cardsMap[s.playerId] = {
           playerId: s.playerId,
-          playerName: s.playerName,
+          playerName: s.playerName || 'Jugador',
           teamId: s.teamId,
           green: 0,
           yellow: 0,
@@ -1429,11 +1461,14 @@ export function calculatePlayerCards(teams: Team[], matches: Match[]): PlayerCar
     });
   });
 
-  const teamMap = new Map(teams.map((t) => [t.id, t]));
+  const teamMap = new Map(safeTeams.map((t) => [t?.id, t]));
   const playerMap = new Map<string, { number: number; name: string }>();
-  teams.forEach((t) => {
+  safeTeams.forEach((t) => {
+    if (!t || !Array.isArray(t.players)) return;
     t.players.forEach((p) => {
-      playerMap.set(p.id, { number: p.number, name: p.name });
+      if (p && p.id) {
+        playerMap.set(p.id, { number: p.number || 0, name: p.name || 'Jugador' });
+      }
     });
   });
 

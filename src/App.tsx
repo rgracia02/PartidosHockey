@@ -29,6 +29,68 @@ import {
 const LOCAL_STORAGE_KEY_V3 = 'hockey_torneos_state_v3';
 const LEGACY_STORAGE_KEY_V2 = 'hockey_torneos_state_v2';
 
+function sanitizeTournament(t: any): TournamentData {
+  if (!t || typeof t !== 'object') return INITIAL_DEMO_DATA;
+  const config: TournamentConfig = {
+    id: t.config?.id || `t-${Date.now()}`,
+    name: t.config?.name || 'Torneo de Hockey',
+    category: t.config?.category || 'General',
+    season: t.config?.season || `${new Date().getFullYear()}`,
+    status: t.config?.status || 'active',
+    courtsCount: Number(t.config?.courtsCount) || 1,
+    format: t.config?.format || 'groups_playoffs_semis',
+    isDoubleRound: Boolean(t.config?.isDoubleRound),
+    pointsWin: t.config?.pointsWin ?? 3,
+    pointsDraw: t.config?.pointsDraw ?? 1,
+    pointsLoss: t.config?.pointsLoss ?? 0,
+  };
+  const teams: Team[] = Array.isArray(t.teams)
+    ? t.teams.map((tm: any, idx: number) => ({
+        id: tm?.id || `team-${idx + 1}`,
+        name: tm?.name || `Equipo ${idx + 1}`,
+        color: tm?.color || '#0284c7',
+        players: Array.isArray(tm?.players)
+          ? tm.players.map((p: any, pIdx: number) => ({
+              id: p?.id || `p-${idx + 1}-${pIdx + 1}`,
+              name: p?.name || `Jugador ${pIdx + 1}`,
+              number: Number(p?.number) || 0,
+              teamId: tm?.id || `team-${idx + 1}`,
+            }))
+          : [],
+      }))
+    : [];
+  const matches: Match[] = Array.isArray(t.matches)
+    ? t.matches.map((m: any, mIdx: number) => ({
+        id: m?.id || `m-${mIdx + 1}`,
+        round: Number(m?.round) || 1,
+        stage: m?.stage || 'group',
+        stageLabel: m?.stageLabel || `Fecha ${m?.round || 1}`,
+        court: m?.court || 'Cancha 1',
+        teamAId: m?.teamAId || '',
+        teamBId: m?.teamBId || '',
+        placeholderA: m?.placeholderA,
+        placeholderB: m?.placeholderB,
+        scoreA: typeof m?.scoreA === 'number' ? m.scoreA : null,
+        scoreB: typeof m?.scoreB === 'number' ? m.scoreB : null,
+        isCompleted: Boolean(m?.isCompleted),
+        isShootout: Boolean(m?.isShootout),
+        shootoutWinnerTeamId: m?.shootoutWinnerTeamId,
+        shootoutScoreA: m?.shootoutScoreA,
+        shootoutScoreB: m?.shootoutScoreB,
+        goals: Array.isArray(m?.goals) ? m.goals : [],
+        sanctions: Array.isArray(m?.sanctions) ? m.sanctions : [],
+        photoUrl: m?.photoUrl,
+        notes: m?.notes,
+      }))
+    : [];
+  return {
+    config,
+    teams,
+    matches,
+    lastUpdated: t.lastUpdated || new Date().toISOString(),
+  };
+}
+
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabType>('posiciones');
 
@@ -39,7 +101,7 @@ export default function App() {
       if (savedV3) {
         const parsed = JSON.parse(savedV3);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
+          return parsed.map(sanitizeTournament);
         }
       }
 
@@ -47,14 +109,15 @@ export default function App() {
       const legacyV2 = localStorage.getItem(LEGACY_STORAGE_KEY_V2);
       if (legacyV2) {
         const parsedLegacy = JSON.parse(legacyV2);
-        if (parsedLegacy.config && parsedLegacy.teams) {
-          return [parsedLegacy, ...DEFAULT_TOURNAMENTS.filter((t) => t.config.id !== parsedLegacy.config.id)];
+        if (parsedLegacy?.config && parsedLegacy?.teams) {
+          const sanitizedLegacy = sanitizeTournament(parsedLegacy);
+          return [sanitizedLegacy, ...DEFAULT_TOURNAMENTS.filter((t) => t.config.id !== sanitizedLegacy.config.id)];
         }
       }
     } catch (e) {
       console.error('Error loading tournaments list from localStorage:', e);
     }
-    return DEFAULT_TOURNAMENTS;
+    return DEFAULT_TOURNAMENTS.map(sanitizeTournament);
   });
 
   const [activeTournamentId, setActiveTournamentId] = useState<string>(() => {
@@ -64,7 +127,7 @@ export default function App() {
     } catch (e) {
       // ignore
     }
-    return tournaments[0]?.config.id || 'demo-tournament-2026';
+    return tournaments[0]?.config?.id || 'demo-tournament-2026';
   });
 
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);

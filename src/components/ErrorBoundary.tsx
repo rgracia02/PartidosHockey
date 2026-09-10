@@ -25,6 +25,9 @@ export class ErrorBoundary extends Component<Props, State> {
   private handleReset = () => {
     try {
       localStorage.removeItem('hockey_torneos_state_v3');
+      localStorage.removeItem('hockey_torneos_state_v2');
+      localStorage.removeItem('hockey_active_tournament_id');
+      localStorage.removeItem('hockey_theme_mode');
     } catch (e) {
       // ignore
     }
