@@ -1,0 +1,20 @@
+{
+  "id": "/",
+  "name": "Hockey Torneos",
+  "short_name": "Hockey",
+  "description": "App estilo iOS para administrar y seguir torneos de hockey sobre césped, fixture y posiciones.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#090d16",
+  "theme_color": "#0284c7",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
