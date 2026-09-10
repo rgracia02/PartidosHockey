@@ -1,0 +1,7 @@
+{
+  "name": "Hockey Torneos",
+  "description": "Aplicación PWA estilo iOS para administrar y seguir torneos internos de hockey sobre césped, con carga rápida post-partido y fixture automático.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+

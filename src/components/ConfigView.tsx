@@ -1,0 +1,633 @@
+import React, { useState } from 'react';
+import {
+  Archive,
+  Check,
+  Code,
+  Copy,
+  Download,
+  FolderOpen,
+  Layers,
+  Plus,
+  RefreshCw,
+  RotateCcw,
+  Sparkles,
+  Trash2,
+  Trophy,
+  Upload,
+  Users,
+} from 'lucide-react';
+import {
+  Player,
+  Team,
+  TournamentConfig,
+  TournamentData,
+  TournamentFormat,
+  TournamentStatus,
+} from '../types';
+
+interface ConfigViewProps {
+  data: TournamentData;
+  tournaments: TournamentData[];
+  onSelectTournament: (id: string) => void;
+  onOpenCreateTournamentModal: () => void;
+  onDuplicateTournament: (id: string) => void;
+  onDeleteTournament: (id: string) => void;
+  onUpdateConfig: (config: TournamentConfig) => void;
+  onUpdateTeams: (teams: Team[]) => void;
+  onRegenerateFixture: () => void;
+  onLoadDemoData: () => void;
+  onOpenStandaloneModal: () => void;
+  onImportJson: (imported: TournamentData) => void;
+}
+
+const COLOR_PRESETS = [
+  '#0284C7', // Celeste / Sky
+  '#059669', // Verde Césped
+  '#DC2626', // Rojo
+  '#D97706', // Ámbar / Oro
+  '#7C3AED', // Violeta
+  '#2563EB', // Azul Marino
+  '#DB2777', // Rosa
+  '#0F172A', // Negro / Azul noche
+  '#EA580C', // Naranja
+  '#475569', // Gris grafito
+];
+
+export function ConfigView({
+  data,
+  tournaments,
+  onSelectTournament,
+  onOpenCreateTournamentModal,
+  onDuplicateTournament,
+  onDeleteTournament,
+  onUpdateConfig,
+  onUpdateTeams,
+  onRegenerateFixture,
+  onLoadDemoData,
+  onOpenStandaloneModal,
+  onImportJson,
+}: ConfigViewProps) {
+  // New team form state
+  const [newTeamName, setNewTeamName] = useState('');
+  const [newTeamColor, setNewTeamColor] = useState(COLOR_PRESETS[0]);
+  const [expandedTeamId, setExpandedTeamId] = useState<string | null>(null);
+
+  // New player form state
+  const [newPlayerName, setNewPlayerName] = useState('');
+  const [newPlayerNumber, setNewPlayerNumber] = useState('');
+
+  const handleAddTeam = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTeamName.trim()) return;
+
+    const newTeam: Team = {
+      id: `t-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      name: newTeamName.trim(),
+      color: newTeamColor,
+      players: [],
+    };
+
+    const updated = [...data.teams, newTeam];
+    onUpdateTeams(updated);
+    setNewTeamName('');
+    setExpandedTeamId(newTeam.id);
+  };
+
+  const handleRemoveTeam = (teamId: string) => {
+    if (confirm('¿Eliminar este equipo y sus jugadoras/es?')) {
+      const updated = data.teams.filter((t) => t.id !== teamId);
+      onUpdateTeams(updated);
+    }
+  };
+
+  const handleAddPlayer = (teamId: string) => {
+    if (!newPlayerName.trim()) return;
+
+    const num = parseInt(newPlayerNumber, 10) || 1;
+    const newPlayer: Player = {
+      id: `p-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      name: newPlayerName.trim(),
+      number: num,
+      teamId,
+    };
+
+    const updated = data.teams.map((t) => {
+      if (t.id === teamId) {
+        return {
+          ...t,
+          players: [...t.players, newPlayer],
+        };
+      }
+      return t;
+    });
+
+    onUpdateTeams(updated);
+    setNewPlayerName('');
+    setNewPlayerNumber('');
+  };
+
+  const handleRemovePlayer = (teamId: string, playerId: string) => {
+    const updated = data.teams.map((t) => {
+      if (t.id === teamId) {
+        return {
+          ...t,
+          players: t.players.filter((p) => p.id !== playerId),
+        };
+      }
+      return t;
+    });
+    onUpdateTeams(updated);
+  };
+
+  const handleExportJson = () => {
+    const exportPayload = {
+      activeTournament: data,
+      allTournaments: tournaments,
+      exportedAt: new Date().toISOString(),
+    };
+    const blob = new Blob([JSON.stringify(exportPayload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `hockey-torneos-${data.config.name.toLowerCase().replace(/\s+/g, '-')}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleFileImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const parsed = JSON.parse(event.target?.result as string);
+        if (parsed.config && parsed.teams && parsed.matches) {
+          onImportJson(parsed);
+          alert('¡Torneo importado con éxito!');
+        } else if (parsed.activeTournament) {
+          onImportJson(parsed.activeTournament);
+          alert('¡Torneos importados con éxito!');
+        } else {
+          alert('Archivo JSON no válido.');
+        }
+      } catch (err) {
+        alert('Error al leer el archivo JSON.');
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  return (
+    <div className="space-y-4 animate-in fade-in duration-200">
+      {/* 0. MULTI-TOURNAMENT MANAGEMENT SECTION */}
+      <div className="bg-white rounded-3xl p-4 shadow-sm border border-slate-200/80 space-y-3">
+        <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+          <div className="flex items-center gap-2">
+            <Trophy className="w-4 h-4 text-amber-500" />
+            <h3 className="text-sm font-bold text-slate-900">
+              Mis Torneos ({tournaments.length})
+            </h3>
+          </div>
+          <button
+            onClick={onOpenCreateTournamentModal}
+            className="px-3 py-1.5 bg-sky-600 active:bg-sky-700 text-white rounded-xl text-xs font-bold flex items-center gap-1 shadow-xs active:scale-95 transition-all"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Nuevo Torneo</span>
+          </button>
+        </div>
+
+        <p className="text-[11px] text-slate-500">
+          Gestiona torneos en curso, históricos y futuros. Toca cualquier torneo para activarlo:
+        </p>
+
+        {/* Tournament Cards List */}
+        <div className="space-y-2">
+          {tournaments.map((t) => {
+            const isCurrent = t.config.id === data.config.id;
+            const completedCount = t.matches.filter((m) => m.isCompleted).length;
+            const status = t.config.status || 'active';
+
+            return (
+              <div
+                key={t.config.id}
+                className={`p-3 rounded-2xl border transition-all flex items-center justify-between gap-2 ${
+                  isCurrent
+                    ? 'bg-sky-50/80 border-sky-300 ring-1 ring-sky-400'
+                    : 'bg-slate-50 border-slate-200 hover:bg-slate-100/70'
+                }`}
+              >
+                <div
+                  onClick={() => onSelectTournament(t.config.id)}
+                  className="min-w-0 flex-1 cursor-pointer"
+                >
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    {status === 'active' && (
+                      <span className="px-1.5 py-0.2 bg-emerald-100 text-emerald-800 rounded font-black text-[9px]">
+                        🟢 En Curso
+                      </span>
+                    )}
+                    {status === 'completed' && (
+                      <span className="px-1.5 py-0.2 bg-slate-200 text-slate-800 rounded font-bold text-[9px]">
+                        🏁 Finalizado
+                      </span>
+                    )}
+                    {status === 'upcoming' && (
+                      <span className="px-1.5 py-0.2 bg-amber-100 text-amber-800 rounded font-bold text-[9px]">
+                        ⏳ Próximo
+                      </span>
+                    )}
+                    <span className="text-[10px] text-slate-400 font-medium">
+                      {t.config.season || '2026'} • {t.config.category || 'General'}
+                    </span>
+                  </div>
+
+                  <p className="font-bold text-xs text-slate-900 truncate flex items-center gap-1.5">
+                    <span>{t.config.name}</span>
+                    {isCurrent && (
+                      <span className="text-[10px] text-sky-700 font-black bg-sky-100 px-1.5 py-0.2 rounded-md">
+                        Activo
+                      </span>
+                    )}
+                  </p>
+                  <p className="text-[10px] text-slate-400 mt-0.5">
+                    {t.teams.length} equipos • {completedCount}/{t.matches.length} jugados
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    onClick={() => onDuplicateTournament(t.config.id)}
+                    title="Duplicar torneo (iniciar nueva edición con mismos equipos)"
+                    className="p-2 text-slate-400 hover:text-sky-600 rounded-xl hover:bg-sky-50 transition-colors"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                  </button>
+
+                  {tournaments.length > 1 && (
+                    <button
+                      onClick={() => onDeleteTournament(t.config.id)}
+                      title="Eliminar este torneo"
+                      className="p-2 text-slate-400 hover:text-rose-600 rounded-xl hover:bg-rose-50 transition-colors"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 1. General Tournament Configuration */}
+      <div className="bg-white rounded-3xl p-4 shadow-sm border border-slate-200/80">
+        <h3 className="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
+          <span>⚙️</span>
+          <span>Ajustes del Torneo Activo: {data.config.name}</span>
+        </h3>
+
+        <div className="space-y-3 text-xs">
+          <div>
+            <label className="block text-slate-500 font-bold mb-1">Nombre del Torneo</label>
+            <input
+              type="text"
+              value={data.config.name}
+              onChange={(e) =>
+                onUpdateConfig({
+                  ...data.config,
+                  name: e.target.value,
+                })
+              }
+              placeholder="Ej. Torneo Apertura 2026"
+              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-semibold text-slate-900 min-h-[44px]"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+            <div>
+              <label className="block text-slate-500 font-bold mb-1">Categoría</label>
+              <input
+                type="text"
+                value={data.config.category || ''}
+                onChange={(e) =>
+                  onUpdateConfig({
+                    ...data.config,
+                    category: e.target.value,
+                  })
+                }
+                placeholder="Primera Damas"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-semibold text-slate-900 min-h-[44px]"
+              />
+            </div>
+
+            <div>
+              <label className="block text-slate-500 font-bold mb-1">Año / Temporada</label>
+              <input
+                type="text"
+                value={data.config.season || ''}
+                onChange={(e) =>
+                  onUpdateConfig({
+                    ...data.config,
+                    season: e.target.value,
+                  })
+                }
+                placeholder="2026"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-semibold text-slate-900 min-h-[44px]"
+              />
+            </div>
+
+            <div>
+              <label className="block text-slate-500 font-bold mb-1">Estado</label>
+              <select
+                value={data.config.status || 'active'}
+                onChange={(e) =>
+                  onUpdateConfig({
+                    ...data.config,
+                    status: e.target.value as TournamentStatus,
+                  })
+                }
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-semibold text-slate-900 min-h-[44px]"
+              >
+                <option value="active">🟢 En Curso</option>
+                <option value="completed">🏁 Finalizado</option>
+                <option value="upcoming">⏳ Próximo</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-slate-500 font-bold mb-1">
+                Canchas en Simultáneo
+              </label>
+              <select
+                value={data.config.courtsCount}
+                onChange={(e) =>
+                  onUpdateConfig({
+                    ...data.config,
+                    courtsCount: Number(e.target.value),
+                  })
+                }
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-semibold text-slate-900 min-h-[44px]"
+              >
+                <option value="1">1 Cancha (Cancha 1)</option>
+                <option value="2">2 Canchas (Cancha 1 y 2)</option>
+                <option value="3">3 Canchas (Cancha 1, 2 y 3)</option>
+                <option value="4">4 Canchas (Canchas 1 a 4)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-slate-500 font-bold mb-1">Formato de Competición</label>
+              <select
+                value={data.config.format}
+                onChange={(e) =>
+                  onUpdateConfig({
+                    ...data.config,
+                    format: e.target.value as TournamentFormat,
+                  })
+                }
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-semibold text-slate-900 min-h-[44px]"
+              >
+                <option value="groups_only">Liga Simple (Solo Fase de Grupos)</option>
+                <option value="groups_playoffs_final">Grupos + Final Directa (1° vs 2°)</option>
+                <option value="groups_playoffs_semis">Grupos + Semifinales (Top 4) + Final</option>
+                <option value="groups_playoffs_quarters">Grupos + Cuartos (Top 8) + Semis + Final</option>
+                <option value="knockout_only">Eliminación Directa Pura</option>
+              </select>
+            </div>
+          </div>
+
+          <button
+            onClick={() => {
+              if (
+                confirm(
+                  '¿Deseas recalcular y regenerar el Fixture con los equipos y canchas actuales? Los resultados de partidos previos de este torneo se reiniciarán.'
+                )
+              ) {
+                onRegenerateFixture();
+              }
+            }}
+            className="w-full py-3 bg-slate-900 active:bg-black text-white font-bold rounded-2xl text-xs flex items-center justify-center gap-2 mt-2 min-h-[44px] active:scale-95 transition-all shadow-xs"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span>Regenerar Fixture de este Torneo</span>
+          </button>
+        </div>
+      </div>
+
+      {/* 2. Teams & Roster Manager */}
+      <div className="bg-white rounded-3xl p-4 shadow-sm border border-slate-200/80">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
+          <div className="flex items-center gap-2">
+            <Users className="w-4 h-4 text-sky-600" />
+            <h3 className="text-sm font-bold text-slate-900">
+              Equipos y Planteles ({data.teams.length})
+            </h3>
+          </div>
+        </div>
+
+        {/* Add Team Form */}
+        <form onSubmit={handleAddTeam} className="p-3 bg-slate-50 rounded-2xl border border-slate-100 mb-4 space-y-3">
+          <label className="block text-[11px] font-bold text-slate-600">Nuevo Equipo</label>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={newTeamName}
+              onChange={(e) => setNewTeamName(e.target.value)}
+              placeholder="Nombre del equipo (ej. Belgrano HC)"
+              className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-800 min-h-[44px]"
+            />
+            <button
+              type="submit"
+              disabled={!newTeamName.trim()}
+              className="px-4 py-2 bg-sky-600 active:bg-sky-700 text-white font-bold rounded-xl text-xs disabled:opacity-40 min-h-[44px] flex items-center gap-1 active:scale-95 transition-all"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Agregar</span>
+            </button>
+          </div>
+
+          <div>
+            <span className="block text-[10px] text-slate-400 font-bold mb-1.5 uppercase">
+              Color Distintivo
+            </span>
+            <div className="flex items-center gap-2 flex-wrap">
+              {COLOR_PRESETS.map((color) => (
+                <button
+                  type="button"
+                  key={color}
+                  onClick={() => setNewTeamColor(color)}
+                  className={`w-7 h-7 rounded-full transition-transform ${
+                    newTeamColor === color ? 'scale-125 ring-2 ring-slate-900 ring-offset-2' : 'hover:scale-110'
+                  }`}
+                  style={{ backgroundColor: color }}
+                />
+              ))}
+            </div>
+          </div>
+        </form>
+
+        {/* Teams List */}
+        <div className="space-y-2">
+          {data.teams.length === 0 ? (
+            <p className="text-xs text-slate-400 py-4 text-center">
+              No hay equipos inscriptos en este torneo. Agrega uno arriba.
+            </p>
+          ) : (
+            data.teams.map((team) => {
+              const isExpanded = expandedTeamId === team.id;
+              return (
+                <div
+                  key={team.id}
+                  className="border border-slate-200 rounded-2xl overflow-hidden bg-slate-50/50"
+                >
+                  <div
+                    onClick={() => setExpandedTeamId(isExpanded ? null : team.id)}
+                    className="p-3 flex items-center justify-between cursor-pointer hover:bg-slate-100/50 transition-colors"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span
+                        className="w-3.5 h-3.5 rounded-full shrink-0 shadow-xs ring-1 ring-black/10"
+                        style={{ backgroundColor: team.color }}
+                      />
+                      <div>
+                        <p className="font-bold text-xs text-slate-900">{team.name}</p>
+                        <p className="text-[10px] text-slate-400">
+                          {team.players.length} {team.players.length === 1 ? 'jugadora/or' : 'jugadoras/es'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveTeam(team.id);
+                        }}
+                        className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                      <span className="text-xs text-slate-400 font-bold px-1">
+                        {isExpanded ? '▲' : '▼'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Expanded Player Roster Form */}
+                  {isExpanded && (
+                    <div className="p-3 bg-white border-t border-slate-200 space-y-3">
+                      <div className="flex gap-2 items-center">
+                        <input
+                          type="number"
+                          placeholder="N°"
+                          value={newPlayerNumber}
+                          onChange={(e) => setNewPlayerNumber(e.target.value)}
+                          className="w-14 px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-center font-bold"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Nombre jugadora/or..."
+                          value={newPlayerName}
+                          onChange={(e) => setNewPlayerName(e.target.value)}
+                          className="flex-1 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleAddPlayer(team.id)}
+                          className="px-3 py-1.5 bg-sky-600 text-white font-bold rounded-xl text-xs shrink-0"
+                        >
+                          + Agregar
+                        </button>
+                      </div>
+
+                      {/* Players list */}
+                      <div className="divide-y divide-slate-100 max-h-40 overflow-y-auto no-scrollbar">
+                        {team.players.map((player) => (
+                          <div
+                            key={player.id}
+                            className="py-1.5 flex items-center justify-between text-xs"
+                          >
+                            <span className="font-medium text-slate-800">
+                              <span className="font-bold text-sky-600 mr-1.5">#{player.number}</span>
+                              {player.name}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleRemovePlayer(team.id, player.id)}
+                              className="text-slate-300 hover:text-rose-600 p-1"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+
+      {/* 3. GitHub Pages Ready Standalone Generator */}
+      <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-3xl p-5 shadow-md border border-slate-700 space-y-3">
+        <div className="flex items-center gap-2">
+          <Code className="w-5 h-5 text-sky-400" />
+          <h3 className="text-sm font-black">GitHub Pages 100% Autónomo</h3>
+        </div>
+        <p className="text-xs text-slate-300 leading-relaxed">
+          Genera y copia el código autónomo completo en un único archivo <code>index.html</code> con soporte para múltiples torneos, React 18, Babel y Tailwind CDN listos para pegar en GitHub Pages.
+        </p>
+        <button
+          id="btn-open-standalone-export"
+          onClick={onOpenStandaloneModal}
+          className="w-full py-3.5 bg-sky-500 hover:bg-sky-400 active:bg-sky-600 text-white font-bold rounded-2xl text-xs flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.98] min-h-[48px]"
+        >
+          <Sparkles className="w-4 h-4" />
+          <span>Ver / Copiar index.html Autónomo</span>
+        </button>
+      </div>
+
+      {/* 4. Backup, Demo Data and Reset */}
+      <div className="bg-white rounded-3xl p-4 shadow-sm border border-slate-200/80 space-y-2.5">
+        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+          Respaldo & Muestra
+        </h3>
+
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            onClick={handleExportJson}
+            className="py-2.5 px-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-700 flex items-center justify-center gap-1.5 hover:bg-slate-100 min-h-[44px]"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>Descargar JSON</span>
+          </button>
+
+          <label className="py-2.5 px-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-700 flex items-center justify-center gap-1.5 hover:bg-slate-100 min-h-[44px] cursor-pointer">
+            <Upload className="w-3.5 h-3.5" />
+            <span>Importar JSON</span>
+            <input type="file" accept=".json" onChange={handleFileImport} className="hidden" />
+          </label>
+        </div>
+
+        <button
+          onClick={() => {
+            if (confirm('¿Restablecer todos los torneos al set de datos de prueba?')) {
+              onLoadDemoData();
+            }
+          }}
+          className="w-full py-2.5 bg-rose-50 text-rose-600 font-bold rounded-2xl text-xs flex items-center justify-center gap-1.5 hover:bg-rose-100 active:scale-98 transition-all min-h-[44px]"
+        >
+          <RotateCcw className="w-3.5 h-3.5" />
+          <span>Restablecer Torneos Demo</span>
+        </button>
+      </div>
+    </div>
+  );
+}
