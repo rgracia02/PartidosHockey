@@ -184,7 +184,8 @@ export default function App() {
     status: TournamentStatus,
     format: TournamentFormat,
     courtsCount: number,
-    sourceTournamentId?: string
+    sourceTournamentId?: string,
+    isDoubleRound?: boolean
   ) => {
     let sourceTeams: Team[] | undefined = undefined;
     if (sourceTournamentId && sourceTournamentId !== 'none') {
@@ -194,7 +195,15 @@ export default function App() {
       }
     }
 
-    const created = createNewTournament(name, category, season, format, courtsCount, sourceTeams);
+    const created = createNewTournament(
+      name,
+      category,
+      season,
+      format,
+      courtsCount,
+      sourceTeams,
+      isDoubleRound || false
+    );
     created.config.status = status;
 
     setTournaments((prev) => [created, ...prev]);
@@ -213,7 +222,8 @@ export default function App() {
       `${new Date().getFullYear()}`,
       source.config.format,
       source.config.courtsCount,
-      source.teams
+      source.teams,
+      source.config.isDoubleRound || false
     );
 
     setTournaments((prev) => [newTournament, ...prev]);
@@ -281,7 +291,8 @@ export default function App() {
     const newMatches = generateFixture(
       currentTournament.teams,
       currentTournament.config.format,
-      currentTournament.config.courtsCount
+      currentTournament.config.courtsCount,
+      currentTournament.config.isDoubleRound || false
     );
     updateCurrentTournament((prev) => ({
       ...prev,

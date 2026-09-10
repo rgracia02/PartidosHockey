@@ -725,7 +725,8 @@ export function createNewTournament(
   season: string,
   format: TournamentFormat,
   courtsCount: number,
-  baseTeams?: Team[]
+  baseTeams?: Team[],
+  isDoubleRound: boolean = false
 ): TournamentData {
   const id = `t-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
   
@@ -742,7 +743,7 @@ export function createNewTournament(
     })),
   }));
 
-  const matches = generateFixture(teams, format, courtsCount);
+  const matches = generateFixture(teams, format, courtsCount, isDoubleRound);
 
   return {
     config: {
@@ -753,6 +754,7 @@ export function createNewTournament(
       status: 'upcoming',
       courtsCount: Math.max(1, courtsCount),
       format,
+      isDoubleRound,
       pointsWin: 3,
       pointsDraw: 1,
       pointsLoss: 0,
@@ -765,11 +767,13 @@ export function createNewTournament(
 
 /**
  * Generates Round-Robin matches for a list of teams and distributes across available courts.
+ * Supports single round (Solo Ida) or double round (Ida y Vuelta).
  */
 export function generateFixture(
   teams: Team[],
   format: TournamentFormat,
-  courtsCount: number
+  courtsCount: number,
+  isDoubleRound: boolean = false
 ): Match[] {
   if (teams.length < 2) return [];
 
@@ -794,9 +798,11 @@ export function generateFixture(
 
   let globalCourtIdx = 0;
 
-  // Round robin rotation
+  // Round robin rotation - First Leg (Ida)
   for (let round = 0; round < numRounds; round++) {
     const roundNumber = round + 1;
+    const stageLabel = isDoubleRound ? `Fecha ${roundNumber} (Ida)` : `Fecha ${roundNumber}`;
+
     for (let matchIdx = 0; matchIdx < matchesPerRound; matchIdx++) {
       const homeIdx = (round + matchIdx) % (numTeams - 1);
       let awayIdx = (numTeams - 1 - matchIdx + round) % (numTeams - 1);
@@ -819,7 +825,7 @@ export function generateFixture(
         id: `match-r${roundNumber}-${matchIdx}-${Date.now().toString(36)}`,
         round: roundNumber,
         stage: 'group',
-        stageLabel: `Fecha ${roundNumber}`,
+        stageLabel,
         court,
         teamAId: teamA.id,
         teamBId: teamB.id,
@@ -833,11 +839,57 @@ export function generateFixture(
     }
   }
 
+  // Second Leg (Vuelta) if double round is enabled
+  if (isDoubleRound) {
+    for (let round = 0; round < numRounds; round++) {
+      const returnRoundNumber = numRounds + round + 1;
+      const stageLabel = `Fecha ${returnRoundNumber} (Vuelta)`;
+
+      for (let matchIdx = 0; matchIdx < matchesPerRound; matchIdx++) {
+        const homeIdx = (round + matchIdx) % (numTeams - 1);
+        let awayIdx = (numTeams - 1 - matchIdx + round) % (numTeams - 1);
+        if (matchIdx === 0) {
+          awayIdx = numTeams - 1;
+        }
+
+        // Invert home and away for return leg
+        const teamA = teamList[awayIdx];
+        const teamB = teamList[homeIdx];
+
+        // Skip bye match
+        if (teamA.id === 'BYE' || teamB.id === 'BYE') {
+          continue;
+        }
+
+        const court = courts[globalCourtIdx % courts.length];
+        globalCourtIdx++;
+
+        matches.push({
+          id: `match-r${returnRoundNumber}-${matchIdx}-${Date.now().toString(36)}`,
+          round: returnRoundNumber,
+          stage: 'group',
+          stageLabel,
+          court,
+          teamAId: teamA.id,
+          teamBId: teamB.id,
+          scoreA: null,
+          scoreB: null,
+          isCompleted: false,
+          isShootout: false,
+          goals: [],
+          sanctions: [],
+        });
+      }
+    }
+  }
+
+  const totalGroupRounds = isDoubleRound ? numRounds * 2 : numRounds;
+
   // Generate Playoff Matches if format requires it
   if (format === 'groups_playoffs_final') {
     matches.push({
       id: `po-final-${Date.now().toString(36)}`,
-      round: numRounds + 1,
+      round: totalGroupRounds + 1,
       stage: 'final',
       stageLabel: 'Gran Final',
       court: courts[0],
@@ -853,7 +905,7 @@ export function generateFixture(
       sanctions: [],
     });
   } else if (format === 'groups_playoffs_semis') {
-    const semiRound = numRounds + 1;
+    const semiRound = totalGroupRounds + 1;
     matches.push(
       {
         id: `po-semi-1-${Date.now().toString(36)}`,
@@ -908,7 +960,7 @@ export function generateFixture(
       }
     );
   } else if (format === 'groups_playoffs_quarters') {
-    const qRound = numRounds + 1;
+    const qRound = totalGroupRounds + 1;
     matches.push(
       {
         id: `po-q-1-${Date.now().toString(36)}`,
@@ -1414,7 +1466,9 @@ export function formatWhatsAppSingleMatch(
   teams: Team[],
   tournamentName: string,
   category?: string,
-  season?: string
+  season?: string,
+  whatsappHeader?: string,
+  whatsappFooter?: string
 ): string {
   const teamMap = new Map(teams.map((t) => [t.id, t]));
   const teamA = teamMap.get(match.teamAId);
@@ -1425,7 +1479,11 @@ export function formatWhatsAppSingleMatch(
   const cat = category ? ` - ${category}` : '';
   const yr = season ? ` (${season})` : '';
 
-  let text = `🏑 *${tournamentName.toUpperCase()}*${cat}${yr}\n`;
+  const headerLine = whatsappHeader && whatsappHeader.trim()
+    ? `${whatsappHeader.trim()}\n`
+    : `🏑 *${tournamentName.toUpperCase()}*${cat}${yr}\n`;
+
+  let text = headerLine;
   text += `📍 *${match.stageLabel || `Fecha ${match.round}`}* • ${match.court}\n`;
   text += `───────────────────────\n`;
 
@@ -1470,7 +1528,11 @@ export function formatWhatsAppSingleMatch(
     }
   }
 
-  text += `\n_Generado con Hockey Torneos PWA_ 🏑`;
+  const footerText = whatsappFooter && whatsappFooter.trim()
+    ? `\n${whatsappFooter.trim()}`
+    : `\n_Generado con Hockey Torneos PWA_ 🏑`;
+
+  text += footerText;
   return text;
 }
 
@@ -1481,12 +1543,18 @@ export function formatWhatsAppStandings(
   tournamentName: string,
   standings: StandingsRow[],
   category?: string,
-  season?: string
+  season?: string,
+  whatsappHeader?: string,
+  whatsappFooter?: string
 ): string {
   const cat = category ? ` - ${category}` : '';
   const yr = season ? ` (${season})` : '';
 
-  let text = `🏑 *${tournamentName.toUpperCase()}*${cat}${yr}\n`;
+  const headerLine = whatsappHeader && whatsappHeader.trim()
+    ? `${whatsappHeader.trim()}\n`
+    : `🏑 *${tournamentName.toUpperCase()}*${cat}${yr}\n`;
+
+  let text = headerLine;
   text += `🏆 *TABLA DE POSICIONES*\n`;
   text += `📅 Actualización: ${new Date().toLocaleDateString('es-AR', {
     day: '2-digit',
@@ -1504,7 +1572,11 @@ export function formatWhatsAppStandings(
     text += `     👉 *${row.points} pts* | PJ: ${row.played} | PG: ${row.won} | PE: ${row.drawn} | PP: ${row.lost} | DG: ${row.goalDiff > 0 ? '+' : ''}${row.goalDiff} | GF: ${row.goalsFor} (GC: ${row.goalsAgainst})\n`;
   });
 
-  text += `\n_Generado con Hockey Torneos PWA_ 🏑`;
+  const footerText = whatsappFooter && whatsappFooter.trim()
+    ? `\n${whatsappFooter.trim()}`
+    : `\n_Generado con Hockey Torneos PWA_ 🏑`;
+
+  text += footerText;
   return text;
 }
 
@@ -1517,13 +1589,19 @@ export function formatWhatsAppResults(
   teams: Team[],
   roundFilter: string = 'all',
   category?: string,
-  season?: string
+  season?: string,
+  whatsappHeader?: string,
+  whatsappFooter?: string
 ): string {
   const teamMap = new Map(teams.map((t) => [t.id, t]));
   const cat = category ? ` - ${category}` : '';
   const yr = season ? ` (${season})` : '';
 
-  let text = `🏑 *${tournamentName.toUpperCase()}*${cat}${yr}\n`;
+  const headerLine = whatsappHeader && whatsappHeader.trim()
+    ? `${whatsappHeader.trim()}\n`
+    : `🏑 *${tournamentName.toUpperCase()}*${cat}${yr}\n`;
+
+  let text = headerLine;
   text += `📅 *RESULTADOS Y FIXTURE*\n\n`;
 
   const filteredMatches = matches.filter((m) => {
@@ -1565,7 +1643,11 @@ export function formatWhatsAppResults(
     });
   }
 
-  text += `_Generado con Hockey Torneos PWA_ 🏑`;
+  const footerText = whatsappFooter && whatsappFooter.trim()
+    ? `\n${whatsappFooter.trim()}`
+    : `\n_Generado con Hockey Torneos PWA_ 🏑`;
+
+  text += footerText;
   return text;
 }
 
@@ -1576,10 +1658,16 @@ export function formatWhatsAppScorers(
   tournamentName: string,
   topScorers: ScorerStat[],
   cardStats?: PlayerCardStat[],
-  category?: string
+  category?: string,
+  whatsappHeader?: string,
+  whatsappFooter?: string
 ): string {
   const cat = category ? ` - ${category}` : '';
-  let text = `🏑 *${tournamentName.toUpperCase()}*${cat}\n`;
+  const headerLine = whatsappHeader && whatsappHeader.trim()
+    ? `${whatsappHeader.trim()}\n`
+    : `🏑 *${tournamentName.toUpperCase()}*${cat}\n`;
+
+  let text = headerLine;
   text += `🎯 *TABLA DE GOLEADORES/AS*\n\n`;
 
   if (topScorers.length === 0) {
@@ -1604,7 +1692,11 @@ export function formatWhatsAppScorers(
     });
   }
 
-  text += `\n_Generado con Hockey Torneos PWA_ 🏑`;
+  const footerText = whatsappFooter && whatsappFooter.trim()
+    ? `\n${whatsappFooter.trim()}`
+    : `\n_Generado con Hockey Torneos PWA_ 🏑`;
+
+  text += footerText;
   return text;
 }
 
@@ -1618,13 +1710,19 @@ export function formatWhatsAppSummary(
   teams: Team[],
   topScorers: ScorerStat[],
   category?: string,
-  season?: string
+  season?: string,
+  whatsappHeader?: string,
+  whatsappFooter?: string
 ): string {
   const teamMap = new Map(teams.map((t) => [t.id, t]));
   const cat = category ? ` - ${category}` : '';
   const yr = season ? ` (${season})` : '';
 
-  let text = `🏑 *${tournamentName.toUpperCase()}*${cat}${yr}\n`;
+  const headerLine = whatsappHeader && whatsappHeader.trim()
+    ? `${whatsappHeader.trim()}\n`
+    : `🏑 *${tournamentName.toUpperCase()}*${cat}${yr}\n`;
+
+  let text = headerLine;
   text += `📅 Actualización: ${new Date().toLocaleDateString('es-AR', {
     day: '2-digit',
     month: 'short',
@@ -1668,6 +1766,10 @@ export function formatWhatsAppSummary(
     });
   }
 
-  text += `\n_Generado con Hockey Torneos PWA_ 🏑`;
+  const footerText = whatsappFooter && whatsappFooter.trim()
+    ? `\n${whatsappFooter.trim()}`
+    : `\n_Generado con Hockey Torneos PWA_ 🏑`;
+
+  text += footerText;
   return text;
 }

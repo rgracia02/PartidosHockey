@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Archive,
   Check,
@@ -7,6 +7,7 @@ import {
   Download,
   FolderOpen,
   Layers,
+  MessageCircle,
   Pencil,
   Plus,
   RefreshCw,
@@ -87,6 +88,38 @@ export function ConfigView({
   const [editingPlayerId, setEditingPlayerId] = useState<string | null>(null);
   const [editPlayerName, setEditPlayerName] = useState('');
   const [editPlayerNumber, setEditPlayerNumber] = useState('');
+
+  // WhatsApp template state
+  const [whatsappHeaderInput, setWhatsappHeaderInput] = useState(data.config.whatsappHeader || '');
+  const [whatsappFooterInput, setWhatsappFooterInput] = useState(data.config.whatsappFooter || '');
+  const [whatsappSaveSuccess, setWhatsappSaveSuccess] = useState(false);
+
+  useEffect(() => {
+    setWhatsappHeaderInput(data.config.whatsappHeader || '');
+    setWhatsappFooterInput(data.config.whatsappFooter || '');
+  }, [data.config.id, data.config.whatsappHeader, data.config.whatsappFooter]);
+
+  const handleSaveWhatsAppTemplate = () => {
+    onUpdateConfig({
+      ...data.config,
+      whatsappHeader: whatsappHeaderInput.trim() ? whatsappHeaderInput.trim() : undefined,
+      whatsappFooter: whatsappFooterInput.trim() ? whatsappFooterInput.trim() : undefined,
+    });
+    setWhatsappSaveSuccess(true);
+    setTimeout(() => setWhatsappSaveSuccess(false), 2500);
+  };
+
+  const handleResetWhatsAppTemplate = () => {
+    setWhatsappHeaderInput('');
+    setWhatsappFooterInput('');
+    onUpdateConfig({
+      ...data.config,
+      whatsappHeader: undefined,
+      whatsappFooter: undefined,
+    });
+    setWhatsappSaveSuccess(true);
+    setTimeout(() => setWhatsappSaveSuccess(false), 2500);
+  };
 
   const handleStartEditTeam = (team: Team, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
@@ -424,7 +457,7 @@ export function ConfigView({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="block text-slate-500 dark:text-slate-400 font-bold mb-1">
                 Canchas en Simultáneo
@@ -447,7 +480,7 @@ export function ConfigView({
             </div>
 
             <div>
-              <label className="block text-slate-500 dark:text-slate-400 font-bold mb-1">Formato de Competición</label>
+              <label className="block text-slate-500 dark:text-slate-400 font-bold mb-1">Formato</label>
               <select
                 value={data.config.format}
                 onChange={(e) =>
@@ -458,11 +491,30 @@ export function ConfigView({
                 }
                 className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-semibold text-slate-900 dark:text-white min-h-[44px]"
               >
-                <option value="groups_only">Liga Simple (Solo Fase de Grupos)</option>
-                <option value="groups_playoffs_final">Grupos + Final Directa (1° vs 2°)</option>
-                <option value="groups_playoffs_semis">Grupos + Semifinales (Top 4) + Final</option>
-                <option value="groups_playoffs_quarters">Grupos + Cuartos (Top 8) + Semis + Final</option>
+                <option value="groups_only">Liga Simple (Solo Grupos)</option>
+                <option value="groups_playoffs_final">Grupos + Final (1° vs 2°)</option>
+                <option value="groups_playoffs_semis">Grupos + Semis (Top 4) + Final</option>
+                <option value="groups_playoffs_quarters">Grupos + Cuartos + Semis + Final</option>
                 <option value="knockout_only">Eliminación Directa Pura</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-slate-500 dark:text-slate-400 font-bold mb-1">
+                Ruedas / Rondas
+              </label>
+              <select
+                value={data.config.isDoubleRound ? 'double' : 'single'}
+                onChange={(e) =>
+                  onUpdateConfig({
+                    ...data.config,
+                    isDoubleRound: e.target.value === 'double',
+                  })
+                }
+                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-semibold text-slate-900 dark:text-white min-h-[44px]"
+              >
+                <option value="single">🔄 Solo Ida (1 rueda)</option>
+                <option value="double">🔁 Ida y Vuelta (2 ruedas)</option>
               </select>
             </div>
           </div>
@@ -778,7 +830,124 @@ export function ConfigView({
         </div>
       </div>
 
-      {/* 3. Backup, Demo Data and Reset */}
+      {/* 3. WhatsApp Messages & Default Templates */}
+      <div className="bg-white dark:bg-slate-900 rounded-3xl p-4 sm:p-5 shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-4 transition-colors">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span className="p-1.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl">
+              <MessageCircle className="w-4 h-4" />
+            </span>
+            <span>Mensajes y Plantilla de WhatsApp</span>
+          </h3>
+          <span className="text-[10px] font-bold px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 rounded-full border border-emerald-200/60 dark:border-emerald-800/60">
+            Auto-formato
+          </span>
+        </div>
+
+        <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+          Personaliza los textos predeterminados que se añaden al principio y al final de todos los mensajes al compartir resultados, posiciones, fixture o goleadores.
+        </p>
+
+        <div className="space-y-3.5 text-xs">
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-slate-700 dark:text-slate-300 font-bold">
+                Encabezado / Mensaje Superior
+              </label>
+              <span className="text-[10px] text-slate-400">
+                Usa <code className="bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded">*texto*</code> para negrita
+              </span>
+            </div>
+            <textarea
+              value={whatsappHeaderInput}
+              onChange={(e) => setWhatsappHeaderInput(e.target.value)}
+              placeholder={`🏑 *${data.config.name.toUpperCase()}*${data.config.category ? ` - ${data.config.category}` : ''}\n¡Atención jugadoras y delegados!`}
+              rows={2}
+              className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-medium text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all"
+            />
+            <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">
+              Si lo dejas vacío, usará automáticamente el nombre y categoría del torneo.
+            </p>
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-slate-700 dark:text-slate-300 font-bold">
+                Firma / Pie de Mensaje
+              </label>
+              <span className="text-[10px] text-slate-400">
+                Usa <code className="bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded">_texto_</code> para cursiva
+              </span>
+            </div>
+            <textarea
+              value={whatsappFooterInput}
+              onChange={(e) => setWhatsappFooterInput(e.target.value)}
+              placeholder="Organiza: Subcomisión de Hockey • Dudas o cambios por privado 🏑"
+              rows={2}
+              className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-medium text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all"
+            />
+            <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">
+              Reemplaza la firma estándar al final de cada mensaje enviado a los grupos.
+            </p>
+          </div>
+
+          {/* Live Preview Box */}
+          <div className="pt-2">
+            <span className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+              Vista Previa en WhatsApp:
+            </span>
+            <div className="bg-[#EFEAE2] dark:bg-[#121B22] p-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-inner font-sans text-xs">
+              <div className="bg-white dark:bg-[#1F2C34] text-slate-900 dark:text-[#E9EDEF] p-3 rounded-2xl rounded-tl-none shadow-xs border border-slate-200/50 dark:border-slate-700/50 space-y-2 max-w-sm">
+                <div className="font-bold whitespace-pre-line text-emerald-800 dark:text-emerald-400">
+                  {whatsappHeaderInput.trim()
+                    ? whatsappHeaderInput.trim()
+                    : `🏑 *${data.config.name.toUpperCase()}*${data.config.category ? ` - ${data.config.category}` : ''}`}
+                </div>
+                <div className="text-[11px] text-slate-600 dark:text-slate-300 font-mono bg-slate-50 dark:bg-slate-800/60 p-2 rounded-xl border border-slate-200/40 dark:border-slate-700/40">
+                  🏆 *TABLA DE POSICIONES*<br />
+                  🥇 *{data.teams[0]?.name || 'Equipo 1'}* (6 pts)<br />
+                  🥈 *{data.teams[1]?.name || 'Equipo 2'}* (3 pts)<br />
+                  ... [Contenido del mensaje]
+                </div>
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 italic whitespace-pre-line">
+                  {whatsappFooterInput.trim()
+                    ? whatsappFooterInput.trim()
+                    : '_Generado con Hockey Torneos PWA_ 🏑'}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex flex-col sm:flex-row gap-2 pt-2">
+            <button
+              onClick={handleSaveWhatsAppTemplate}
+              className={`flex-1 py-3 px-4 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 min-h-[44px] transition-all active:scale-95 shadow-xs ${
+                whatsappSaveSuccess
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white'
+              }`}
+            >
+              <Check className="w-4 h-4" />
+              <span>
+                {whatsappSaveSuccess
+                  ? '¡Mensajes Guardados!'
+                  : 'Guardar Mensajes Predeterminados'}
+              </span>
+            </button>
+
+            <button
+              onClick={handleResetWhatsAppTemplate}
+              className="py-3 px-4 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-2xl font-bold text-xs flex items-center justify-center gap-1.5 min-h-[44px] transition-all"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Restablecer</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* 4. Backup, Demo Data and Reset */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl p-4 shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-2.5 transition-colors">
         <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
           Respaldo & Muestra

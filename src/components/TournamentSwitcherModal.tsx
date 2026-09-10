@@ -24,7 +24,8 @@ interface TournamentSwitcherModalProps {
     status: TournamentStatus,
     format: TournamentFormat,
     courtsCount: number,
-    sourceTournamentId?: string
+    sourceTournamentId?: string,
+    isDoubleRound?: boolean
   ) => void;
   onClose: () => void;
 }
@@ -45,6 +46,7 @@ export function TournamentSwitcherModal({
   const [newSeason, setNewSeason] = useState(`${new Date().getFullYear()}`);
   const [newStatus, setNewStatus] = useState<TournamentStatus>('upcoming');
   const [newFormat, setNewFormat] = useState<TournamentFormat>('groups_playoffs_semis');
+  const [newIsDoubleRound, setNewIsDoubleRound] = useState<boolean>(false);
   const [newCourtsCount, setNewCourtsCount] = useState(2);
   const [sourceTournamentId, setSourceTournamentId] = useState<string>('none');
 
@@ -64,7 +66,8 @@ export function TournamentSwitcherModal({
       newStatus,
       newFormat,
       newCourtsCount,
-      sourceTournamentId !== 'none' ? sourceTournamentId : undefined
+      sourceTournamentId !== 'none' ? sourceTournamentId : undefined,
+      newIsDoubleRound
     );
     setIsCreating(false);
     onClose();
@@ -174,21 +177,37 @@ export function TournamentSwitcherModal({
               </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">
-                Formato de Competición
-              </label>
-              <select
-                value={newFormat}
-                onChange={(e) => setNewFormat(e.target.value as TournamentFormat)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-semibold text-slate-900 dark:text-white min-h-[44px]"
-              >
-                <option value="groups_playoffs_semis">Grupos + Semifinales (Top 4) + Final</option>
-                <option value="groups_playoffs_final">Grupos + Final Directa (1° vs 2°)</option>
-                <option value="groups_playoffs_quarters">Grupos + Cuartos + Semis + Final</option>
-                <option value="groups_only">Liga Simple (Todos contra todos)</option>
-                <option value="knockout_only">Eliminación Directa</option>
-              </select>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <div>
+                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">
+                  Formato de Competición
+                </label>
+                <select
+                  value={newFormat}
+                  onChange={(e) => setNewFormat(e.target.value as TournamentFormat)}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-semibold text-slate-900 dark:text-white min-h-[44px]"
+                >
+                  <option value="groups_playoffs_semis">Grupos + Semis + Final</option>
+                  <option value="groups_playoffs_final">Grupos + Final Directa</option>
+                  <option value="groups_playoffs_quarters">Grupos + Cuartos + Semis + Final</option>
+                  <option value="groups_only">Liga Simple (Solo grupos)</option>
+                  <option value="knockout_only">Eliminación Directa</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">
+                  Ruedas / Modalidad
+                </label>
+                <select
+                  value={newIsDoubleRound ? 'double' : 'single'}
+                  onChange={(e) => setNewIsDoubleRound(e.target.value === 'double')}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-semibold text-slate-900 dark:text-white min-h-[44px]"
+                >
+                  <option value="single">🔄 Solo Ida (1 rueda)</option>
+                  <option value="double">🔁 Ida y Vuelta (2 ruedas)</option>
+                </select>
+              </div>
             </div>
 
             <div>

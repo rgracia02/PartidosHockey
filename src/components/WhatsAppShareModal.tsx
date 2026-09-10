@@ -101,7 +101,14 @@ export function WhatsAppShareModal({
   const defaultFormattedText = useMemo(() => {
     switch (shareType) {
       case 'standings':
-        return formatWhatsAppStandings(config.name, standings, config.category, config.season);
+        return formatWhatsAppStandings(
+          config.name,
+          standings,
+          config.category,
+          config.season,
+          config.whatsappHeader,
+          config.whatsappFooter
+        );
       case 'results':
         return formatWhatsAppResults(
           config.name,
@@ -109,7 +116,9 @@ export function WhatsAppShareModal({
           teams,
           selectedRound,
           config.category,
-          config.season
+          config.season,
+          config.whatsappHeader,
+          config.whatsappFooter
         );
       case 'single_match':
         if (!selectedMatch) return '';
@@ -118,10 +127,19 @@ export function WhatsAppShareModal({
           teams,
           config.name,
           config.category,
-          config.season
+          config.season,
+          config.whatsappHeader,
+          config.whatsappFooter
         );
       case 'scorers':
-        return formatWhatsAppScorers(config.name, topScorers, cardStats, config.category);
+        return formatWhatsAppScorers(
+          config.name,
+          topScorers,
+          cardStats,
+          config.category,
+          config.whatsappHeader,
+          config.whatsappFooter
+        );
       case 'summary':
       default:
         return formatWhatsAppSummary(
@@ -131,7 +149,9 @@ export function WhatsAppShareModal({
           teams,
           topScorers,
           config.category,
-          config.season
+          config.season,
+          config.whatsappHeader,
+          config.whatsappFooter
         );
     }
   }, [shareType, selectedRound, selectedMatch, config, standings, matches, teams, topScorers, cardStats]);

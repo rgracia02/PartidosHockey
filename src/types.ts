@@ -75,9 +75,12 @@ export interface TournamentConfig {
   status?: TournamentStatus;
   courtsCount: number;
   format: TournamentFormat;
+  isDoubleRound?: boolean; // false / undefined = Solo Ida (1 rueda), true = Ida y Vuelta (2 ruedas)
   pointsWin: number;
   pointsDraw: number;
   pointsLoss: number;
+  whatsappHeader?: string;
+  whatsappFooter?: string;
 }
 
 export interface StandingsRow {

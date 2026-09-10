@@ -52,7 +52,9 @@ export function SingleMatchShareModal({
       teams,
       config.name,
       config.category,
-      config.season
+      config.season,
+      config.whatsappHeader,
+      config.whatsappFooter
     );
   }, [match, teams, config]);
 
