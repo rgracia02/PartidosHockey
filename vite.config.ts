@@ -5,7 +5,7 @@ import { defineConfig } from 'vite';
 
 export default defineConfig(() => {
   return {
-    base: '/',
+    base: './',
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
@@ -15,6 +15,8 @@ export default defineConfig(() => {
     build: {
       target: ['es2020', 'safari14', 'chrome87', 'edge88', 'firefox78'],
       cssTarget: ['safari14'],
+      outDir: 'dist',
+      assetsDir: 'assets',
     },
     server: {
       host: '0.0.0.0',
