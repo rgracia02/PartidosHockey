@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es" class="h-full bg-[#F2F2F7]">
+<html lang="es" class="h-full bg-[#F2F2F7] dark:bg-slate-950">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
@@ -24,35 +24,13 @@
       // the React bundle fails to download or throws a parse error. Captures
       // any error and shows it on screen if the app never mounts.
       window.__diagError = null;
-      window.__diagExtra = '';
       window.addEventListener('error', function (event) {
         window.__diagError = (event.error && (event.error.stack || event.error.message)) || event.message || 'Error desconocido';
       });
-      // Capture phase: resource loading errors (404s on <script>/<link>) only fire here.
-      window.addEventListener('error', function (event) {
-        if (event.target && event.target !== window && event.target.tagName) {
-          window.__diagExtra += 'Recurso que falló al cargar: ' + event.target.tagName + ' -> ' + (event.target.src || event.target.href) + '\n';
-        }
-      }, true);
       window.addEventListener('unhandledrejection', function (event) {
         var reason = event.reason;
         window.__diagError = (reason && (reason.stack || reason.message)) || String(reason);
       });
-      // Directly probe the bundle URL so we know the real HTTP status, not just "it errored".
-      (function () {
-        var s = document.querySelector('script[type="module"]');
-        var src = s ? s.getAttribute('src') : null;
-        if (src) {
-          var resolvedUrl = new URL(src, document.baseURI).href;
-          fetch(resolvedUrl, { cache: 'no-store' })
-            .then(function (res) {
-              window.__diagExtra += 'Fetch de ' + resolvedUrl + ' -> HTTP ' + res.status + ' (' + res.headers.get('content-type') + ')\n';
-            })
-            .catch(function (err) {
-              window.__diagExtra += 'Fetch de ' + resolvedUrl + ' -> fall\u00f3 de red: ' + err.message + '\n';
-            });
-        }
-      })();
       setTimeout(function () {
         if (window.__appMounted) return;
         var box = document.createElement('div');
@@ -60,18 +38,25 @@
         box.innerHTML =
           '<div style="font-size:36px;margin-bottom:12px;">\u26A0\uFE0F</div>' +
           '<h2 style="font-size:16px;font-weight:bold;margin-bottom:10px;">La app no pudo cargar</h2>' +
-          '<pre style="font-size:11px;color:#fca5a5;background:#1e293b;padding:10px;border-radius:8px;max-width:90vw;max-height:50vh;overflow:auto;white-space:pre-wrap;word-break:break-word;text-align:left;">' +
-          ('URL actual: ' + location.href + '\n\n') +
-          (window.__diagExtra || '') +
-          (window.__diagError ? String(window.__diagError) : '') +
+          '<pre style="font-size:11px;color:#fca5a5;background:#1e293b;padding:10px;border-radius:8px;max-width:90vw;max-height:40vh;overflow:auto;white-space:pre-wrap;word-break:break-word;text-align:left;">' +
+          (window.__diagError ? String(window.__diagError).replace(/</g, '&lt;') : 'No se capturó ningún error de JavaScript.\nEsto sugiere que el archivo del script no llegó a cargarse (revisar la red / la URL del bundle).') +
           '</pre>' +
           '<button onclick="localStorage.clear();sessionStorage.clear();if(window.caches){caches.keys().then(function(k){k.forEach(function(n){caches.delete(n)})})};location.reload();" style="margin-top:16px;background:#0284c7;color:#fff;border:none;padding:10px 20px;border-radius:12px;font-weight:bold;font-size:13px;">Reiniciar</button>';
         document.body.appendChild(box);
-      }, 3000);
+      }, 2500);
     </script>
   </head>
-  <body class="h-full bg-[#F2F2F7] text-slate-900 antialiased select-none font-sans overflow-x-hidden">
-    <div id="root" class="h-full min-h-screen"></div>
+  <body class="h-full bg-[#F2F2F7] dark:bg-slate-950 text-slate-900 antialiased select-none font-sans overflow-x-hidden">
+    <div id="root" class="h-full min-h-screen">
+      <div id="initial-splash" style="height:100%;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;">
+        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="1.8">
+          <circle cx="12" cy="12" r="9.5" />
+          <path d="M12 6v6l4 2" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        <span style="font-family:-apple-system,sans-serif;font-weight:700;font-size:15px;color:#0284c7;">Hockey Torneos</span>
+        <span style="font-family:-apple-system,sans-serif;font-size:11px;color:#94a3b8;">por Rodrigo Gracia</span>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
