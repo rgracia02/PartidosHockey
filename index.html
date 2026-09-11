@@ -19,6 +19,32 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+      // Diagnostic script: plain JS, not part of the bundle, so it runs even if
+      // the React bundle fails to download or throws a parse error. Captures
+      // any error and shows it on screen if the app never mounts.
+      window.__diagError = null;
+      window.addEventListener('error', function (event) {
+        window.__diagError = (event.error && (event.error.stack || event.error.message)) || event.message || 'Error desconocido';
+      });
+      window.addEventListener('unhandledrejection', function (event) {
+        var reason = event.reason;
+        window.__diagError = (reason && (reason.stack || reason.message)) || String(reason);
+      });
+      setTimeout(function () {
+        if (window.__appMounted) return;
+        var box = document.createElement('div');
+        box.style.cssText = 'position:fixed;inset:0;background:#0f172a;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;font-family:-apple-system,sans-serif;z-index:99999;';
+        box.innerHTML =
+          '<div style="font-size:36px;margin-bottom:12px;">\u26A0\uFE0F</div>' +
+          '<h2 style="font-size:16px;font-weight:bold;margin-bottom:10px;">La app no pudo cargar</h2>' +
+          '<pre style="font-size:11px;color:#fca5a5;background:#1e293b;padding:10px;border-radius:8px;max-width:90vw;max-height:40vh;overflow:auto;white-space:pre-wrap;word-break:break-word;text-align:left;">' +
+          (window.__diagError ? String(window.__diagError).replace(/</g, '&lt;') : 'No se capturó ningún error de JavaScript.\nEsto sugiere que el archivo del script no llegó a cargarse (revisar la red / la URL del bundle).') +
+          '</pre>' +
+          '<button onclick="localStorage.clear();sessionStorage.clear();if(window.caches){caches.keys().then(function(k){k.forEach(function(n){caches.delete(n)})})};location.reload();" style="margin-top:16px;background:#0284c7;color:#fff;border:none;padding:10px 20px;border-radius:12px;font-weight:bold;font-size:13px;">Reiniciar</button>';
+        document.body.appendChild(box);
+      }, 2500);
+    </script>
   </head>
   <body class="h-full bg-[#F2F2F7] text-slate-900 antialiased select-none font-sans overflow-x-hidden">
     <div id="root" class="h-full min-h-screen"></div>
