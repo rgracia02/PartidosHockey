@@ -33,6 +33,7 @@ try {
         </ErrorBoundary>
       </StrictMode>
     );
+    (window as unknown as { __appMounted?: boolean }).__appMounted = true;
   }
 } catch (err) {
   console.error('Fatal initialization error:', err);
