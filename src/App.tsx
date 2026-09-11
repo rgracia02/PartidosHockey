@@ -158,6 +158,12 @@ export default function App() {
       } else {
         document.documentElement.classList.remove('dark');
       }
+      // Keep the iOS status bar / Safari toolbar color in sync with the app's
+      // actual theme so it never shows a mismatched white/dark bar up top.
+      const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+      if (themeColorMeta) {
+        themeColorMeta.setAttribute('content', isDarkMode ? '#020617' : '#F2F2F7');
+      }
     } catch (e) {
       // ignore
     }
