@@ -981,6 +981,10 @@ export function ConfigView({
           <span>Restablecer Torneos Demo</span>
         </button>
       </div>
+
+      <p className="text-center text-[11px] font-medium text-slate-400 dark:text-slate-600 pt-1 pb-2">
+        Hockey Torneos · Desarrollado por Rodrigo Gracia
+      </p>
     </div>
   );
 }
