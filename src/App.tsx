@@ -495,7 +495,6 @@ export default function App() {
           else if (activeTab === 'goleadores') handleOpenShareModal('scorers');
           else handleOpenShareModal('summary');
         }}
-        courtsCount={currentTournament.config.courtsCount}
         onOpenTournamentSwitcher={() => {
           setSwitcherInitialMode('list');
           setShowSwitcherModal(true);
