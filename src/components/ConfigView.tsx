@@ -44,6 +44,8 @@ interface ConfigViewProps {
   onImportJson: (imported: TournamentData) => void;
   onLinkTournamentEvent: (targetId: string, useSeparateCourts?: boolean) => void;
   onUnlinkTournamentEvent: () => void;
+  onSetManualCross: (matchId: string, teamAId: string, teamBId: string) => void;
+  onResetManualCross: (matchId: string) => void;
 }
 
 const COLOR_PRESETS = [
@@ -74,6 +76,8 @@ export function ConfigView({
   onImportJson,
   onLinkTournamentEvent,
   onUnlinkTournamentEvent,
+  onSetManualCross,
+  onResetManualCross,
 }: ConfigViewProps) {
   const [linkTargetId, setLinkTargetId] = useState('none');
   const [useSeparateCourts, setUseSeparateCourts] = useState(false);
@@ -519,6 +523,27 @@ export function ConfigView({
                 <option value="double">🔁 Ida y Vuelta (2 ruedas)</option>
               </select>
             </div>
+
+            {data.config.format === 'groups_playoffs_semis' && (
+              <div>
+                <label className="block text-slate-500 dark:text-slate-400 font-bold mb-1">
+                  Partido por el 3° y 4° Puesto
+                </label>
+                <select
+                  value={data.config.includeThirdPlace ? 'yes' : 'no'}
+                  onChange={(e) =>
+                    onUpdateConfig({
+                      ...data.config,
+                      includeThirdPlace: e.target.value === 'yes',
+                    })
+                  }
+                  className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-semibold text-slate-900 dark:text-white min-h-[44px]"
+                >
+                  <option value="no">No jugar 3er puesto</option>
+                  <option value="yes">🥉 Jugar 3er y 4to puesto</option>
+                </select>
+              </div>
+            )}
           </div>
 
           <button
@@ -637,6 +662,77 @@ export function ConfigView({
           );
         })()}
       </CollapsibleSection>
+
+      {/* 1.6 Manual Playoff Cross Editor */}
+      {(() => {
+        const playoffMatches = data.matches.filter((m) => m.stage !== 'group');
+        if (playoffMatches.length === 0) return null;
+
+        return (
+          <CollapsibleSection icon={<Trophy className="w-4 h-4 text-sky-600" />} title="Cruces de Playoffs">
+            <p className="text-xs text-slate-500 dark:text-slate-500 -mt-1 mb-3">
+              Por defecto los cruces se arman solos con la tabla de posiciones. Si necesitás armarlos vos (por ejemplo, por un desempate especial), elegí los equipos acá.
+            </p>
+            <div className="space-y-3">
+              {playoffMatches.map((m) => {
+                const teamA = data.teams.find((t) => t.id === m.teamAId);
+                const teamB = data.teams.find((t) => t.id === m.teamBId);
+                return (
+                  <div
+                    key={m.id}
+                    className="p-3 bg-slate-50 dark:bg-slate-800/70 rounded-2xl border border-slate-100 dark:border-slate-700 space-y-2"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300">{m.stageLabel}</span>
+                      {m.isManualCross && (
+                        <button
+                          onClick={() => onResetManualCross(m.id)}
+                          className="text-[10px] font-bold text-sky-600 dark:text-sky-400 flex items-center gap-1"
+                        >
+                          <RotateCcw className="w-3 h-3" />
+                          <span>Automático</span>
+                        </button>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={m.teamAId || ''}
+                        onChange={(e) => onSetManualCross(m.id, e.target.value, m.teamBId)}
+                        className="flex-1 px-2.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-900 dark:text-white min-h-[40px]"
+                      >
+                        <option value="">{m.placeholderA || 'Por definir'}</option>
+                        {data.teams.map((t) => (
+                          <option key={t.id} value={t.id}>
+                            {t.name}
+                          </option>
+                        ))}
+                      </select>
+                      <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500">vs</span>
+                      <select
+                        value={m.teamBId || ''}
+                        onChange={(e) => onSetManualCross(m.id, m.teamAId, e.target.value)}
+                        className="flex-1 px-2.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-900 dark:text-white min-h-[40px]"
+                      >
+                        <option value="">{m.placeholderB || 'Por definir'}</option>
+                        {data.teams.map((t) => (
+                          <option key={t.id} value={t.id}>
+                            {t.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    {!teamA && !teamB && !m.isManualCross && (
+                      <p className="text-[10px] text-slate-400 dark:text-slate-500">
+                        Se completa solo cuando termine la fase anterior.
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </CollapsibleSection>
+        );
+      })()}
 
       {/* 2. Teams & Roster Manager */}
       <CollapsibleSection icon={<Users className="w-4 h-4 text-sky-600" />} title={`Equipos y Planteles (${data.teams.length})`} defaultOpen={true}>
