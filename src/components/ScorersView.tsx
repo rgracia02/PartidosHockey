@@ -46,7 +46,7 @@ export function ScorersView({ scorers, cardStats, onShareScorers }: ScorersViewP
           <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 mb-2">
             <div>
               <h3 className="text-sm font-bold text-slate-900 dark:text-white leading-tight">Tabla de Goleadores/as</h3>
-              <p className="text-[10px] text-slate-400 dark:text-slate-500">Goles convertidos en el torneo</p>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400">Goles convertidos en el torneo</p>
             </div>
             
             <div className="flex items-center gap-2">
@@ -61,12 +61,12 @@ export function ScorersView({ scorers, cardStats, onShareScorers }: ScorersViewP
                   <span>Compartir</span>
                 </button>
               )}
-              <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500">Total Goles</span>
+              <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Total Goles</span>
             </div>
           </div>
 
           {scorers.length === 0 ? (
-            <div className="py-8 text-center text-xs text-slate-400 dark:text-slate-500">
+            <div className="py-8 text-center text-xs text-slate-500 dark:text-slate-400">
               Aún no se han anotado goles en los partidos disputados.
             </div>
           ) : (
@@ -82,10 +82,10 @@ export function ScorersView({ scorers, cardStats, onShareScorers }: ScorersViewP
                         idx === 0
                           ? 'text-amber-500 text-sm'
                           : idx === 1
-                          ? 'text-slate-400 text-sm'
+                          ? 'text-slate-500 text-sm'
                           : idx === 2
                           ? 'text-amber-700 dark:text-amber-600 text-sm'
-                          : 'text-slate-400 dark:text-slate-600'
+                          : 'text-slate-500 dark:text-slate-600'
                       }`}
                     >
                       {idx + 1}
@@ -99,7 +99,7 @@ export function ScorersView({ scorers, cardStats, onShareScorers }: ScorersViewP
                       <div>
                         <p className="font-bold text-slate-900 dark:text-slate-100 text-sm flex items-center gap-1.5">
                           <span>{scorer.playerName}</span>
-                          <span className="text-slate-400 dark:text-slate-500 text-xs font-normal">
+                          <span className="text-slate-500 dark:text-slate-400 text-xs font-normal">
                             #{scorer.playerNumber}
                           </span>
                         </p>
@@ -126,13 +126,13 @@ export function ScorersView({ scorers, cardStats, onShareScorers }: ScorersViewP
           <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 mb-2">
             <div>
               <h3 className="text-sm font-bold text-slate-900 dark:text-white">Sanciones Acumuladas</h3>
-              <p className="text-[11px] text-slate-400 dark:text-slate-500">Verde (2m) • Amarilla (5/10m) • Roja</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">Verde (2m) • Amarilla (5/10m) • Roja</p>
             </div>
-            <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500">Tarjetas</span>
+            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Tarjetas</span>
           </div>
 
           {cardStats.length === 0 ? (
-            <div className="py-8 text-center text-xs text-slate-400 dark:text-slate-500">
+            <div className="py-8 text-center text-xs text-slate-500 dark:text-slate-400">
               Excelente conducta: ¡Sin tarjetas ni sanciones registradas!
             </div>
           ) : (
@@ -150,7 +150,7 @@ export function ScorersView({ scorers, cardStats, onShareScorers }: ScorersViewP
                     <div>
                       <p className="font-bold text-slate-900 dark:text-slate-100 text-sm">
                         {cardItem.playerName}{' '}
-                        <span className="text-slate-400 dark:text-slate-500 text-xs font-normal">
+                        <span className="text-slate-500 dark:text-slate-400 text-xs font-normal">
                           #{cardItem.playerNumber}
                         </span>
                       </p>
