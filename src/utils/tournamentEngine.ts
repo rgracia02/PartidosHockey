@@ -1561,6 +1561,26 @@ export function calculatePlayerCards(teams: Team[] = [], matches: Match[] = []):
 /**
  * Formats a Single Match Result / Match Sheet specifically for WhatsApp
  */
+/**
+ * Returns the distinct round/stage labels from a list of matches, sorted by
+ * stage (group phase before quarters/semis/final/3rd-place) and then by round
+ * number — not by array/insertion order, so a manually-reordered "Fecha 2"
+ * always sorts after "Fecha 1" regardless of where that match sits in the array.
+ */
+export function getSortedRoundLabels(matches: Match[]): string[] {
+  const STAGE_SORT_WEIGHT: Record<string, number> = { group: 0, quarter: 1, semi: 2, third_place: 3, final: 4 };
+  const map = new Map<string, { round: number; stageWeight: number }>();
+  matches.forEach((m) => {
+    const label = m.stageLabel || `Fecha ${m.round}`;
+    if (!map.has(label)) {
+      map.set(label, { round: m.round, stageWeight: STAGE_SORT_WEIGHT[m.stage] ?? 0 });
+    }
+  });
+  return Array.from(map.entries())
+    .sort((a, b) => a[1].stageWeight - b[1].stageWeight || a[1].round - b[1].round)
+    .map(([label]) => label);
+}
+
 export function formatWhatsAppSingleMatch(
   match: Match,
   teams: Team[],
@@ -1709,9 +1729,7 @@ export function formatWhatsAppResults(
     return (m.stageLabel || `Fecha ${m.round}`) === roundFilter;
   });
 
-  const rounds = Array.from(
-    new Set(filteredMatches.map((m) => m.stageLabel || `Fecha ${m.round}`))
-  );
+  const rounds = getSortedRoundLabels(filteredMatches);
 
   if (rounds.length === 0) {
     text += `_No hay partidos programados para esta fecha._\n`;
@@ -1765,14 +1783,8 @@ export function formatWhatsAppCombinedEvent(
   text += `📅 *JORNADA COMBINADA*\n`;
   text += entries.map((e) => `_${e.config.category || e.config.name}_`).join('  •  ') + '\n\n';
 
-  // Union of round labels across all linked tournaments, in first-seen order.
-  const allRoundLabels: string[] = [];
-  entries.forEach((e) => {
-    e.matches.forEach((m) => {
-      const label = m.stageLabel || `Fecha ${m.round}`;
-      if (!allRoundLabels.includes(label)) allRoundLabels.push(label);
-    });
-  });
+  // Union of round labels across all linked tournaments, sorted chronologically.
+  const allRoundLabels = getSortedRoundLabels(entries.flatMap((e) => e.matches));
 
   const roundsToShow = roundFilter === 'all' ? allRoundLabels : [roundFilter];
 
@@ -1902,7 +1914,7 @@ export function formatWhatsAppSummary(
   });
 
   text += `\n📌 *RESULTADOS Y PRÓXIMOS ENCUENTROS*\n`;
-  const rounds = Array.from(new Set(matches.map((m) => m.stageLabel || `Fecha ${m.round}`)));
+  const rounds = getSortedRoundLabels(matches);
 
   rounds.forEach((roundLabel) => {
     const roundMatches = matches.filter(
