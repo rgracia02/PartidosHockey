@@ -41,6 +41,8 @@ interface ConfigViewProps {
   onLoadDemoData: () => void;
   onOpenStandaloneModal: () => void;
   onImportJson: (imported: TournamentData) => void;
+  onLinkTournamentEvent: (targetId: string) => void;
+  onUnlinkTournamentEvent: () => void;
 }
 
 const COLOR_PRESETS = [
@@ -69,7 +71,10 @@ export function ConfigView({
   onLoadDemoData,
   onOpenStandaloneModal,
   onImportJson,
+  onLinkTournamentEvent,
+  onUnlinkTournamentEvent,
 }: ConfigViewProps) {
+  const [linkTargetId, setLinkTargetId] = useState('none');
   // New team form state
   const [newTeamName, setNewTeamName] = useState('');
   const [newTeamColor, setNewTeamColor] = useState(COLOR_PRESETS[0]);
@@ -535,6 +540,94 @@ export function ConfigView({
             <span>Regenerar Fixture de este Torneo</span>
           </button>
         </div>
+      </div>
+
+      {/* 1.5 Combined Event Linking (e.g. Damas + Varones, same jornada) */}
+      <div className="bg-white dark:bg-slate-900 rounded-3xl p-4 shadow-sm border border-slate-200/80 dark:border-slate-800 transition-colors">
+        <div className="flex items-center gap-2 pb-3 border-b border-slate-100 dark:border-slate-800 mb-3">
+          <Layers className="w-4 h-4 text-rose-600" />
+          <h3 className="text-sm font-bold text-slate-900 dark:text-white">Evento Combinado</h3>
+        </div>
+
+        {(() => {
+          const linked = tournaments.filter(
+            (t) => data.config.eventGroupId && t.config.eventGroupId === data.config.eventGroupId && t.config.id !== data.config.id
+          );
+          const linkable = tournaments.filter(
+            (t) => t.config.id !== data.config.id && t.config.eventGroupId !== data.config.eventGroupId
+          );
+
+          if (linked.length > 0) {
+            return (
+              <div className="space-y-2.5">
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                  Este torneo está vinculado con:
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {linked.map((t) => (
+                    <span
+                      key={t.config.id}
+                      className="px-2.5 py-1 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 rounded-full text-xs font-bold"
+                    >
+                      {t.config.category || t.config.name}
+                    </span>
+                  ))}
+                </div>
+                <p className="text-[11px] text-slate-400 dark:text-slate-500">
+                  Ahora podés compartir un reporte de WhatsApp con la "Jornada Combinada" de ambos torneos, sin mezclar tablas de posiciones.
+                </p>
+                <button
+                  onClick={onUnlinkTournamentEvent}
+                  className="w-full py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-2xl font-bold text-xs flex items-center justify-center gap-1.5 min-h-[44px] transition-all"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  <span>Desvincular Evento</span>
+                </button>
+              </div>
+            );
+          }
+
+          if (linkable.length === 0) {
+            return (
+              <p className="text-xs text-slate-400 dark:text-slate-500">
+                Creá otro torneo (por ejemplo, otra categoría) para poder vincularlo con este como un mismo evento.
+              </p>
+            );
+          }
+
+          return (
+            <div className="space-y-2.5">
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                Vinculá este torneo con otro (ej: Damas + Varones) para compartir un fixture y reporte combinado del mismo día.
+              </p>
+              <select
+                value={linkTargetId}
+                onChange={(e) => setLinkTargetId(e.target.value)}
+                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-semibold text-slate-900 dark:text-white min-h-[44px]"
+              >
+                <option value="none">Seleccionar torneo...</option>
+                {linkable.map((t) => (
+                  <option key={t.config.id} value={t.config.id}>
+                    {t.config.name} {t.config.category ? `(${t.config.category})` : ''}
+                  </option>
+                ))}
+              </select>
+              <button
+                onClick={() => {
+                  if (linkTargetId !== 'none') {
+                    onLinkTournamentEvent(linkTargetId);
+                    setLinkTargetId('none');
+                  }
+                }}
+                disabled={linkTargetId === 'none'}
+                className="w-full py-2.5 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 disabled:bg-slate-200 disabled:dark:bg-slate-800 disabled:text-slate-400 text-white rounded-2xl font-bold text-xs flex items-center justify-center gap-1.5 min-h-[44px] transition-all"
+              >
+                <Layers className="w-3.5 h-3.5" />
+                <span>Vincular como Mismo Evento</span>
+              </button>
+            </div>
+          );
+        })()}
       </div>
 
       {/* 2. Teams & Roster Manager */}
