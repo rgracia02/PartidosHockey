@@ -312,9 +312,11 @@ export default function App() {
   };
 
   // Link the active tournament with another one as the same combined event (e.g. Damas + Varones, same jornada).
-  // This is a one-click action: it also reassigns non-colliding court numbers and
-  // regenerates both fixtures automatically, so the user doesn't need extra steps.
-  const handleLinkTournamentEvent = (targetId: string) => {
+  // This is a one-click action: it regenerates both fixtures automatically so the user doesn't
+  // need extra steps. By default both keep their own court numbering (they share the same physical
+  // courts, just at different times of the day). Only if useSeparateCourts is true do we shift the
+  // second tournament's court numbers so they don't overlap with the first (for venues with more courts).
+  const handleLinkTournamentEvent = (targetId: string, useSeparateCourts: boolean = false) => {
     const target = tournaments.find((t) => t.config.id === targetId);
     if (!target) return;
 
@@ -332,10 +334,8 @@ export default function App() {
       target.config.eventGroupId ||
       `event_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
-    // Current tournament keeps (or starts at) Cancha 1; the target continues right after it,
-    // so the two never collide on the same physical court number.
     const currentOffset = currentTournament.config.courtLabelOffset || 0;
-    const targetOffset = currentOffset + currentTournament.config.courtsCount;
+    const targetOffset = useSeparateCourts ? currentOffset + currentTournament.config.courtsCount : 0;
 
     setTournaments((prev) =>
       prev.map((t) => {
