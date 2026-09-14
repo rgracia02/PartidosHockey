@@ -670,8 +670,6 @@ export function ConfigView({
         const groupMatches = data.matches.filter((m) => m.stage === 'group');
         if (groupMatches.length === 0) return null;
 
-        const roundOptions = Array.from(new Set(data.matches.map((m) => m.round))).sort((a, b) => a - b);
-        const maxRound = roundOptions.length > 0 ? Math.max(...roundOptions) : 1;
         const courtOptions = Array.from(new Set(data.matches.map((m) => m.court))).sort();
 
         const sortedGroupMatches = [...groupMatches].sort((a, b) => a.round - b.round || a.court.localeCompare(b.court));
@@ -696,18 +694,16 @@ export function ConfigView({
                     <div className="flex items-center gap-2">
                       <div className="flex-1">
                         <label className="block text-[10px] text-slate-500 dark:text-slate-400 font-bold mb-1">Fecha</label>
-                        <select
+                        <input
+                          type="number"
+                          min={1}
                           value={m.round}
-                          onChange={(e) => onRescheduleMatch(m.id, Number(e.target.value), m.court)}
+                          onChange={(e) => {
+                            const val = Number(e.target.value);
+                            if (val >= 1) onRescheduleMatch(m.id, val, m.court);
+                          }}
                           className="w-full px-2.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-900 dark:text-white min-h-[40px]"
-                        >
-                          {roundOptions.map((r) => (
-                            <option key={r} value={r}>
-                              Fecha {r}
-                            </option>
-                          ))}
-                          <option value={maxRound + 1}>Fecha {maxRound + 1} (nueva)</option>
-                        </select>
+                        />
                       </div>
                       <div className="flex-1">
                         <label className="block text-[10px] text-slate-500 dark:text-slate-400 font-bold mb-1">Cancha</label>
