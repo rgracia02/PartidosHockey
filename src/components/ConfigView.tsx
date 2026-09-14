@@ -42,7 +42,7 @@ interface ConfigViewProps {
   onLoadDemoData: () => void;
   onOpenStandaloneModal: () => void;
   onImportJson: (imported: TournamentData) => void;
-  onLinkTournamentEvent: (targetId: string) => void;
+  onLinkTournamentEvent: (targetId: string, useSeparateCourts?: boolean) => void;
   onUnlinkTournamentEvent: () => void;
 }
 
@@ -76,6 +76,7 @@ export function ConfigView({
   onUnlinkTournamentEvent,
 }: ConfigViewProps) {
   const [linkTargetId, setLinkTargetId] = useState('none');
+  const [useSeparateCourts, setUseSeparateCourts] = useState(false);
   // New team form state
   const [newTeamName, setNewTeamName] = useState('');
   const [newTeamColor, setNewTeamColor] = useState(COLOR_PRESETS[0]);
@@ -605,11 +606,25 @@ export function ConfigView({
                   </option>
                 ))}
               </select>
+
+              <label className="flex items-start gap-2.5 px-1 py-1 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={useSeparateCourts}
+                  onChange={(e) => setUseSeparateCourts(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 accent-sky-600 shrink-0"
+                />
+                <span className="text-xs text-slate-500 dark:text-slate-400">
+                  Cada categoría juega en canchas físicas distintas (si no marcás esto, las dos comparten la misma numeración de cancha, solo que en horarios distintos).
+                </span>
+              </label>
+
               <button
                 onClick={() => {
                   if (linkTargetId !== 'none') {
-                    onLinkTournamentEvent(linkTargetId);
+                    onLinkTournamentEvent(linkTargetId, useSeparateCourts);
                     setLinkTargetId('none');
+                    setUseSeparateCourts(false);
                   }
                 }}
                 disabled={linkTargetId === 'none'}
