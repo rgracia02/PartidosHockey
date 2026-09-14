@@ -16,85 +16,121 @@ interface ExportableStandingsImageProps {
 }
 
 const MEDAL = ['🥇', '🥈', '🥉'];
+const WIDTH = 340;
+const PAD = 18;
+const ROW_HEIGHT = 40;
+const COL_PJ_X = 240;
+const COL_DG_X = 280;
+const COL_PTS_X = 322;
+const NAME_X = 68;
 
-export const ExportableStandingsImage = forwardRef<HTMLDivElement, ExportableStandingsImageProps>(
+function truncate(name: string, max: number): string {
+  return name.length > max ? `${name.slice(0, max - 1)}…` : name;
+}
+
+export const ExportableStandingsImage = forwardRef<SVGSVGElement, ExportableStandingsImageProps>(
   ({ tournamentName, category, roundLabel, standings, format }, ref) => {
     const qualifyCutoff = QUALIFY_CUTOFF_BY_FORMAT[format] || 0;
 
+    const headerHeight = 100;
+    const rowsHeight = standings.length * ROW_HEIGHT;
+    const legendHeight = qualifyCutoff > 0 ? 36 : 12;
+    const totalHeight = headerHeight + rowsHeight + legendHeight;
+
+    const subtitle = [category, roundLabel].filter(Boolean).length
+      ? `Tabla de posiciones · ${[category, roundLabel].filter(Boolean).join(' · ')}`
+      : 'Tabla de posiciones';
+
     return (
-      <div
+      <svg
         ref={ref}
-        style={{
-          background: '#ffffff',
-          borderRadius: 16,
-          padding: '20px 18px',
-          width: 340,
-          fontFamily: '-apple-system, sans-serif',
-        }}
+        viewBox={`0 0 ${WIDTH} ${totalHeight}`}
+        width={WIDTH}
+        height={totalHeight}
+        xmlns="http://www.w3.org/2000/svg"
+        fontFamily="Arial, Helvetica, sans-serif"
       >
-        <div style={{ textAlign: 'center', marginBottom: 4 }}>
-          <div style={{ fontSize: 22 }}>🏑</div>
-          <div style={{ fontSize: 17, fontWeight: 600, color: '#0f172a', marginTop: 4 }}>{tournamentName}</div>
-          <div style={{ fontSize: 12, color: '#64748b' }}>
-            Tabla de posiciones{category ? ` · ${category}` : ''}
-            {roundLabel ? ` · ${roundLabel}` : ''}
-          </div>
-        </div>
+        <rect x={0} y={0} width={WIDTH} height={totalHeight} fill="#ffffff" />
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0 6px', marginTop: 8 }}>
-          <span style={{ width: 22 }} />
-          <span style={{ width: 8 }} />
-          <span style={{ flex: 1, fontSize: 10, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 0.4 }}>
-            Equipo
-          </span>
-          <span style={{ fontSize: 10, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase' }}>PJ</span>
-          <span style={{ fontSize: 10, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', width: 34, textAlign: 'right' }}>
-            DG
-          </span>
-          <span style={{ fontSize: 10, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', width: 30, textAlign: 'right' }}>
-            PTS
-          </span>
-        </div>
+        <text x={WIDTH / 2} y={32} fontSize={22} textAnchor="middle">
+          🏑
+        </text>
+        <text x={WIDTH / 2} y={54} fontSize={17} fontWeight={700} fill="#0f172a" textAnchor="middle">
+          {tournamentName}
+        </text>
+        <text x={WIDTH / 2} y={70} fontSize={12} fill="#64748b" textAnchor="middle">
+          {subtitle}
+        </text>
 
-        <div style={{ borderTop: '1px solid #e2e8f0' }}>
-          {standings.map((row, i) => {
-            const qualifies = qualifyCutoff > 0 && i < qualifyCutoff;
-            const isLastQualifier = qualifyCutoff > 0 && i === qualifyCutoff - 1;
-            return (
-              <div
-                key={row.teamId}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 10,
-                  padding: '10px 18px',
-                  margin: '0 -18px',
-                  borderBottom: isLastQualifier ? '2px solid #0284c7' : '1px solid #f1f5f9',
-                  background: qualifies ? '#f0f9ff' : 'transparent',
-                }}
-              >
-                <span style={{ fontSize: 14, width: 22 }}>{i < 3 ? MEDAL[i] : <span style={{ fontSize: 12, color: '#94a3b8' }}>{i + 1}.</span>}</span>
-                <span style={{ width: 8, height: 8, borderRadius: '50%', background: row.teamColor, display: 'inline-block' }} />
-                <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: '#0f172a' }}>{row.teamName}</span>
-                <span style={{ fontSize: 12, color: '#64748b' }}>{row.played}</span>
-                <span style={{ fontSize: 12, color: '#64748b', width: 34, textAlign: 'right' }}>
-                  {row.goalDiff > 0 ? `+${row.goalDiff}` : row.goalDiff}
-                </span>
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#0f172a', width: 30, textAlign: 'right' }}>{row.points}</span>
-              </div>
-            );
-          })}
-        </div>
+        {/* Column headers */}
+        <text x={NAME_X} y={92} fontSize={10} fontWeight={700} fill="#94a3b8">
+          EQUIPO
+        </text>
+        <text x={COL_PJ_X} y={92} fontSize={10} fontWeight={700} fill="#94a3b8" textAnchor="end">
+          PJ
+        </text>
+        <text x={COL_DG_X} y={92} fontSize={10} fontWeight={700} fill="#94a3b8" textAnchor="end">
+          DG
+        </text>
+        <text x={COL_PTS_X} y={92} fontSize={10} fontWeight={700} fill="#94a3b8" textAnchor="end">
+          PTS
+        </text>
+        <line x1={0} y1={headerHeight} x2={WIDTH} y2={headerHeight} stroke="#e2e8f0" strokeWidth={1} />
+
+        {standings.map((row, i) => {
+          const y = headerHeight + i * ROW_HEIGHT;
+          const qualifies = qualifyCutoff > 0 && i < qualifyCutoff;
+          const isLastQualifier = qualifyCutoff > 0 && i === qualifyCutoff - 1;
+          const midY = y + ROW_HEIGHT / 2;
+
+          return (
+            <g key={row.teamId}>
+              {qualifies && <rect x={0} y={y} width={WIDTH} height={ROW_HEIGHT} fill="#f0f9ff" />}
+              <line
+                x1={0}
+                y1={y + ROW_HEIGHT}
+                x2={WIDTH}
+                y2={y + ROW_HEIGHT}
+                stroke={isLastQualifier ? '#0284c7' : '#f1f5f9'}
+                strokeWidth={isLastQualifier ? 2 : 1}
+              />
+              <text x={PAD} y={midY + 5} fontSize={i < 3 ? 15 : 12} fill="#94a3b8">
+                {i < 3 ? MEDAL[i] : `${i + 1}.`}
+              </text>
+              <circle cx={PAD + 32} cy={midY} r={4} fill={row.teamColor} />
+              <text x={NAME_X} y={midY + 4} fontSize={13} fontWeight={700} fill="#0f172a">
+                {truncate(row.teamName, 20)}
+              </text>
+              <text x={COL_PJ_X} y={midY + 4} fontSize={12} fill="#64748b" textAnchor="end">
+                {row.played}
+              </text>
+              <text x={COL_DG_X} y={midY + 4} fontSize={12} fill="#64748b" textAnchor="end">
+                {row.goalDiff > 0 ? `+${row.goalDiff}` : row.goalDiff}
+              </text>
+              <text x={COL_PTS_X} y={midY + 4} fontSize={13} fontWeight={700} fill="#0f172a" textAnchor="end">
+                {row.points}
+              </text>
+            </g>
+          );
+        })}
 
         {qualifyCutoff > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 12 }}>
-            <span style={{ width: 10, height: 10, borderRadius: 3, background: '#f0f9ff', border: '1px solid #bae6fd', display: 'inline-block' }} />
-            <span style={{ fontSize: 10, color: '#94a3b8' }}>
+          <g>
+            <rect
+              x={PAD}
+              y={headerHeight + rowsHeight + 12}
+              width={10}
+              height={10}
+              rx={2}
+              fill="#f0f9ff"
+              stroke="#bae6fd"
+            />
+            <text x={PAD + 16} y={headerHeight + rowsHeight + 21} fontSize={10} fill="#94a3b8">
               {format === 'groups_playoffs_final' ? 'Clasifican a la final' : 'Clasifican a playoffs'}
-            </span>
-          </div>
+            </text>
+          </g>
         )}
-      </div>
+      </svg>
     );
   }
 );
