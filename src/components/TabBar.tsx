@@ -30,7 +30,7 @@ export function TabBar({ activeTab, onSelectTab, pendingMatchesCount, onAddTourn
         className={`flex flex-col items-center justify-center py-1 px-3 min-w-[70px] min-h-[48px] rounded-xl transition-all duration-150 active:scale-95 ${
           isActive
             ? 'text-sky-600 dark:text-sky-400 font-bold'
-            : 'text-slate-400 dark:text-slate-500 font-medium hover:text-slate-600 dark:hover:text-slate-300'
+            : 'text-slate-500 dark:text-slate-400 font-medium hover:text-slate-600 dark:hover:text-slate-300'
         }`}
       >
         <div className="relative">
