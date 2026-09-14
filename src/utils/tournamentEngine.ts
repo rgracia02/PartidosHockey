@@ -908,6 +908,26 @@ export function generateFixture(
       goals: [],
       sanctions: [],
     });
+
+    if (includeThirdPlace) {
+      matches.push({
+        id: `po-third-${Date.now().toString(36)}`,
+        round: totalGroupRounds + 1,
+        stage: 'third_place',
+        stageLabel: '3er y 4to Puesto',
+        court: courts[1] || courts[0],
+        teamAId: '',
+        teamBId: '',
+        placeholderA: '3° Posición Fase Regular',
+        placeholderB: '4° Posición Fase Regular',
+        scoreA: null,
+        scoreB: null,
+        isCompleted: false,
+        isShootout: false,
+        goals: [],
+        sanctions: [],
+      });
+    }
   } else if (format === 'groups_playoffs_semis') {
     const semiRound = totalGroupRounds + 1;
     matches.push(
@@ -1377,6 +1397,14 @@ export function syncPlayoffMatches(
         const loser2 = winner2 ? (winner2 === semi2.teamAId ? semi2.teamBId : semi2.teamAId) : '';
         if (loser1 && m.teamAId !== loser1) m.teamAId = loser1;
         if (loser2 && m.teamBId !== loser2) m.teamBId = loser2;
+      } else if (safeStandings.length >= 4) {
+        // No semifinals (direct-final format): 3rd vs 4th place in the group standings
+        if (!m.teamAId || m.teamAId !== safeStandings[2]?.teamId) {
+          m.teamAId = safeStandings[2]?.teamId || '';
+        }
+        if (!m.teamBId || m.teamBId !== safeStandings[3]?.teamId) {
+          m.teamBId = safeStandings[3]?.teamId || '';
+        }
       }
     } else if (m.stage === 'final') {
       // If final is straight from standings (groups_playoffs_final)
