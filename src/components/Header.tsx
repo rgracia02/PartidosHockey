@@ -9,7 +9,6 @@ interface HeaderProps {
   isDark: boolean;
   onToggleTheme: () => void;
   onShareWhatsApp: () => void;
-  courtsCount: number;
   onOpenTournamentSwitcher: () => void;
 }
 
@@ -21,7 +20,6 @@ export function Header({
   isDark,
   onToggleTheme,
   onShareWhatsApp,
-  courtsCount,
   onOpenTournamentSwitcher,
 }: HeaderProps) {
   return (
@@ -56,10 +54,6 @@ export function Header({
                 ⏳ Próximo
               </span>
             )}
-
-            <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500">
-              • {courtsCount} {courtsCount === 1 ? 'Cancha' : 'Canchas'}
-            </span>
           </div>
 
           <div className="flex items-center gap-1">
