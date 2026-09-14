@@ -63,7 +63,7 @@ function MatchCard({ match, teams, onShareSingleMatch, onClick, categoryTag, cat
             {match.court}
           </span>
           {match.photoUrl && (
-            <span className="px-1.5 py-0.5 rounded-md bg-violet-50 dark:bg-violet-950/80 text-violet-700 dark:text-violet-300 font-bold flex items-center gap-0.5 text-[10px]">
+            <span className="px-1.5 py-0.5 rounded-md bg-sky-50 dark:bg-sky-950/80 text-sky-700 dark:text-sky-300 font-bold flex items-center gap-0.5 text-[10px]">
               📸 Foto
             </span>
           )}
@@ -132,7 +132,7 @@ function MatchCard({ match, teams, onShareSingleMatch, onClick, categoryTag, cat
 
       {/* Shoot-out indicator */}
       {match.isShootout && (
-        <div className="mt-1 text-center text-[10px] font-bold text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/50 py-0.5 rounded-md">
+        <div className="mt-1 text-center text-[10px] font-bold text-violet-700 dark:text-violet-300 bg-violet-50 dark:bg-violet-950/50 py-0.5 rounded-md">
           Definición por Shoot-outs (SO: {match.shootoutScoreA ?? 0} - {match.shootoutScoreB ?? 0})
         </div>
       )}
@@ -311,7 +311,7 @@ export function FixtureView({
       </div>
 
       {isCombined && (
-        <p className="text-xs text-slate-400 dark:text-slate-500 px-1 -mt-1">
+        <p className="text-xs text-slate-500 dark:text-slate-400 px-1 -mt-1">
           Mostrando: {[currentCategory || 'Este torneo', ...linkedTournaments.map((t) => t.config.category || t.config.name)].join(' · ')}. Tocá un partido de otra categoría para cambiar de torneo y cargar su resultado.
         </p>
       )}
@@ -321,7 +321,7 @@ export function FixtureView({
         {isCombined ? (
           combinedEntries.length === 0 ? (
             <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 text-center border border-slate-200/60 dark:border-slate-800 shadow-xs transition-colors">
-              <p className="text-xs text-slate-400 dark:text-slate-500 font-medium">No hay partidos en esta fecha.</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">No hay partidos en esta fecha.</p>
             </div>
           ) : (
             combinedEntries.map(({ match, teams: entryTeams, tournamentId, categoryTag, categoryColor, isOwn }) => (
@@ -344,7 +344,7 @@ export function FixtureView({
           )
         ) : filteredMatches.length === 0 ? (
           <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 text-center border border-slate-200/60 dark:border-slate-800 shadow-xs transition-colors">
-            <p className="text-xs text-slate-400 dark:text-slate-500 font-medium">No hay partidos en esta fecha.</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">No hay partidos en esta fecha.</p>
           </div>
         ) : (
           filteredMatches.map((match) => (
