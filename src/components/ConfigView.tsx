@@ -539,7 +539,7 @@ export function ConfigView({
       </CollapsibleSection>
 
       {/* 1.5 Combined Event Linking (e.g. Damas + Varones, same jornada) */}
-      <CollapsibleSection icon={<Layers className="w-4 h-4 text-sky-600" />} title="Combinar con Otra Categoría">
+      <CollapsibleSection icon={<Layers className="w-4 h-4 text-sky-600" />} title="Combinar con Otra Categoría" defaultOpen={true}>
         <p className="text-xs text-slate-400 dark:text-slate-500 -mt-1 mb-3">
           Para torneos que juegan el mismo día (ej: Damas y Varones). Cada uno mantiene su propia tabla; solo se
           comparte el horario del día y un mensaje de WhatsApp en común.
@@ -550,7 +550,9 @@ export function ConfigView({
             (t) => data.config.eventGroupId && t.config.eventGroupId === data.config.eventGroupId && t.config.id !== data.config.id
           );
           const linkable = tournaments.filter(
-            (t) => t.config.id !== data.config.id && t.config.eventGroupId !== data.config.eventGroupId
+            (t) =>
+              t.config.id !== data.config.id &&
+              !(data.config.eventGroupId && t.config.eventGroupId === data.config.eventGroupId)
           );
 
           if (linked.length > 0) {
