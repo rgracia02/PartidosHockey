@@ -83,6 +83,7 @@ export interface TournamentConfig {
   whatsappFooter?: string;
   eventGroupId?: string; // shared id linking two or more tournaments (e.g. Damas + Varones) as the same event/jornada
   eventLabel?: string; // optional display name for the combined event, e.g. "Jornada Interclubes"
+  courtLabelOffset?: number; // shifts generated court numbers (e.g. offset=2 -> "Cancha 3", "Cancha 4"...) so linked tournaments don't collide on the same physical courts
 }
 
 export interface StandingsRow {
