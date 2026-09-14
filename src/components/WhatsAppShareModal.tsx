@@ -489,7 +489,7 @@ export function WhatsAppShareModal({
                   </option>
                 ))}
               </select>
-              <p className="text-[10px] text-slate-400 mt-1 px-1">
+              <p className="text-[10px] text-slate-500 mt-1 px-1">
                 Combina los partidos de: {[config, ...linkedTournaments.map((t) => t.config)].map((c) => c.category || c.name).join(', ')}
               </p>
             </div>
@@ -621,7 +621,7 @@ export function WhatsAppShareModal({
 
             {/* Formatting shortcuts bar */}
             <div className="flex items-center gap-1 overflow-x-auto pb-1 px-1 text-[11px]">
-              <span className="text-[10px] text-slate-400 font-bold mr-1">Insertar:</span>
+              <span className="text-[10px] text-slate-500 font-bold mr-1">Insertar:</span>
               <button
                 type="button"
                 onClick={() => insertSnippet('🏑 ')}
@@ -680,7 +680,7 @@ export function WhatsAppShareModal({
                 />
               </div>
             </div>
-            <p className="text-[10px] text-slate-400 px-1 text-right">
+            <p className="text-[10px] text-slate-500 px-1 text-right">
               {messageText.length} caracteres • Puedes editar cualquier línea antes de enviar
             </p>
           </div>
