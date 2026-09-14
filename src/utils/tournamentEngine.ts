@@ -1687,8 +1687,70 @@ export function formatWhatsAppResults(
 }
 
 /**
- * Formats Top Scorers and Sanctions for WhatsApp
+ * Formats a combined WhatsApp report merging matches from two or more
+ * linked tournaments (e.g. Damas + Varones playing the same jornada),
+ * grouped by round/stage and tagged with each match's category.
  */
+export function formatWhatsAppCombinedEvent(
+  eventLabel: string,
+  entries: { config: TournamentConfig; teams: Team[]; matches: Match[] }[],
+  roundFilter: string = 'all'
+): string {
+  let text = `🏑 *${eventLabel.toUpperCase()}*\n`;
+  text += `📅 *JORNADA COMBINADA*\n`;
+  text += entries.map((e) => `_${e.config.category || e.config.name}_`).join('  •  ') + '\n\n';
+
+  // Union of round labels across all linked tournaments, in first-seen order.
+  const allRoundLabels: string[] = [];
+  entries.forEach((e) => {
+    e.matches.forEach((m) => {
+      const label = m.stageLabel || `Fecha ${m.round}`;
+      if (!allRoundLabels.includes(label)) allRoundLabels.push(label);
+    });
+  });
+
+  const roundsToShow = roundFilter === 'all' ? allRoundLabels : [roundFilter];
+
+  if (roundsToShow.length === 0) {
+    text += `_No hay partidos programados._\n`;
+  } else {
+    roundsToShow.forEach((roundLabel) => {
+      // Collect matches for this round across every linked tournament, tagged with their category.
+      const roundEntries: { match: Match; teams: Team[]; categoryTag: string }[] = [];
+      entries.forEach((e) => {
+        const categoryTag = e.config.category || e.config.name;
+        e.matches
+          .filter((m) => (m.stageLabel || `Fecha ${m.round}`) === roundLabel)
+          .forEach((m) => roundEntries.push({ match: m, teams: e.teams, categoryTag }));
+      });
+
+      if (roundEntries.length === 0) return;
+
+      // Sort by court so the report reads like a schedule of the day.
+      roundEntries.sort((a, b) => a.match.court.localeCompare(b.match.court));
+
+      text += `📍 *${roundLabel.toUpperCase()}*\n`;
+      roundEntries.forEach(({ match: m, teams, categoryTag }) => {
+        const teamMap = new Map(teams.map((t) => [t.id, t]));
+        const teamA = teamMap.get(m.teamAId)?.name || m.placeholderA || 'TBD';
+        const teamB = teamMap.get(m.teamBId)?.name || m.placeholderB || 'TBD';
+        const tag = `[${categoryTag}]`;
+
+        if (m.isCompleted) {
+          text += ` ✅ ${tag} *${teamA} ${m.scoreA} - ${m.scoreB} ${teamB}* [${m.court}]\n`;
+        } else {
+          text += ` ⏳ ${tag} ${teamA} vs ${teamB} [${m.court}]${m.time ? ` - ${m.time}` : ''}\n`;
+        }
+      });
+      text += `\n`;
+    });
+  }
+
+  text += `_Generado con Hockey Torneos PWA_ 🏑`;
+  return text;
+}
+
+
 export function formatWhatsAppScorers(
   tournamentName: string,
   topScorers: ScorerStat[],
