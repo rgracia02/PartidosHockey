@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { Download, Share2, X } from 'lucide-react';
 import { Match, StandingsRow, Team, TournamentFormat } from '../types';
 import { getSortedRoundLabels } from '../utils/tournamentEngine';
-import { captureElementAsPngFile, shareOrDownloadImageFile } from '../utils/imageExport';
+import { svgToPngFile, shareOrDownloadImageFile } from '../utils/imageExport';
 import { ExportableStandingsImage } from './ExportableStandingsImage';
 import { ExportableFixtureImage } from './ExportableFixtureImage';
 
@@ -33,7 +33,7 @@ export function ImageShareModal({
 }: ImageShareModalProps) {
   const [roundFilter, setRoundFilter] = useState('all');
   const [isSharing, setIsSharing] = useState(false);
-  const cardRef = useRef<HTMLDivElement>(null);
+  const cardRef = useRef<SVGSVGElement>(null);
 
   const roundLabels = getSortedRoundLabels(matches);
 
@@ -42,7 +42,7 @@ export function ImageShareModal({
     setIsSharing(true);
     try {
       const fileName = `${type === 'standings' ? 'posiciones' : 'fixture'}-${tournamentName.replace(/\s+/g, '-').toLowerCase()}.png`;
-      const file = await captureElementAsPngFile(cardRef.current, fileName);
+      const file = await svgToPngFile(cardRef.current, fileName);
       const result = await shareOrDownloadImageFile(file, tournamentName);
       if (result === 'downloaded') {
         onToast('✓ Imagen descargada');
