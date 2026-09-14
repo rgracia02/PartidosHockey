@@ -34,7 +34,7 @@ export function StandingsView({ standings, format, onShareStandings }: Standings
             </div>
             <div>
               <h2 className="text-sm font-bold text-slate-900 dark:text-white leading-none">Tabla de Posiciones</h2>
-              <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">Fase Regular / Liga</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Fase Regular / Liga</p>
             </div>
           </div>
           
@@ -57,14 +57,14 @@ export function StandingsView({ standings, format, onShareStandings }: Standings
         </div>
 
         {standings.length === 0 ? (
-          <div className="py-8 text-center text-xs text-slate-400 dark:text-slate-500">
+          <div className="py-8 text-center text-xs text-slate-500 dark:text-slate-400">
             No hay equipos cargados en el torneo.
           </div>
         ) : (
           <div className="overflow-x-auto -mx-4 px-4 no-scrollbar">
             <table className="w-full text-left text-xs min-w-[340px]">
               <thead>
-                <tr className="text-slate-400 dark:text-slate-500 text-[11px] font-bold border-b border-slate-100 dark:border-slate-800 uppercase tracking-wider">
+                <tr className="text-slate-500 dark:text-slate-400 text-[11px] font-bold border-b border-slate-100 dark:border-slate-800 uppercase tracking-wider">
                   <th className="py-2.5 pl-1 w-6 text-center">#</th>
                   <th className="py-2.5 pl-2">Equipo</th>
                   <th className="py-2.5 text-center font-black text-slate-800 dark:text-slate-200 w-10">PTS</th>
@@ -90,11 +90,11 @@ export function StandingsView({ standings, format, onShareStandings }: Standings
                           : 'hover:bg-slate-50/70 dark:hover:bg-slate-800/40'
                       }`}
                     >
-                      <td className="py-3 pl-1 text-center font-bold text-slate-400 dark:text-slate-500">
+                      <td className="py-3 pl-1 text-center font-bold text-slate-500 dark:text-slate-400">
                         {idx === 0 ? (
                           <span className="text-amber-500 font-black">1</span>
                         ) : idx === 1 ? (
-                          <span className="text-slate-400 font-bold">2</span>
+                          <span className="text-slate-500 font-bold">2</span>
                         ) : idx === 2 ? (
                           <span className="text-amber-700 dark:text-amber-600 font-bold">3</span>
                         ) : (
@@ -121,7 +121,7 @@ export function StandingsView({ standings, format, onShareStandings }: Standings
                         {row.goalDiff > 0 ? `+${row.goalDiff}` : row.goalDiff}
                       </td>
                       <td className="py-3 text-center text-slate-500 dark:text-slate-400">{row.goalsFor}</td>
-                      <td className="py-3 text-center text-slate-400 dark:text-slate-500 pr-1">{row.goalsAgainst}</td>
+                      <td className="py-3 text-center text-slate-500 dark:text-slate-400 pr-1">{row.goalsAgainst}</td>
                     </tr>
                   );
                 })}
@@ -140,7 +140,7 @@ export function StandingsView({ standings, format, onShareStandings }: Standings
 
       {/* Scoring rules info card */}
       <div className="bg-white/80 dark:bg-slate-900/80 rounded-2xl p-3.5 border border-slate-200/60 dark:border-slate-800 flex items-start gap-3 transition-colors">
-        <Info className="w-4 h-4 text-slate-400 dark:text-slate-500 shrink-0 mt-0.5" />
+        <Info className="w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0 mt-0.5" />
         <div className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
           <p className="font-semibold text-slate-700 dark:text-slate-300 mb-0.5">Criterio de desempate oficial</p>
           <span>Puntos (3 por PG, 1 por PE) &gt; Diferencia de Gol &gt; Goles a Favor &gt; Sorteo/Fair Play.</span>
