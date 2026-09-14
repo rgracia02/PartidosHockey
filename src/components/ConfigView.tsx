@@ -558,6 +558,11 @@ export function ConfigView({
           );
 
           if (linked.length > 0) {
+            const offset = data.config.courtLabelOffset || 0;
+            const courtRange =
+              data.config.courtsCount > 1
+                ? `Canchas ${offset + 1}-${offset + data.config.courtsCount}`
+                : `Cancha ${offset + 1}`;
             return (
               <div className="space-y-2.5">
                 <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
@@ -572,6 +577,11 @@ export function ConfigView({
                       {t.config.category || t.config.name}
                     </span>
                   ))}
+                </div>
+                <div className="bg-slate-50 dark:bg-slate-800 rounded-xl px-3 py-2 text-[11px] text-slate-500 dark:text-slate-400">
+                  Este torneo usa <span className="font-bold text-slate-700 dark:text-slate-200">{courtRange}</span>.
+                  Si acabás de vincular o cambiar canchas, tocá <span className="font-bold">"Regenerar Fixture de este Torneo"</span> arriba
+                  (y también en el otro torneo) para que las canchas no se pisen.
                 </div>
                 <p className="text-[11px] text-slate-400 dark:text-slate-500">
                   Ahora podés compartir un reporte de WhatsApp con la "Jornada Combinada" de ambos torneos, sin mezclar tablas de posiciones.
