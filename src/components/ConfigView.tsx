@@ -526,7 +526,7 @@ export function ConfigView({
               </select>
             </div>
 
-            {data.config.format === 'groups_playoffs_semis' && (
+            {(data.config.format === 'groups_playoffs_semis' || data.config.format === 'groups_playoffs_final') && (
               <div>
                 <label className="block text-slate-500 dark:text-slate-400 font-bold mb-1">
                   Partido por el 3° y 4° Puesto
