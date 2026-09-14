@@ -10,6 +10,7 @@ import { StandingsView } from './components/StandingsView';
 import { TabBar, TabType } from './components/TabBar';
 import { TournamentSwitcherModal } from './components/TournamentSwitcherModal';
 import { ShareType, WhatsAppShareModal } from './components/WhatsAppShareModal';
+import { ImageShareModal, ImageShareType } from './components/ImageShareModal';
 import { Match, Team, TournamentConfig, TournamentData, TournamentFormat, TournamentStatus } from './types';
 import {
   calculatePlayerCards,
@@ -136,6 +137,8 @@ export default function App() {
   const [showSwitcherModal, setShowSwitcherModal] = useState(false);
   const [switcherInitialMode, setSwitcherInitialMode] = useState<'list' | 'create'>('list');
   const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
+  const [showImageShareModal, setShowImageShareModal] = useState(false);
+  const [imageShareType, setImageShareType] = useState<ImageShareType>('standings');
   const [whatsAppShareType, setWhatsAppShareType] = useState<ShareType>('standings');
   const [whatsAppRoundFilter, setWhatsAppRoundFilter] = useState<string>('all');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -517,6 +520,11 @@ export default function App() {
     setShowWhatsAppModal(true);
   };
 
+  const handleOpenImageShareModal = (type: ImageShareType) => {
+    setImageShareType(type);
+    setShowImageShareModal(true);
+  };
+
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => {
@@ -553,6 +561,7 @@ export default function App() {
             standings={standings}
             format={currentTournament.config.format}
             onShareStandings={() => handleOpenShareModal('standings')}
+            onShareStandingsImage={() => handleOpenImageShareModal('standings')}
           />
         )}
 
@@ -562,6 +571,7 @@ export default function App() {
             teams={currentTournament.teams}
             onSelectMatch={(m) => setSelectedMatch(m)}
             onShareResults={(roundLabel) => handleOpenShareModal('results', roundLabel || 'all')}
+            onShareFixtureImage={() => handleOpenImageShareModal('fixture')}
             onShareSingleMatch={(m) => setMatchToShare(m)}
             linkedTournaments={linkedTournaments}
             currentTournamentId={currentTournament.config.id}
@@ -623,6 +633,21 @@ export default function App() {
           linkedTournaments={linkedTournaments}
           onClose={() => setShowWhatsAppModal(false)}
           onSaveMatchPhoto={handleSaveMatchPhoto}
+          onToast={showToast}
+        />
+      )}
+
+      {/* Image Share Modal (standings/fixture as PNG) */}
+      {showImageShareModal && (
+        <ImageShareModal
+          type={imageShareType}
+          tournamentName={currentTournament.config.name}
+          category={currentTournament.config.category}
+          format={currentTournament.config.format}
+          standings={standings}
+          matches={currentTournament.matches}
+          teams={currentTournament.teams}
+          onClose={() => setShowImageShareModal(false)}
           onToast={showToast}
         />
       )}
