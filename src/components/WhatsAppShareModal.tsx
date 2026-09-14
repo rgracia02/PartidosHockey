@@ -21,8 +21,10 @@ import {
   StandingsRow,
   Team,
   TournamentConfig,
+  TournamentData,
 } from '../types';
 import {
+  formatWhatsAppCombinedEvent,
   formatWhatsAppResults,
   formatWhatsAppScorers,
   formatWhatsAppSingleMatch,
@@ -30,7 +32,7 @@ import {
   formatWhatsAppSummary,
 } from '../utils/tournamentEngine';
 
-export type ShareType = 'summary' | 'standings' | 'results' | 'single_match' | 'scorers';
+export type ShareType = 'summary' | 'standings' | 'results' | 'single_match' | 'scorers' | 'combined_event';
 
 interface WhatsAppShareModalProps {
   initialType?: ShareType;
@@ -42,6 +44,7 @@ interface WhatsAppShareModalProps {
   teams: Team[];
   topScorers: ScorerStat[];
   cardStats: PlayerCardStat[];
+  linkedTournaments?: TournamentData[];
   onClose: () => void;
   onSaveMatchPhoto?: (matchId: string, photoUrl: string | undefined) => void;
   onToast: (msg: string) => void;
@@ -57,6 +60,7 @@ export function WhatsAppShareModal({
   teams,
   topScorers,
   cardStats,
+  linkedTournaments = [],
   onClose,
   onSaveMatchPhoto,
   onToast,
@@ -96,6 +100,18 @@ export function WhatsAppShareModal({
   const roundLabels = useMemo(() => {
     return Array.from(new Set(matches.map((m) => m.stageLabel || `Fecha ${m.round}`)));
   }, [matches]);
+
+  // Union of round labels across the current tournament + any linked ones, for the combined report
+  const combinedRoundLabels = useMemo(() => {
+    const labels: string[] = [];
+    [{ matches }, ...linkedTournaments].forEach((t) => {
+      (t.matches || []).forEach((m: Match) => {
+        const label = m.stageLabel || `Fecha ${m.round}`;
+        if (!labels.includes(label)) labels.push(label);
+      });
+    });
+    return labels;
+  }, [matches, linkedTournaments]);
 
   // Default Formatted Text generation
   const defaultFormattedText = useMemo(() => {
@@ -140,6 +156,15 @@ export function WhatsAppShareModal({
           config.whatsappHeader,
           config.whatsappFooter
         );
+      case 'combined_event':
+        return formatWhatsAppCombinedEvent(
+          config.eventLabel || 'Jornada Combinada',
+          [
+            { config, teams, matches },
+            ...linkedTournaments.map((t) => ({ config: t.config, teams: t.teams, matches: t.matches })),
+          ],
+          selectedRound
+        );
       case 'summary':
       default:
         return formatWhatsAppSummary(
@@ -154,7 +179,7 @@ export function WhatsAppShareModal({
           config.whatsappFooter
         );
     }
-  }, [shareType, selectedRound, selectedMatch, config, standings, matches, teams, topScorers, cardStats]);
+  }, [shareType, selectedRound, selectedMatch, config, standings, matches, teams, topScorers, cardStats, linkedTournaments]);
 
   // User editable message text
   const [messageText, setMessageText] = useState<string>(defaultFormattedText);
@@ -405,6 +430,21 @@ export function WhatsAppShareModal({
               <Flame className="w-3.5 h-3.5 shrink-0" />
               <span>Goleadores</span>
             </button>
+
+            {linkedTournaments.length > 0 && (
+              <button
+                id="btn-share-type-combined-event"
+                onClick={() => handleShareTypeChange('combined_event')}
+                className={`py-2 px-2 col-span-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-all min-h-[38px] ${
+                  shareType === 'combined_event'
+                    ? 'bg-rose-600 text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70'
+                }`}
+              >
+                <Calendar className="w-3.5 h-3.5 shrink-0" />
+                <span>Jornada Combinada</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -428,6 +468,30 @@ export function WhatsAppShareModal({
                   </option>
                 ))}
               </select>
+            </div>
+          )}
+
+          {/* Combined Event Sub-Filter: Round / Stage selector across linked tournaments */}
+          {shareType === 'combined_event' && (
+            <div>
+              <label className="block text-[11px] font-bold text-slate-500 mb-1">
+                Filtrar Jornada / Fecha:
+              </label>
+              <select
+                value={selectedRound}
+                onChange={(e) => handleRoundChange(e.target.value)}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 min-h-[40px]"
+              >
+                <option value="all">Todas las fechas</option>
+                {combinedRoundLabels.map((lbl) => (
+                  <option key={lbl} value={lbl}>
+                    {lbl}
+                  </option>
+                ))}
+              </select>
+              <p className="text-[10px] text-slate-400 mt-1 px-1">
+                Combina los partidos de: {[config, ...linkedTournaments.map((t) => t.config)].map((c) => c.category || c.name).join(', ')}
+              </p>
             </div>
           )}
 
