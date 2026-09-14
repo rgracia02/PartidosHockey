@@ -215,7 +215,7 @@ export function TournamentSwitcherModal({
             <div>
               <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1 flex items-center justify-between">
                 <span>Copiar Equipos y Jugadores/as</span>
-                <span className="text-[10px] font-normal text-slate-400">Opcional</span>
+                <span className="text-[10px] font-normal text-slate-500">Opcional</span>
               </label>
               <select
                 value={sourceTournamentId}
@@ -298,7 +298,7 @@ export function TournamentSwitcherModal({
             {/* List of Tournaments */}
             <div className="space-y-2.5 overflow-y-auto flex-1 pr-0.5 no-scrollbar">
               {filteredTournaments.length === 0 ? (
-                <div className="py-12 text-center text-xs text-slate-400 dark:text-slate-500">
+                <div className="py-12 text-center text-xs text-slate-500 dark:text-slate-400">
                   No se encontraron torneos en este estado.
                 </div>
               ) : (
@@ -340,7 +340,7 @@ export function TournamentSwitcherModal({
                             </span>
                           )}
 
-                          <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-400">
+                          <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">
                             {tournament.config.season || '2026'} • {tournament.config.category || 'General'}
                           </span>
                         </div>
@@ -366,7 +366,7 @@ export function TournamentSwitcherModal({
                             <Check className="w-4 h-4 stroke-[3]" />
                           </span>
                         ) : (
-                          <span className="text-slate-400">
+                          <span className="text-slate-500">
                             <ChevronRight className="w-5 h-5" />
                           </span>
                         )}
