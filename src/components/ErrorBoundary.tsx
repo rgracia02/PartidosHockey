@@ -42,7 +42,7 @@ export class ErrorBoundary extends Component<Props, State> {
             ⚠️
           </div>
           <h1 className="text-xl font-bold mb-2">Se produjo un error al cargar la app</h1>
-          <p className="text-slate-400 text-xs max-w-sm mb-6">
+          <p className="text-slate-500 text-xs max-w-sm mb-6">
             {this.state.error?.message || 'Error inesperado. Puedes reiniciar la aplicación para recuperarla.'}
           </p>
           <div className="flex gap-3">
