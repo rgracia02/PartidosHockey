@@ -670,6 +670,10 @@ export function ConfigView({
         const groupMatches = data.matches.filter((m) => m.stage === 'group');
         if (groupMatches.length === 0) return null;
 
+        const existingMaxRound = Math.max(1, ...groupMatches.map((m) => m.round));
+        // Offer a generous range of Fecha options (existing rounds + a few extra), so any
+        // reasonable date is always selectable, not just the ones already in use.
+        const fechaOptions = Array.from({ length: existingMaxRound + 5 }, (_, i) => i + 1);
         const courtOptions = Array.from(new Set(data.matches.map((m) => m.court))).sort();
 
         const sortedGroupMatches = [...groupMatches].sort((a, b) => a.round - b.round || a.court.localeCompare(b.court));
@@ -694,16 +698,17 @@ export function ConfigView({
                     <div className="flex items-center gap-2">
                       <div className="flex-1">
                         <label className="block text-[10px] text-slate-500 dark:text-slate-400 font-bold mb-1">Fecha</label>
-                        <input
-                          type="number"
-                          min={1}
+                        <select
                           value={m.round}
-                          onChange={(e) => {
-                            const val = Number(e.target.value);
-                            if (val >= 1) onRescheduleMatch(m.id, val, m.court);
-                          }}
+                          onChange={(e) => onRescheduleMatch(m.id, Number(e.target.value), m.court)}
                           className="w-full px-2.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-900 dark:text-white min-h-[40px]"
-                        />
+                        >
+                          {fechaOptions.map((r) => (
+                            <option key={r} value={r}>
+                              Fecha {r}
+                            </option>
+                          ))}
+                        </select>
                       </div>
                       <div className="flex-1">
                         <label className="block text-[10px] text-slate-500 dark:text-slate-400 font-bold mb-1">Cancha</label>
