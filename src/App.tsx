@@ -346,7 +346,8 @@ export default function App() {
             newConfig.format,
             newConfig.courtsCount,
             newConfig.isDoubleRound || false,
-            newConfig.courtLabelOffset || 0
+            newConfig.courtLabelOffset || 0,
+            newConfig.includeThirdPlace || false
           );
           return { ...t, config: newConfig, matches: newMatches, lastUpdated: new Date().toISOString() };
         }
@@ -357,7 +358,8 @@ export default function App() {
             newConfig.format,
             newConfig.courtsCount,
             newConfig.isDoubleRound || false,
-            targetOffset
+            targetOffset,
+            newConfig.includeThirdPlace || false
           );
           return { ...t, config: newConfig, matches: newMatches, lastUpdated: new Date().toISOString() };
         }
@@ -381,11 +383,38 @@ export default function App() {
         newConfig.format,
         newConfig.courtsCount,
         newConfig.isDoubleRound || false,
-        0
+        0,
+        newConfig.includeThirdPlace || false
       );
       return { ...prev, config: newConfig, matches: newMatches, lastUpdated: new Date().toISOString() };
     });
     showToast('✓ Torneo desvinculado del evento combinado');
+  };
+
+  // Manually set the two teams facing off in a playoff match (semi/third_place/final),
+  // overriding the automatic standings-based assignment for that match.
+  const handleSetManualCross = (matchId: string, teamAId: string, teamBId: string) => {
+    updateCurrentTournament((prev) => ({
+      ...prev,
+      matches: prev.matches.map((m) =>
+        m.id === matchId ? { ...m, teamAId, teamBId, isManualCross: true } : m
+      ),
+      lastUpdated: new Date().toISOString(),
+    }));
+    showToast('✓ Cruce actualizado');
+  };
+
+  // Return a playoff match to automatic assignment based on standings
+  const handleResetManualCross = (matchId: string) => {
+    updateCurrentTournament((prev) => {
+      const clearedMatches = prev.matches.map((m) =>
+        m.id === matchId ? { ...m, teamAId: '', teamBId: '', isManualCross: false } : m
+      );
+      const curStandings = calculateStandings(prev.teams, clearedMatches, prev.config);
+      const synced = syncPlayoffMatches(clearedMatches, curStandings, prev.teams);
+      return { ...prev, matches: synced, lastUpdated: new Date().toISOString() };
+    });
+    showToast('✓ Cruce vuelto a automático');
   };
 
   // Match & Config Handlers for Active Tournament
@@ -438,7 +467,8 @@ export default function App() {
       currentTournament.config.format,
       currentTournament.config.courtsCount,
       currentTournament.config.isDoubleRound || false,
-      currentTournament.config.courtLabelOffset || 0
+      currentTournament.config.courtLabelOffset || 0,
+      currentTournament.config.includeThirdPlace || false
     );
     updateCurrentTournament((prev) => ({
       ...prev,
@@ -557,6 +587,8 @@ export default function App() {
             onImportJson={handleImportJson}
             onLinkTournamentEvent={handleLinkTournamentEvent}
             onUnlinkTournamentEvent={handleUnlinkTournamentEvent}
+            onSetManualCross={handleSetManualCross}
+            onResetManualCross={handleResetManualCross}
           />
         )}
       </main>
