@@ -134,6 +134,7 @@ export default function App() {
   const [matchToShare, setMatchToShare] = useState<Match | null>(null);
   const [showStandaloneModal, setShowStandaloneModal] = useState(false);
   const [showSwitcherModal, setShowSwitcherModal] = useState(false);
+  const [switcherInitialMode, setSwitcherInitialMode] = useState<'list' | 'create'>('list');
   const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
   const [whatsAppShareType, setWhatsAppShareType] = useState<ShareType>('standings');
   const [whatsAppRoundFilter, setWhatsAppRoundFilter] = useState<string>('all');
@@ -407,7 +408,10 @@ export default function App() {
           else handleOpenShareModal('summary');
         }}
         courtsCount={currentTournament.config.courtsCount}
-        onOpenTournamentSwitcher={() => setShowSwitcherModal(true)}
+        onOpenTournamentSwitcher={() => {
+          setSwitcherInitialMode('list');
+          setShowSwitcherModal(true);
+        }}
       />
 
       {/* Main Tab Views */}
@@ -443,7 +447,10 @@ export default function App() {
             data={currentTournament}
             tournaments={tournaments}
             onSelectTournament={handleSelectTournament}
-            onOpenCreateTournamentModal={() => setShowSwitcherModal(true)}
+            onOpenCreateTournamentModal={() => {
+              setSwitcherInitialMode('create');
+              setShowSwitcherModal(true);
+            }}
             onDuplicateTournament={handleDuplicateTournament}
             onDeleteTournament={handleDeleteTournament}
             onUpdateConfig={handleUpdateConfig}
@@ -508,6 +515,7 @@ export default function App() {
           onSelectTournament={handleSelectTournament}
           onCreateTournament={handleCreateTournament}
           onClose={() => setShowSwitcherModal(false)}
+          initialMode={switcherInitialMode}
         />
       )}
 
@@ -526,6 +534,10 @@ export default function App() {
         activeTab={activeTab}
         onSelectTab={(t) => setActiveTab(t)}
         pendingMatchesCount={pendingCount}
+        onAddTournament={() => {
+          setSwitcherInitialMode('create');
+          setShowSwitcherModal(true);
+        }}
       />
     </div>
   );
