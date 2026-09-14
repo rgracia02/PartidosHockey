@@ -776,7 +776,8 @@ export function generateFixture(
   format: TournamentFormat,
   courtsCount: number,
   isDoubleRound: boolean = false,
-  courtOffset: number = 0
+  courtOffset: number = 0,
+  includeThirdPlace: boolean = false
 ): Match[] {
   if (teams.length < 2) return [];
 
@@ -962,6 +963,26 @@ export function generateFixture(
         sanctions: [],
       }
     );
+
+    if (includeThirdPlace) {
+      matches.push({
+        id: `po-third-${Date.now().toString(36)}`,
+        round: semiRound + 1,
+        stage: 'third_place',
+        stageLabel: '3er y 4to Puesto',
+        court: courts[1] || courts[0],
+        teamAId: '',
+        teamBId: '',
+        placeholderA: 'Perdedor Semifinal 1',
+        placeholderB: 'Perdedor Semifinal 2',
+        scoreA: null,
+        scoreB: null,
+        isCompleted: false,
+        isShootout: false,
+        goals: [],
+        sanctions: [],
+      });
+    }
   } else if (format === 'groups_playoffs_quarters') {
     const qRound = totalGroupRounds + 1;
     matches.push(
@@ -1328,6 +1349,7 @@ export function syncPlayoffMatches(
 
   updated.forEach((m) => {
     if (!m) return;
+    if (m.isManualCross) return; // user picked the teams by hand — leave it alone
     if (m.stage === 'semi') {
       if (m.stageLabel?.includes('1') && safeStandings.length >= 4) {
         if (!m.teamAId || m.teamAId !== safeStandings[0]?.teamId) {
@@ -1343,6 +1365,18 @@ export function syncPlayoffMatches(
         if (!m.teamBId || m.teamBId !== safeStandings[2]?.teamId) {
           m.teamBId = safeStandings[2]?.teamId || '';
         }
+      }
+    } else if (m.stage === 'third_place') {
+      // Losers of each semifinal face off for 3rd/4th place
+      const semi1 = updated.find((x) => x && x.stage === 'semi' && x.stageLabel?.includes('1'));
+      const semi2 = updated.find((x) => x && x.stage === 'semi' && x.stageLabel?.includes('2'));
+      if (semi1 && semi2) {
+        const winner1 = matchWinners[semi1.id];
+        const winner2 = matchWinners[semi2.id];
+        const loser1 = winner1 ? (winner1 === semi1.teamAId ? semi1.teamBId : semi1.teamAId) : '';
+        const loser2 = winner2 ? (winner2 === semi2.teamAId ? semi2.teamBId : semi2.teamAId) : '';
+        if (loser1 && m.teamAId !== loser1) m.teamAId = loser1;
+        if (loser2 && m.teamBId !== loser2) m.teamBId = loser2;
       }
     } else if (m.stage === 'final') {
       // If final is straight from standings (groups_playoffs_final)
