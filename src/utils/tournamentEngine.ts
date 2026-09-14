@@ -726,7 +726,8 @@ export function createNewTournament(
   format: TournamentFormat,
   courtsCount: number,
   baseTeams?: Team[],
-  isDoubleRound: boolean = false
+  isDoubleRound: boolean = false,
+  courtLabelOffset: number = 0
 ): TournamentData {
   const id = `t-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
   
@@ -743,7 +744,7 @@ export function createNewTournament(
     })),
   }));
 
-  const matches = generateFixture(teams, format, courtsCount, isDoubleRound);
+  const matches = generateFixture(teams, format, courtsCount, isDoubleRound, courtLabelOffset);
 
   return {
     config: {
@@ -755,6 +756,7 @@ export function createNewTournament(
       courtsCount: Math.max(1, courtsCount),
       format,
       isDoubleRound,
+      courtLabelOffset,
       pointsWin: 3,
       pointsDraw: 1,
       pointsLoss: 0,
@@ -773,7 +775,8 @@ export function generateFixture(
   teams: Team[],
   format: TournamentFormat,
   courtsCount: number,
-  isDoubleRound: boolean = false
+  isDoubleRound: boolean = false,
+  courtOffset: number = 0
 ): Match[] {
   if (teams.length < 2) return [];
 
@@ -794,7 +797,7 @@ export function generateFixture(
   const matchesPerRound = numTeams / 2;
 
   const matches: Match[] = [];
-  const courts = Array.from({ length: Math.max(1, courtsCount) }, (_, i) => `Cancha ${i + 1}`);
+  const courts = Array.from({ length: Math.max(1, courtsCount) }, (_, i) => `Cancha ${courtOffset + i + 1}`);
 
   let globalCourtIdx = 0;
 
