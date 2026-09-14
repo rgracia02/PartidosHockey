@@ -236,10 +236,16 @@ export function FixtureView({
         .sort((a, b) => a.match.court.localeCompare(b.match.court))
     : [];
 
-  const filteredMatches = matches.filter((m) => {
-    if (selectedRoundFilter === 'all') return true;
-    return (m.stageLabel || `Fecha ${m.round}`) === selectedRoundFilter;
-  });
+  const filteredMatches = matches
+    .filter((m) => {
+      if (selectedRoundFilter === 'all') return true;
+      return (m.stageLabel || `Fecha ${m.round}`) === selectedRoundFilter;
+    })
+    .sort((a, b) => {
+      const weightA = STAGE_SORT_WEIGHT[a.stage] ?? 0;
+      const weightB = STAGE_SORT_WEIGHT[b.stage] ?? 0;
+      return weightA - weightB || a.round - b.round || a.court.localeCompare(b.court);
+    });
 
   return (
     <div className="space-y-3 animate-in fade-in duration-200">
