@@ -46,6 +46,7 @@ interface ConfigViewProps {
   onUnlinkTournamentEvent: () => void;
   onSetManualCross: (matchId: string, teamAId: string, teamBId: string) => void;
   onResetManualCross: (matchId: string) => void;
+  onRescheduleMatch: (matchId: string, newRound: number, newCourt: string) => void;
 }
 
 const COLOR_PRESETS = [
@@ -78,6 +79,7 @@ export function ConfigView({
   onUnlinkTournamentEvent,
   onSetManualCross,
   onResetManualCross,
+  onRescheduleMatch,
 }: ConfigViewProps) {
   const [linkTargetId, setLinkTargetId] = useState('none');
   const [useSeparateCourts, setUseSeparateCourts] = useState(false);
@@ -663,7 +665,74 @@ export function ConfigView({
         })()}
       </CollapsibleSection>
 
-      {/* 1.6 Manual Playoff Cross Editor */}
+      {/* 1.6 Manual League Phase Ordering */}
+      {(() => {
+        const groupMatches = data.matches.filter((m) => m.stage === 'group');
+        if (groupMatches.length === 0) return null;
+
+        const roundOptions = Array.from(new Set(data.matches.map((m) => m.round))).sort((a, b) => a - b);
+        const maxRound = roundOptions.length > 0 ? Math.max(...roundOptions) : 1;
+        const courtOptions = Array.from(new Set(data.matches.map((m) => m.court))).sort();
+
+        const sortedGroupMatches = [...groupMatches].sort((a, b) => a.round - b.round || a.court.localeCompare(b.court));
+
+        return (
+          <CollapsibleSection icon={<span>📅</span>} title="Orden de la Fase de Liga">
+            <p className="text-xs text-slate-500 dark:text-slate-500 -mt-1 mb-3">
+              Cambiá la fecha y/o cancha de cualquier partido de la fase de liga si preferís otro orden al que se generó automático.
+            </p>
+            <div className="space-y-2.5">
+              {sortedGroupMatches.map((m) => {
+                const teamA = data.teams.find((t) => t.id === m.teamAId);
+                const teamB = data.teams.find((t) => t.id === m.teamBId);
+                return (
+                  <div
+                    key={m.id}
+                    className="p-3 bg-slate-50 dark:bg-slate-800/70 rounded-2xl border border-slate-100 dark:border-slate-700 space-y-2"
+                  >
+                    <p className="text-xs font-bold text-slate-700 dark:text-slate-200 truncate">
+                      {teamA?.name || 'Por definir'} vs {teamB?.name || 'Por definir'}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1">
+                        <label className="block text-[10px] text-slate-500 dark:text-slate-400 font-bold mb-1">Fecha</label>
+                        <select
+                          value={m.round}
+                          onChange={(e) => onRescheduleMatch(m.id, Number(e.target.value), m.court)}
+                          className="w-full px-2.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-900 dark:text-white min-h-[40px]"
+                        >
+                          {roundOptions.map((r) => (
+                            <option key={r} value={r}>
+                              Fecha {r}
+                            </option>
+                          ))}
+                          <option value={maxRound + 1}>Fecha {maxRound + 1} (nueva)</option>
+                        </select>
+                      </div>
+                      <div className="flex-1">
+                        <label className="block text-[10px] text-slate-500 dark:text-slate-400 font-bold mb-1">Cancha</label>
+                        <select
+                          value={m.court}
+                          onChange={(e) => onRescheduleMatch(m.id, m.round, e.target.value)}
+                          className="w-full px-2.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-900 dark:text-white min-h-[40px]"
+                        >
+                          {courtOptions.map((c) => (
+                            <option key={c} value={c}>
+                              {c}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CollapsibleSection>
+        );
+      })()}
+
+      {/* 1.7 Manual Playoff Cross Editor */}
       {(() => {
         const playoffMatches = data.matches.filter((m) => m.stage !== 'group');
         if (playoffMatches.length === 0) return null;
