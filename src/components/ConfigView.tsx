@@ -345,7 +345,7 @@ export function ConfigView({
                         ⏳ Próximo
                       </span>
                     )}
-                    <span className="text-[10px] text-slate-400 dark:text-slate-400 font-medium">
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
                       {t.config.season || '2026'} • {t.config.category || 'General'}
                     </span>
                   </div>
@@ -358,7 +358,7 @@ export function ConfigView({
                       </span>
                     )}
                   </p>
-                  <p className="text-[10px] text-slate-400 dark:text-slate-400 mt-0.5">
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
                     {t.teams.length} equipos • {completedCount}/{t.matches.length} jugados
                   </p>
                 </div>
@@ -367,7 +367,7 @@ export function ConfigView({
                   <button
                     onClick={() => onDuplicateTournament(t.config.id)}
                     title="Duplicar torneo (iniciar nueva edición con mismos equipos)"
-                    className="p-2 text-slate-400 hover:text-sky-600 rounded-xl hover:bg-sky-50 dark:hover:bg-slate-700 transition-colors"
+                    className="p-2 text-slate-500 hover:text-sky-600 rounded-xl hover:bg-sky-50 dark:hover:bg-slate-700 transition-colors"
                   >
                     <Copy className="w-3.5 h-3.5" />
                   </button>
@@ -376,7 +376,7 @@ export function ConfigView({
                     <button
                       onClick={() => onDeleteTournament(t.config.id)}
                       title="Eliminar este torneo"
-                      className="p-2 text-slate-400 hover:text-rose-600 rounded-xl hover:bg-rose-50 dark:hover:bg-slate-700 transition-colors"
+                      className="p-2 text-slate-500 hover:text-rose-600 rounded-xl hover:bg-rose-50 dark:hover:bg-slate-700 transition-colors"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -541,7 +541,7 @@ export function ConfigView({
 
       {/* 1.5 Combined Event Linking (e.g. Damas + Varones, same jornada) */}
       <CollapsibleSection icon={<Layers className="w-4 h-4 text-sky-600" />} title="Combinar con Otra Categoría" defaultOpen={true}>
-        <p className="text-xs text-slate-400 dark:text-slate-500 -mt-1 mb-3">
+        <p className="text-xs text-slate-500 dark:text-slate-400 -mt-1 mb-3">
           Para torneos que juegan el mismo día (ej: Damas y Varones). Cada uno mantiene su propia tabla; solo se
           comparte el horario del día y un mensaje de WhatsApp en común.
         </p>
@@ -570,7 +570,7 @@ export function ConfigView({
                     Combinado con {linked.map((t) => t.config.category || t.config.name).join(', ')} — este torneo usa {courtRange}.
                   </p>
                 </div>
-                <p className="text-xs text-slate-400 dark:text-slate-500 px-1">
+                <p className="text-xs text-slate-500 dark:text-slate-400 px-1">
                   Andá a la pestaña <span className="font-bold">Fixture → Evento Combinado</span> para ver ambos juntos, o compartí el reporte "Jornada Combinada" por WhatsApp.
                 </p>
                 <button
@@ -586,7 +586,7 @@ export function ConfigView({
 
           if (linkable.length === 0) {
             return (
-              <p className="text-xs text-slate-400 dark:text-slate-500">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 Creá otro torneo (por ejemplo, la otra categoría) para poder combinarlo con este.
               </p>
             );
@@ -628,7 +628,7 @@ export function ConfigView({
                   }
                 }}
                 disabled={linkTargetId === 'none'}
-                className="w-full py-2.5 bg-sky-600 hover:bg-sky-700 active:bg-sky-800 disabled:bg-slate-200 disabled:dark:bg-slate-800 disabled:text-slate-400 text-white rounded-2xl font-bold text-xs flex items-center justify-center gap-1.5 min-h-[44px] transition-all"
+                className="w-full py-2.5 bg-sky-600 hover:bg-sky-700 active:bg-sky-800 disabled:bg-slate-200 disabled:dark:bg-slate-800 disabled:text-slate-500 text-white rounded-2xl font-bold text-xs flex items-center justify-center gap-1.5 min-h-[44px] transition-all"
               >
                 <Layers className="w-3.5 h-3.5" />
                 <span>Combinar Torneos</span>
@@ -662,7 +662,7 @@ export function ConfigView({
           </div>
 
           <div>
-            <span className="block text-[10px] text-slate-400 dark:text-slate-400 font-bold mb-1.5 uppercase">
+            <span className="block text-[10px] text-slate-500 dark:text-slate-400 font-bold mb-1.5 uppercase">
               Color Distintivo
             </span>
             <div className="flex items-center gap-2 flex-wrap">
@@ -684,7 +684,7 @@ export function ConfigView({
         {/* Teams List */}
         <div className="space-y-2">
           {data.teams.length === 0 ? (
-            <p className="text-xs text-slate-400 py-4 text-center">
+            <p className="text-xs text-slate-500 py-4 text-center">
               No hay equipos inscriptos en este torneo. Agrega uno arriba.
             </p>
           ) : (
@@ -708,7 +708,7 @@ export function ConfigView({
                         <button
                           type="button"
                           onClick={handleCancelTeamEdit}
-                          className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg"
+                          className="p-1 text-slate-500 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg"
                         >
                           <X className="w-4 h-4" />
                         </button>
@@ -781,7 +781,7 @@ export function ConfigView({
                         />
                         <div className="min-w-0">
                           <p className="font-bold text-xs text-slate-900 dark:text-slate-100 truncate">{team.name}</p>
-                          <p className="text-[10px] text-slate-400">
+                          <p className="text-[10px] text-slate-500">
                             {team.players.length} {team.players.length === 1 ? 'jugadora/or' : 'jugadoras/es'}
                           </p>
                         </div>
@@ -792,7 +792,7 @@ export function ConfigView({
                           type="button"
                           onClick={(e) => handleStartEditTeam(team, e)}
                           title="Editar nombre y color del equipo"
-                          className="p-1.5 text-slate-400 hover:text-sky-600 rounded-lg hover:bg-sky-50 dark:hover:bg-slate-700 transition-colors"
+                          className="p-1.5 text-slate-500 hover:text-sky-600 rounded-lg hover:bg-sky-50 dark:hover:bg-slate-700 transition-colors"
                         >
                           <Pencil className="w-3.5 h-3.5" />
                         </button>
@@ -803,11 +803,11 @@ export function ConfigView({
                             handleRemoveTeam(team.id);
                           }}
                           title="Eliminar equipo"
-                          className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 dark:hover:bg-slate-700 transition-colors"
+                          className="p-1.5 text-slate-500 hover:text-rose-600 rounded-lg hover:bg-rose-50 dark:hover:bg-slate-700 transition-colors"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
-                        <span className="text-xs text-slate-400 font-bold px-1">
+                        <span className="text-xs text-slate-500 font-bold px-1">
                           {isExpanded ? '▲' : '▼'}
                         </span>
                       </div>
@@ -875,7 +875,7 @@ export function ConfigView({
                                   <button
                                     type="button"
                                     onClick={handleCancelPlayerEdit}
-                                    className="p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
+                                    className="p-1 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
                                     title="Cancelar"
                                   >
                                     <X className="w-3.5 h-3.5" />
@@ -893,7 +893,7 @@ export function ConfigView({
                                     <button
                                       type="button"
                                       onClick={() => handleStartEditPlayer(player)}
-                                      className="text-slate-400 hover:text-sky-600 p-1 rounded-lg hover:bg-sky-50 dark:hover:bg-slate-800"
+                                      className="text-slate-500 hover:text-sky-600 p-1 rounded-lg hover:bg-sky-50 dark:hover:bg-slate-800"
                                       title="Editar jugadora/or"
                                     >
                                       <Pencil className="w-3 h-3" />
@@ -946,7 +946,7 @@ export function ConfigView({
               <label className="block text-slate-700 dark:text-slate-300 font-bold">
                 Encabezado / Mensaje Superior
               </label>
-              <span className="text-[10px] text-slate-400">
+              <span className="text-[10px] text-slate-500">
                 Usa <code className="bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded">*texto*</code> para negrita
               </span>
             </div>
@@ -955,9 +955,9 @@ export function ConfigView({
               onChange={(e) => setWhatsappHeaderInput(e.target.value)}
               placeholder={`🏑 *${data.config.name.toUpperCase()}*${data.config.category ? ` - ${data.config.category}` : ''}\n¡Atención jugadoras y delegados!`}
               rows={2}
-              className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-medium text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all"
+              className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-medium text-slate-900 dark:text-white placeholder:text-slate-500 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all"
             />
-            <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
               Si lo dejas vacío, usará automáticamente el nombre y categoría del torneo.
             </p>
           </div>
@@ -967,7 +967,7 @@ export function ConfigView({
               <label className="block text-slate-700 dark:text-slate-300 font-bold">
                 Firma / Pie de Mensaje
               </label>
-              <span className="text-[10px] text-slate-400">
+              <span className="text-[10px] text-slate-500">
                 Usa <code className="bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded">_texto_</code> para cursiva
               </span>
             </div>
@@ -976,9 +976,9 @@ export function ConfigView({
               onChange={(e) => setWhatsappFooterInput(e.target.value)}
               placeholder="Organiza: Subcomisión de Hockey • Dudas o cambios por privado 🏑"
               rows={2}
-              className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-medium text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all"
+              className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-medium text-slate-900 dark:text-white placeholder:text-slate-500 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all"
             />
-            <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
               Reemplaza la firma estándar al final de cada mensaje enviado a los grupos.
             </p>
           </div>
@@ -1073,7 +1073,7 @@ export function ConfigView({
         </div>
       </CollapsibleSection>
 
-      <p className="text-center text-[11px] font-medium text-slate-400 dark:text-slate-600 pt-1 pb-2">
+      <p className="text-center text-[11px] font-medium text-slate-500 dark:text-slate-600 pt-1 pb-2">
         Hockey Torneos · Desarrollado por Rodrigo Gracia
       </p>
     </div>
