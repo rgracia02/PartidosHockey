@@ -30,6 +30,7 @@ import {
   formatWhatsAppSingleMatch,
   formatWhatsAppStandings,
   formatWhatsAppSummary,
+  getSortedRoundLabels,
 } from '../utils/tournamentEngine';
 
 export type ShareType = 'summary' | 'standings' | 'results' | 'single_match' | 'scorers' | 'combined_event';
@@ -96,21 +97,14 @@ export function WhatsAppShareModal({
     setIsCustomized(false);
   };
 
-  // Get unique rounds / stages
+  // Get unique rounds / stages, sorted chronologically
   const roundLabels = useMemo(() => {
-    return Array.from(new Set(matches.map((m) => m.stageLabel || `Fecha ${m.round}`)));
+    return getSortedRoundLabels(matches);
   }, [matches]);
 
   // Union of round labels across the current tournament + any linked ones, for the combined report
   const combinedRoundLabels = useMemo(() => {
-    const labels: string[] = [];
-    [{ matches }, ...linkedTournaments].forEach((t) => {
-      (t.matches || []).forEach((m: Match) => {
-        const label = m.stageLabel || `Fecha ${m.round}`;
-        if (!labels.includes(label)) labels.push(label);
-      });
-    });
-    return labels;
+    return getSortedRoundLabels([matches, ...linkedTournaments.map((t) => t.matches || [])].flat());
   }, [matches, linkedTournaments]);
 
   // Default Formatted Text generation
