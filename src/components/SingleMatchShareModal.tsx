@@ -389,7 +389,7 @@ export function SingleMatchShareModal({
                   <div className="text-xs font-bold text-slate-700 dark:text-slate-300">
                     Tomar o subir foto del partido
                   </div>
-                  <div className="text-[11px] text-slate-400">
+                  <div className="text-[11px] text-slate-500">
                     Foto de equipo, festejo, tablero o planilla final
                   </div>
                 </button>
@@ -441,7 +441,7 @@ export function SingleMatchShareModal({
 
             {/* Formatting shortcuts bar */}
             <div className="flex items-center gap-1 overflow-x-auto pb-1 px-1 text-[11px]">
-              <span className="text-[10px] text-slate-400 font-bold mr-1">Insertar:</span>
+              <span className="text-[10px] text-slate-500 font-bold mr-1">Insertar:</span>
               <button
                 type="button"
                 onClick={() => insertSnippet('🏑 ')}
@@ -493,7 +493,7 @@ export function SingleMatchShareModal({
                 />
               </div>
             </div>
-            <p className="text-[10px] text-slate-400 px-1 text-right">
+            <p className="text-[10px] text-slate-500 px-1 text-right">
               {messageText.length} caracteres • Puedes editar cualquier línea antes de enviar
             </p>
           </div>
