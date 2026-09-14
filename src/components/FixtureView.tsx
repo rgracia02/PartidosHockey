@@ -254,7 +254,7 @@ export function FixtureView({
             onClick={() => setViewMode('combined')}
             className={`flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all min-h-[38px] ${
               viewMode === 'combined'
-                ? 'bg-rose-600 text-white shadow-xs'
+                ? 'bg-sky-600 text-white shadow-xs'
                 : 'text-slate-500 dark:text-slate-400'
             }`}
           >
@@ -311,7 +311,7 @@ export function FixtureView({
       </div>
 
       {isCombined && (
-        <p className="text-[11px] text-slate-400 dark:text-slate-500 px-1 -mt-1">
+        <p className="text-xs text-slate-400 dark:text-slate-500 px-1 -mt-1">
           Mostrando: {[currentCategory || 'Este torneo', ...linkedTournaments.map((t) => t.config.category || t.config.name)].join(' · ')}. Tocá un partido de otra categoría para cambiar de torneo y cargar su resultado.
         </p>
       )}
