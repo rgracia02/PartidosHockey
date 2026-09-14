@@ -221,6 +221,16 @@ export default function App() {
     return (currentTournament?.matches || []).filter((m) => !m.isCompleted).length;
   }, [currentTournament?.matches]);
 
+  // Other tournaments sharing the same eventGroupId as the active one (e.g. Damas + Varones, same jornada)
+  const linkedTournaments = useMemo(() => {
+    if (!currentTournament?.config.eventGroupId) return [];
+    return tournaments.filter(
+      (t) =>
+        t.config.eventGroupId === currentTournament.config.eventGroupId &&
+        t.config.id !== currentTournament.config.id
+    );
+  }, [tournaments, currentTournament?.config.eventGroupId, currentTournament?.config.id]);
+
   // Multi-Tournament Handlers
   const handleSelectTournament = (id: string) => {
     setActiveTournamentId(id);
@@ -299,6 +309,36 @@ export default function App() {
       }
       showToast('✓ Torneo eliminado');
     }
+  };
+
+  // Link the active tournament with another one as the same combined event (e.g. Damas + Varones, same jornada)
+  const handleLinkTournamentEvent = (targetId: string) => {
+    const target = tournaments.find((t) => t.config.id === targetId);
+    if (!target) return;
+
+    const groupId =
+      currentTournament.config.eventGroupId ||
+      target.config.eventGroupId ||
+      `event_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+    setTournaments((prev) =>
+      prev.map((t) => {
+        if (t.config.id === currentTournament.config.id || t.config.id === targetId) {
+          return { ...t, config: { ...t.config, eventGroupId: groupId } };
+        }
+        return t;
+      })
+    );
+    showToast(`✓ Vinculado con "${target.config.name}" como el mismo evento`);
+  };
+
+  // Remove the active tournament from its combined-event group
+  const handleUnlinkTournamentEvent = () => {
+    updateCurrentTournament((prev) => ({
+      ...prev,
+      config: { ...prev.config, eventGroupId: undefined },
+    }));
+    showToast('✓ Torneo desvinculado del evento combinado');
   };
 
   // Match & Config Handlers for Active Tournament
@@ -459,6 +499,8 @@ export default function App() {
             onLoadDemoData={handleLoadDemo}
             onOpenStandaloneModal={() => setShowStandaloneModal(true)}
             onImportJson={handleImportJson}
+            onLinkTournamentEvent={handleLinkTournamentEvent}
+            onUnlinkTournamentEvent={handleUnlinkTournamentEvent}
           />
         )}
       </main>
@@ -474,6 +516,7 @@ export default function App() {
           teams={currentTournament.teams}
           topScorers={topScorers}
           cardStats={cardStats}
+          linkedTournaments={linkedTournaments}
           onClose={() => setShowWhatsAppModal(false)}
           onSaveMatchPhoto={handleSaveMatchPhoto}
           onToast={showToast}
