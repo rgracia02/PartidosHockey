@@ -332,21 +332,21 @@ export function WhatsAppShareModal({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="bg-white w-full max-w-lg rounded-t-[32px] sm:rounded-3xl p-5 pb-safe shadow-2xl flex flex-col max-h-[92vh] animate-in slide-in-from-bottom-5 duration-200">
+      <div className="bg-white w-full max-w-lg rounded-t-[32px] sm:rounded-3xl p-5 pb-safe shadow-2xl flex flex-col max-h-[92vh] animate-in slide-in-from-bottom-5 duration-200 dark:bg-slate-900">
         {/* iOS Drag Handle */}
         <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-3 sm:hidden" />
 
         {/* Modal Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100 shrink-0">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100 shrink-0 dark:border-slate-800">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center">
               <Share2 className="w-4 h-4 stroke-[2.5]" />
             </div>
             <div>
-              <h3 className="text-base font-black text-slate-900 leading-tight">
+              <h3 className="text-base font-black text-slate-900 leading-tight dark:text-white">
                 Compartir en WhatsApp
               </h3>
-              <p className="text-[11px] text-slate-500 font-medium">
+              <p className="text-[11px] text-slate-500 font-medium dark:text-slate-400">
                 {config.name} {config.category ? `• ${config.category}` : ''}
               </p>
             </div>
@@ -354,7 +354,7 @@ export function WhatsAppShareModal({
 
           <button
             onClick={onClose}
-            className="p-1.5 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors"
+            className="p-1.5 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors dark:text-slate-400 dark:bg-slate-800"
           >
             <X className="w-4 h-4" />
           </button>
@@ -362,7 +362,7 @@ export function WhatsAppShareModal({
 
         {/* Share Category Selector */}
         <div className="pt-3 pb-2 shrink-0">
-          <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+          <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 dark:text-slate-400">
             ¿Qué deseas compartir?
           </label>
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
@@ -371,8 +371,8 @@ export function WhatsAppShareModal({
               onClick={() => handleShareTypeChange('standings')}
               className={`py-2 px-1.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-all min-h-[38px] ${
                 shareType === 'standings'
-                  ? 'bg-amber-500 text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70'
+                  ? 'bg-sky-600 text-white shadow-xs'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-slate-700'
               }`}
             >
               <Trophy className="w-3.5 h-3.5 shrink-0" />
@@ -384,8 +384,8 @@ export function WhatsAppShareModal({
               onClick={() => handleShareTypeChange('single_match')}
               className={`py-2 px-1.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-all min-h-[38px] ${
                 shareType === 'single_match'
-                  ? 'bg-emerald-600 text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70'
+                  ? 'bg-sky-600 text-white shadow-xs'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-slate-700'
               }`}
             >
               <Camera className="w-3.5 h-3.5 shrink-0" />
@@ -398,7 +398,7 @@ export function WhatsAppShareModal({
               className={`py-2 px-1.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-all min-h-[38px] ${
                 shareType === 'results'
                   ? 'bg-sky-600 text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-slate-700'
               }`}
             >
               <Calendar className="w-3.5 h-3.5 shrink-0" />
@@ -410,8 +410,8 @@ export function WhatsAppShareModal({
               onClick={() => handleShareTypeChange('summary')}
               className={`py-2 px-1.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-all min-h-[38px] ${
                 shareType === 'summary'
-                  ? 'bg-indigo-600 text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70'
+                  ? 'bg-sky-600 text-white shadow-xs'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-slate-700'
               }`}
             >
               <MessageCircle className="w-3.5 h-3.5 shrink-0" />
@@ -423,8 +423,8 @@ export function WhatsAppShareModal({
               onClick={() => handleShareTypeChange('scorers')}
               className={`py-2 px-2 col-span-2 sm:col-span-1 rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-all min-h-[38px] ${
                 shareType === 'scorers'
-                  ? 'bg-violet-600 text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70'
+                  ? 'bg-sky-600 text-white shadow-xs'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-slate-700'
               }`}
             >
               <Flame className="w-3.5 h-3.5 shrink-0" />
@@ -437,8 +437,8 @@ export function WhatsAppShareModal({
                 onClick={() => handleShareTypeChange('combined_event')}
                 className={`py-2 px-2 col-span-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-all min-h-[38px] ${
                   shareType === 'combined_event'
-                    ? 'bg-rose-600 text-white shadow-xs'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70'
+                    ? 'bg-sky-600 text-white shadow-xs'
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-slate-700'
                 }`}
               >
                 <Calendar className="w-3.5 h-3.5 shrink-0" />
@@ -453,13 +453,13 @@ export function WhatsAppShareModal({
           {/* Results Specific Sub-Filter: Round / Stage selector */}
           {shareType === 'results' && roundLabels.length > 0 && (
             <div>
-              <label className="block text-[11px] font-bold text-slate-500 mb-1">
+              <label className="block text-[11px] font-bold text-slate-500 mb-1 dark:text-slate-400">
                 Filtrar Jornada / Fase:
               </label>
               <select
                 value={selectedRound}
                 onChange={(e) => handleRoundChange(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 min-h-[40px]"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 min-h-[40px] dark:text-slate-200 dark:bg-slate-800 dark:border-slate-700"
               >
                 <option value="all">Todas las fechas y playoffs ({matches.length} partidos)</option>
                 {roundLabels.map((lbl) => (
@@ -474,13 +474,13 @@ export function WhatsAppShareModal({
           {/* Combined Event Sub-Filter: Round / Stage selector across linked tournaments */}
           {shareType === 'combined_event' && (
             <div>
-              <label className="block text-[11px] font-bold text-slate-500 mb-1">
+              <label className="block text-[11px] font-bold text-slate-500 mb-1 dark:text-slate-400">
                 Filtrar Jornada / Fecha:
               </label>
               <select
                 value={selectedRound}
                 onChange={(e) => handleRoundChange(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 min-h-[40px]"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 min-h-[40px] dark:text-slate-200 dark:bg-slate-800 dark:border-slate-700"
               >
                 <option value="all">Todas las fechas</option>
                 {combinedRoundLabels.map((lbl) => (
@@ -499,13 +499,13 @@ export function WhatsAppShareModal({
           {shareType === 'single_match' && (
             <div className="space-y-3">
               <div>
-                <label className="block text-[11px] font-bold text-slate-500 mb-1">
+                <label className="block text-[11px] font-bold text-slate-500 mb-1 dark:text-slate-400">
                   Seleccionar Partido:
                 </label>
                 <select
                   value={selectedMatchId}
                   onChange={(e) => handleSelectMatch(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 min-h-[42px]"
+                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 min-h-[42px] dark:text-slate-200 dark:bg-slate-800 dark:border-slate-700"
                 >
                   {matches.map((m) => {
                     const tA = teamMap.get(m.teamAId)?.name || m.placeholderA || 'TBD';
@@ -521,11 +521,11 @@ export function WhatsAppShareModal({
               </div>
 
               {/* Photo Upload Box for this single match */}
-              <div className="bg-slate-50 rounded-2xl p-3 border border-slate-200">
+              <div className="bg-slate-50 rounded-2xl p-3 border border-slate-200 dark:bg-slate-800 dark:border-slate-700">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-1.5">
                     <Camera className="w-3.5 h-3.5 text-emerald-600" />
-                    <span className="text-xs font-bold text-slate-800">
+                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
                       Foto para acompañar el mensaje
                     </span>
                   </div>
@@ -537,7 +537,7 @@ export function WhatsAppShareModal({
                 </div>
 
                 {matchPhotoUrl ? (
-                  <div className="relative rounded-xl overflow-hidden border border-slate-200 bg-black/5 aspect-video flex items-center justify-center group">
+                  <div className="relative rounded-xl overflow-hidden border border-slate-200 bg-black/5 aspect-video flex items-center justify-center group dark:border-slate-700">
                     <img
                       src={matchPhotoUrl}
                       alt="Foto del partido"
@@ -548,7 +548,7 @@ export function WhatsAppShareModal({
                       <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
-                        className="p-1.5 bg-white text-slate-800 rounded-lg text-xs font-bold flex items-center gap-1 shadow-md"
+                        className="p-1.5 bg-white text-slate-800 rounded-lg text-xs font-bold flex items-center gap-1 shadow-md dark:bg-slate-900 dark:text-slate-200"
                       >
                         <Upload className="w-3 h-3" />
                         <span>Cambiar</span>
@@ -566,10 +566,10 @@ export function WhatsAppShareModal({
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="w-full py-3 px-3 border border-dashed border-slate-300 hover:border-emerald-500 rounded-xl bg-white text-center transition-all flex items-center justify-center gap-2"
+                    className="w-full py-3 px-3 border border-dashed border-slate-300 hover:border-emerald-500 rounded-xl bg-white text-center transition-all flex items-center justify-center gap-2 dark:bg-slate-900"
                   >
                     <Camera className="w-4 h-4 text-emerald-600" />
-                    <span className="text-xs font-bold text-slate-700">
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
                       Adjuntar o tomar foto del partido
                     </span>
                   </button>
@@ -592,7 +592,7 @@ export function WhatsAppShareModal({
             <div className="flex items-center justify-between px-1">
               <div className="flex items-center gap-1.5">
                 <Edit3 className="w-3.5 h-3.5 text-emerald-600" />
-                <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wide">
+                <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wide dark:text-slate-400">
                   Mensaje para WhatsApp (Editable)
                 </span>
               </div>
@@ -602,7 +602,7 @@ export function WhatsAppShareModal({
                   <button
                     type="button"
                     onClick={handleResetToDefault}
-                    className="text-[10px] font-bold text-slate-500 hover:text-emerald-700 flex items-center gap-1 bg-slate-100 hover:bg-slate-200 px-2 py-0.5 rounded-full transition-colors"
+                    className="text-[10px] font-bold text-slate-500 hover:text-emerald-700 flex items-center gap-1 bg-slate-100 hover:bg-slate-200 px-2 py-0.5 rounded-full transition-colors dark:text-slate-400 dark:bg-slate-800"
                     title="Restablecer formato original generado"
                   >
                     <RotateCcw className="w-2.5 h-2.5" />
@@ -625,42 +625,42 @@ export function WhatsAppShareModal({
               <button
                 type="button"
                 onClick={() => insertSnippet('🏑 ')}
-                className="px-1.5 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-bold"
+                className="px-1.5 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-bold dark:text-slate-300 dark:bg-slate-800"
               >
                 🏑
               </button>
               <button
                 type="button"
                 onClick={() => insertSnippet('🏆 ')}
-                className="px-1.5 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-bold"
+                className="px-1.5 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-bold dark:text-slate-300 dark:bg-slate-800"
               >
                 🏆
               </button>
               <button
                 type="button"
                 onClick={() => insertSnippet('⭐ ')}
-                className="px-1.5 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-bold"
+                className="px-1.5 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-bold dark:text-slate-300 dark:bg-slate-800"
               >
                 ⭐
               </button>
               <button
                 type="button"
                 onClick={() => insertSnippet('📅 ')}
-                className="px-1.5 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-bold"
+                className="px-1.5 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-bold dark:text-slate-300 dark:bg-slate-800"
               >
                 📅
               </button>
               <button
                 type="button"
                 onClick={() => insertSnippet('📍 ')}
-                className="px-1.5 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-bold"
+                className="px-1.5 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-bold dark:text-slate-300 dark:bg-slate-800"
               >
                 📍
               </button>
               <button
                 type="button"
                 onClick={() => insertSnippet('*texto*')}
-                className="px-1.5 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-bold text-[10px]"
+                className="px-1.5 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-bold text-[10px] dark:text-slate-300 dark:bg-slate-800"
                 title="Texto en negrita"
               >
                 *negrita*
@@ -669,7 +669,7 @@ export function WhatsAppShareModal({
 
             {/* WhatsApp Textarea Canvas */}
             <div className="bg-[#EFEAE2] p-2.5 rounded-2xl border border-[#DAD2C7] shadow-inner relative">
-              <div className="bg-white p-2.5 rounded-xl shadow-xs border border-[#E9EDEF]">
+              <div className="bg-white p-2.5 rounded-xl shadow-xs border border-[#E9EDEF] dark:bg-slate-900">
                 <textarea
                   ref={textareaRef}
                   value={messageText}
@@ -687,11 +687,11 @@ export function WhatsAppShareModal({
         </div>
 
         {/* Action Buttons */}
-        <div className="pt-3 border-t border-slate-100 shrink-0 flex gap-2">
+        <div className="pt-3 border-t border-slate-100 shrink-0 flex gap-2 dark:border-slate-800">
           <button
             type="button"
             onClick={handleCopy}
-            className="flex-1 py-3.5 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-800 font-bold rounded-2xl text-xs flex items-center justify-center gap-1.5 transition-all min-h-[48px] active:scale-95"
+            className="flex-1 py-3.5 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-800 font-bold rounded-2xl text-xs flex items-center justify-center gap-1.5 transition-all min-h-[48px] active:scale-95 dark:text-slate-200 dark:bg-slate-800"
           >
             {copied ? (
               <>
