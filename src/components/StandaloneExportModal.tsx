@@ -33,25 +33,25 @@ export function StandaloneExportModal({ onClose }: StandaloneExportModalProps) {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="bg-white w-full max-w-lg rounded-3xl p-5 shadow-2xl flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-150">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+      <div className="bg-white w-full max-w-lg rounded-3xl p-5 shadow-2xl flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-150 dark:bg-slate-900">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
           <div>
             <span className="text-[10px] font-bold text-sky-600 uppercase tracking-wider">
               GitHub Pages Ready
             </span>
-            <h3 className="text-base font-black text-slate-900">
+            <h3 className="text-base font-black text-slate-900 dark:text-white">
               Archivo index.html Autónomo
             </h3>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200"
+            className="p-1.5 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 dark:text-slate-400 dark:bg-slate-800"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="py-3 text-xs text-slate-600 space-y-2">
+        <div className="py-3 text-xs text-slate-600 space-y-2 dark:text-slate-400">
           <p>
             Este archivo contiene la aplicación completa empaquetada en un único <code>index.html</code> con Tailwind CSS, React 18 y Babel CDN, lista para subir a la raíz de tu repositorio y publicar en <strong>GitHub Pages</strong> sin ningún comando ni build:
           </p>
