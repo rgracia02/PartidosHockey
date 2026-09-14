@@ -23,7 +23,7 @@ export function CollapsibleSection({ icon, title, defaultOpen = false, children 
           <h3 className="text-sm font-bold text-slate-900 dark:text-white">{title}</h3>
         </div>
         <ChevronDown
-          className={`w-4 h-4 text-slate-400 dark:text-slate-500 shrink-0 transition-transform duration-200 ${
+          className={`w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0 transition-transform duration-200 ${
             isOpen ? 'rotate-180' : ''
           }`}
         />
