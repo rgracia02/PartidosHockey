@@ -81,6 +81,8 @@ export interface TournamentConfig {
   pointsLoss: number;
   whatsappHeader?: string;
   whatsappFooter?: string;
+  eventGroupId?: string; // shared id linking two or more tournaments (e.g. Damas + Varones) as the same event/jornada
+  eventLabel?: string; // optional display name for the combined event, e.g. "Jornada Interclubes"
 }
 
 export interface StandingsRow {
