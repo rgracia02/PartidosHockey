@@ -200,7 +200,7 @@ export function PostMatchModal({ match, teams, onSave, onClose }: PostMatchModal
         <div className="flex-1 overflow-y-auto py-4 space-y-4 no-scrollbar">
           {/* Main Score Stepper Box (Apple Style) */}
           <div className="bg-white rounded-3xl p-4 shadow-sm border border-slate-200/80 dark:bg-slate-900 dark:border-slate-800">
-            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider text-center mb-3">
+            <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider text-center mb-3">
               Marcador Final
             </h4>
 
@@ -288,8 +288,8 @@ export function PostMatchModal({ match, teams, onSave, onClose }: PostMatchModal
                 </label>
 
                 {isShootout && (
-                  <div className="mt-3 p-3 bg-purple-50/80 rounded-2xl border border-purple-100 space-y-3">
-                    <p className="text-[11px] font-semibold text-purple-900">
+                  <div className="mt-3 p-3 bg-violet-50/80 dark:bg-violet-950/30 rounded-2xl border border-violet-100 dark:border-violet-900/60 space-y-3">
+                    <p className="text-[11px] font-semibold text-violet-900 dark:text-violet-300">
                       Resultado de tanda de Shoot-outs:
                     </p>
                     <div className="flex items-center justify-between gap-3">
@@ -302,10 +302,10 @@ export function PostMatchModal({ match, teams, onSave, onClose }: PostMatchModal
                           min="0"
                           value={shootoutScoreA}
                           onChange={(e) => setShootoutScoreA(Number(e.target.value))}
-                          className="w-full px-2 py-1 bg-white border border-purple-200 rounded-xl text-center font-bold text-sm dark:bg-slate-900"
+                          className="w-full px-2 py-1 bg-white border border-violet-200 dark:border-violet-800 rounded-xl text-center font-bold text-sm dark:bg-slate-900 dark:text-white"
                         />
                       </div>
-                      <span className="text-xs font-black text-purple-400 mt-4">-</span>
+                      <span className="text-xs font-black text-violet-400 dark:text-violet-500 mt-4">-</span>
                       <div className="flex-1">
                         <label className="block text-[10px] text-slate-600 font-bold mb-1 truncate dark:text-slate-400">
                           {nameB}
@@ -315,7 +315,7 @@ export function PostMatchModal({ match, teams, onSave, onClose }: PostMatchModal
                           min="0"
                           value={shootoutScoreB}
                           onChange={(e) => setShootoutScoreB(Number(e.target.value))}
-                          className="w-full px-2 py-1 bg-white border border-purple-200 rounded-xl text-center font-bold text-sm dark:bg-slate-900"
+                          className="w-full px-2 py-1 bg-white border border-violet-200 dark:border-violet-800 rounded-xl text-center font-bold text-sm dark:bg-slate-900 dark:text-white"
                         />
                       </div>
                     </div>
@@ -327,7 +327,7 @@ export function PostMatchModal({ match, teams, onSave, onClose }: PostMatchModal
                       <select
                         value={shootoutWinner}
                         onChange={(e) => setShootoutWinner(e.target.value)}
-                        className="w-full px-3 py-2 bg-white border border-purple-200 rounded-xl text-xs font-bold text-slate-800 dark:bg-slate-900 dark:text-slate-200"
+                        className="w-full px-3 py-2 bg-white border border-violet-200 dark:border-violet-800 rounded-xl text-xs font-bold text-slate-800 dark:bg-slate-900 dark:text-slate-200"
                       >
                         <option value={match.teamAId}>{nameA}</option>
                         <option value={match.teamBId}>{nameB}</option>
@@ -348,7 +348,7 @@ export function PostMatchModal({ match, teams, onSave, onClose }: PostMatchModal
                   Goleadores/as del Partido
                 </h4>
               </div>
-              <span className="text-[10px] text-slate-400">Toca para sumar gol</span>
+              <span className="text-[10px] text-slate-500">Toca para sumar gol</span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -543,7 +543,7 @@ export function PostMatchModal({ match, teams, onSave, onClose }: PostMatchModal
                       <span>{s.playerName}</span>
                       <button
                         onClick={() => handleRemoveSanction(s.id)}
-                        className="ml-1 text-slate-400 hover:text-rose-600 p-0.5"
+                        className="ml-1 text-slate-500 hover:text-rose-600 p-0.5"
                       >
                         <Trash2 className="w-3 h-3" />
                       </button>
@@ -558,12 +558,12 @@ export function PostMatchModal({ match, teams, onSave, onClose }: PostMatchModal
           <div className="bg-white rounded-3xl p-4 shadow-sm border border-slate-200/60 dark:bg-slate-900 dark:border-slate-800">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full bg-violet-50 text-violet-600 flex items-center justify-center font-bold">
+                <div className="w-7 h-7 rounded-full bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 flex items-center justify-center font-bold">
                   <Camera className="w-4 h-4" />
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-slate-900 leading-none dark:text-white">Foto del Partido</h3>
-                  <p className="text-[11px] text-slate-400 mt-0.5">Opcional • Para compartir en WhatsApp</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Opcional • Para compartir en WhatsApp</p>
                 </div>
               </div>
             </div>
@@ -605,9 +605,9 @@ export function PostMatchModal({ match, teams, onSave, onClose }: PostMatchModal
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="w-full py-3.5 px-3 border-2 border-dashed border-slate-200 hover:border-violet-400 rounded-2xl bg-slate-50 text-center transition-all flex items-center justify-center gap-2 active:scale-[0.99] dark:bg-slate-800 dark:border-slate-700"
+                className="w-full py-3.5 px-3 border-2 border-dashed border-slate-200 hover:border-sky-400 rounded-2xl bg-slate-50 text-center transition-all flex items-center justify-center gap-2 active:scale-[0.99] dark:bg-slate-800 dark:border-slate-700"
               >
-                <Camera className="w-4 h-4 text-violet-500" />
+                <Camera className="w-4 h-4 text-sky-500" />
                 <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Subir foto o planilla</span>
               </button>
             )}
