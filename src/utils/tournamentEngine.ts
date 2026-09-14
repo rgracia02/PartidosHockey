@@ -1735,9 +1735,9 @@ export function formatWhatsAppResults(
     text += `_No hay partidos programados para esta fecha._\n`;
   } else {
     rounds.forEach((roundLabel) => {
-      const roundMatches = filteredMatches.filter(
-        (m) => (m.stageLabel || `Fecha ${m.round}`) === roundLabel
-      );
+      const roundMatches = filteredMatches
+        .filter((m) => (m.stageLabel || `Fecha ${m.round}`) === roundLabel)
+        .sort((a, b) => a.court.localeCompare(b.court));
       text += `📍 *${roundLabel.toUpperCase()}*\n`;
 
       roundMatches.forEach((m) => {
@@ -1917,9 +1917,9 @@ export function formatWhatsAppSummary(
   const rounds = getSortedRoundLabels(matches);
 
   rounds.forEach((roundLabel) => {
-    const roundMatches = matches.filter(
-      (m) => (m.stageLabel || `Fecha ${m.round}`) === roundLabel
-    );
+    const roundMatches = matches
+      .filter((m) => (m.stageLabel || `Fecha ${m.round}`) === roundLabel)
+      .sort((a, b) => a.court.localeCompare(b.court));
     text += `\n🔹 *${roundLabel}*\n`;
     roundMatches.forEach((m) => {
       const teamA = teamMap.get(m.teamAId)?.name || m.placeholderA || 'TBD';
