@@ -28,6 +28,7 @@ interface TournamentSwitcherModalProps {
     isDoubleRound?: boolean
   ) => void;
   onClose: () => void;
+  initialMode?: 'list' | 'create';
 }
 
 export function TournamentSwitcherModal({
@@ -36,9 +37,10 @@ export function TournamentSwitcherModal({
   onSelectTournament,
   onCreateTournament,
   onClose,
+  initialMode = 'list',
 }: TournamentSwitcherModalProps) {
   const [filter, setFilter] = useState<'all' | 'active' | 'completed' | 'upcoming'>('all');
-  const [isCreating, setIsCreating] = useState(false);
+  const [isCreating, setIsCreating] = useState(initialMode === 'create');
 
   // New Tournament Form State
   const [newName, setNewName] = useState('');
