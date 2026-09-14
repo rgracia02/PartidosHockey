@@ -546,8 +546,12 @@ export function ConfigView({
       <div className="bg-white dark:bg-slate-900 rounded-3xl p-4 shadow-sm border border-slate-200/80 dark:border-slate-800 transition-colors">
         <div className="flex items-center gap-2 pb-3 border-b border-slate-100 dark:border-slate-800 mb-3">
           <Layers className="w-4 h-4 text-rose-600" />
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white">Evento Combinado</h3>
+          <h3 className="text-sm font-bold text-slate-900 dark:text-white">Combinar con Otra Categoría</h3>
         </div>
+        <p className="text-[11px] text-slate-400 dark:text-slate-500 -mt-1 mb-3">
+          Para torneos que juegan el mismo día (ej: Damas y Varones). Cada uno mantiene su propia tabla; solo se
+          comparte el horario del día y un mensaje de WhatsApp en común.
+        </p>
 
         {(() => {
           const linked = tournaments.filter(
@@ -561,37 +565,25 @@ export function ConfigView({
             const offset = data.config.courtLabelOffset || 0;
             const courtRange =
               data.config.courtsCount > 1
-                ? `Canchas ${offset + 1}-${offset + data.config.courtsCount}`
+                ? `Cancha ${offset + 1} a ${offset + data.config.courtsCount}`
                 : `Cancha ${offset + 1}`;
             return (
               <div className="space-y-2.5">
-                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                  Este torneo está vinculado con:
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {linked.map((t) => (
-                    <span
-                      key={t.config.id}
-                      className="px-2.5 py-1 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 rounded-full text-xs font-bold"
-                    >
-                      {t.config.category || t.config.name}
-                    </span>
-                  ))}
+                <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-950/30 rounded-xl px-3 py-2.5">
+                  <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <p className="text-xs text-emerald-800 dark:text-emerald-300 font-semibold">
+                    Combinado con {linked.map((t) => t.config.category || t.config.name).join(', ')} — este torneo usa {courtRange}.
+                  </p>
                 </div>
-                <div className="bg-slate-50 dark:bg-slate-800 rounded-xl px-3 py-2 text-[11px] text-slate-500 dark:text-slate-400">
-                  Este torneo usa <span className="font-bold text-slate-700 dark:text-slate-200">{courtRange}</span>.
-                  Si acabás de vincular o cambiar canchas, tocá <span className="font-bold">"Regenerar Fixture de este Torneo"</span> arriba
-                  (y también en el otro torneo) para que las canchas no se pisen.
-                </div>
-                <p className="text-[11px] text-slate-400 dark:text-slate-500">
-                  Ahora podés compartir un reporte de WhatsApp con la "Jornada Combinada" de ambos torneos, sin mezclar tablas de posiciones.
+                <p className="text-[11px] text-slate-400 dark:text-slate-500 px-1">
+                  Andá a la pestaña <span className="font-bold">Fixture → Evento Combinado</span> para ver ambos juntos, o compartí el reporte "Jornada Combinada" por WhatsApp.
                 </p>
                 <button
                   onClick={onUnlinkTournamentEvent}
                   className="w-full py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-2xl font-bold text-xs flex items-center justify-center gap-1.5 min-h-[44px] transition-all"
                 >
                   <X className="w-3.5 h-3.5" />
-                  <span>Desvincular Evento</span>
+                  <span>Separar Torneos</span>
                 </button>
               </div>
             );
@@ -600,22 +592,19 @@ export function ConfigView({
           if (linkable.length === 0) {
             return (
               <p className="text-xs text-slate-400 dark:text-slate-500">
-                Creá otro torneo (por ejemplo, otra categoría) para poder vincularlo con este como un mismo evento.
+                Creá otro torneo (por ejemplo, la otra categoría) para poder combinarlo con este.
               </p>
             );
           }
 
           return (
             <div className="space-y-2.5">
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                Vinculá este torneo con otro (ej: Damas + Varones) para compartir un fixture y reporte combinado del mismo día.
-              </p>
               <select
                 value={linkTargetId}
                 onChange={(e) => setLinkTargetId(e.target.value)}
                 className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-semibold text-slate-900 dark:text-white min-h-[44px]"
               >
-                <option value="none">Seleccionar torneo...</option>
+                <option value="none">Elegí el otro torneo...</option>
                 {linkable.map((t) => (
                   <option key={t.config.id} value={t.config.id}>
                     {t.config.name} {t.config.category ? `(${t.config.category})` : ''}
@@ -633,7 +622,7 @@ export function ConfigView({
                 className="w-full py-2.5 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 disabled:bg-slate-200 disabled:dark:bg-slate-800 disabled:text-slate-400 text-white rounded-2xl font-bold text-xs flex items-center justify-center gap-1.5 min-h-[44px] transition-all"
               >
                 <Layers className="w-3.5 h-3.5" />
-                <span>Vincular como Mismo Evento</span>
+                <span>Combinar Torneos</span>
               </button>
             </div>
           );
