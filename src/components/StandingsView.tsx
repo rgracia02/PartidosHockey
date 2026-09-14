@@ -1,4 +1,4 @@
-import { ChevronRight, Info, Medal, Share2, Trophy } from 'lucide-react';
+import { Camera, ChevronRight, Info, Medal, Share2, Trophy } from 'lucide-react';
 import { StandingsRow, TournamentFormat } from '../types';
 
 interface StandingsViewProps {
@@ -6,9 +6,10 @@ interface StandingsViewProps {
   format: TournamentFormat;
   onSelectTeam?: (teamId: string) => void;
   onShareStandings?: () => void;
+  onShareStandingsImage?: () => void;
 }
 
-export function StandingsView({ standings, format, onShareStandings }: StandingsViewProps) {
+export function StandingsView({ standings, format, onShareStandings, onShareStandingsImage }: StandingsViewProps) {
   // Determine cutoff for playoffs
   let playoffCutoff = 0;
   let playoffLabel = '';
@@ -39,6 +40,16 @@ export function StandingsView({ standings, format, onShareStandings }: Standings
           </div>
           
           <div className="flex items-center gap-1.5">
+            {onShareStandingsImage && standings.length > 0 && (
+              <button
+                id="btn-share-standings-image"
+                onClick={onShareStandingsImage}
+                className="p-1.5 bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 hover:bg-sky-100 dark:hover:bg-sky-900/60 active:bg-sky-200 font-bold rounded-xl transition-all active:scale-95"
+                title="Compartir tabla de posiciones como imagen"
+              >
+                <Camera className="w-3.5 h-3.5 stroke-[2.5]" />
+              </button>
+            )}
             {onShareStandings && standings.length > 0 && (
               <button
                 id="btn-share-standings-whatsapp"
