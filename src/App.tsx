@@ -311,48 +311,81 @@ export default function App() {
     }
   };
 
-  // Link the active tournament with another one as the same combined event (e.g. Damas + Varones, same jornada)
+  // Link the active tournament with another one as the same combined event (e.g. Damas + Varones, same jornada).
+  // This is a one-click action: it also reassigns non-colliding court numbers and
+  // regenerates both fixtures automatically, so the user doesn't need extra steps.
   const handleLinkTournamentEvent = (targetId: string) => {
     const target = tournaments.find((t) => t.config.id === targetId);
     if (!target) return;
+
+    const currentHasResults = currentTournament.matches.some((m) => m.isCompleted);
+    const targetHasResults = target.matches.some((m) => m.isCompleted);
+    if (currentHasResults || targetHasResults) {
+      const proceed = confirm(
+        `Para combinar "${currentTournament.config.name}" con "${target.config.name}" hay que regenerar el fixture de ambos, y eso reinicia los resultados ya cargados. ¿Querés continuar?`
+      );
+      if (!proceed) return;
+    }
 
     const groupId =
       currentTournament.config.eventGroupId ||
       target.config.eventGroupId ||
       `event_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
-    // Auto-assign the target a court range that starts right after the current
-    // tournament's own courts, so both can be regenerated without colliding
-    // on the same physical cancha (only if the target doesn't already have its own offset set).
+    // Current tournament keeps (or starts at) Cancha 1; the target continues right after it,
+    // so the two never collide on the same physical court number.
     const currentOffset = currentTournament.config.courtLabelOffset || 0;
-    const targetNeedsOffset = !target.config.courtLabelOffset;
-    const newTargetOffset = targetNeedsOffset
-      ? currentOffset + currentTournament.config.courtsCount
-      : target.config.courtLabelOffset;
+    const targetOffset = currentOffset + currentTournament.config.courtsCount;
 
     setTournaments((prev) =>
       prev.map((t) => {
         if (t.config.id === currentTournament.config.id) {
-          return { ...t, config: { ...t.config, eventGroupId: groupId } };
+          const newConfig = { ...t.config, eventGroupId: groupId };
+          const newMatches = generateFixture(
+            t.teams,
+            newConfig.format,
+            newConfig.courtsCount,
+            newConfig.isDoubleRound || false,
+            newConfig.courtLabelOffset || 0
+          );
+          return { ...t, config: newConfig, matches: newMatches, lastUpdated: new Date().toISOString() };
         }
         if (t.config.id === targetId) {
-          return { ...t, config: { ...t.config, eventGroupId: groupId, courtLabelOffset: newTargetOffset } };
+          const newConfig = { ...t.config, eventGroupId: groupId, courtLabelOffset: targetOffset };
+          const newMatches = generateFixture(
+            t.teams,
+            newConfig.format,
+            newConfig.courtsCount,
+            newConfig.isDoubleRound || false,
+            targetOffset
+          );
+          return { ...t, config: newConfig, matches: newMatches, lastUpdated: new Date().toISOString() };
         }
         return t;
       })
     );
-    showToast(
-      `✓ Vinculado con "${target.config.name}". Regenerá el fixture de cada torneo para aplicar canchas sin choques.`
-    );
+    showToast(`✓ "${currentTournament.config.name}" y "${target.config.name}" combinados. Mirá la pestaña Fixture → Evento Combinado.`);
   };
 
   // Remove the active tournament from its combined-event group
   const handleUnlinkTournamentEvent = () => {
-    updateCurrentTournament((prev) => ({
-      ...prev,
-      config: { ...prev.config, eventGroupId: undefined, courtLabelOffset: 0 },
-    }));
-    showToast('✓ Torneo desvinculado del evento combinado. Regenerá el fixture si querés volver a "Cancha 1".');
+    const proceed = confirm(
+      'Al desvincular se regenera el fixture de este torneo (vuelve a usar Cancha 1 en adelante) y se reinician sus resultados. ¿Continuar?'
+    );
+    if (!proceed) return;
+
+    updateCurrentTournament((prev) => {
+      const newConfig = { ...prev.config, eventGroupId: undefined, courtLabelOffset: 0 };
+      const newMatches = generateFixture(
+        prev.teams,
+        newConfig.format,
+        newConfig.courtsCount,
+        newConfig.isDoubleRound || false,
+        0
+      );
+      return { ...prev, config: newConfig, matches: newMatches, lastUpdated: new Date().toISOString() };
+    });
+    showToast('✓ Torneo desvinculado del evento combinado');
   };
 
   // Match & Config Handlers for Active Tournament
