@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Layers, Share2 } from 'lucide-react';
+import { Layers, Camera, Share2 } from 'lucide-react';
 import { Match, Team, TournamentData } from '../types';
 
 interface FixtureViewProps {
@@ -7,6 +7,7 @@ interface FixtureViewProps {
   teams: Team[];
   onSelectMatch: (match: Match) => void;
   onShareResults?: (roundLabel?: string) => void;
+  onShareFixtureImage?: () => void;
   onShareSingleMatch?: (match: Match) => void;
   linkedTournaments?: TournamentData[];
   currentTournamentId?: string;
@@ -182,6 +183,7 @@ export function FixtureView({
   teams,
   onSelectMatch,
   onShareResults,
+  onShareFixtureImage,
   onShareSingleMatch,
   linkedTournaments = [],
   currentTournamentId,
@@ -318,6 +320,16 @@ export function FixtureView({
             <span className="text-[11px] font-bold">
               {selectedRoundFilter === 'all' ? 'Compartir' : `Compartir ${selectedRoundFilter}`}
             </span>
+          </button>
+        )}
+        {!isCombined && onShareFixtureImage && matches.length > 0 && (
+          <button
+            id="btn-share-fixture-image"
+            onClick={onShareFixtureImage}
+            className="p-1.5 bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 hover:bg-sky-100 dark:hover:bg-sky-900/60 active:bg-sky-200 font-bold rounded-full transition-all active:scale-95 shrink-0 border border-sky-200/60 dark:border-sky-800/60 shadow-xs"
+            title="Compartir fixture como imagen"
+          >
+            <Camera className="w-3.5 h-3.5 stroke-[2.5]" />
           </button>
         )}
       </div>
