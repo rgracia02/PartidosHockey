@@ -27,6 +27,7 @@ import {
   TournamentFormat,
   TournamentStatus,
 } from '../types';
+import { CollapsibleSection } from './CollapsibleSection';
 
 interface ConfigViewProps {
   data: TournamentData;
@@ -387,12 +388,7 @@ export function ConfigView({
       </div>
 
       {/* 1. General Tournament Configuration */}
-      <div className="bg-white dark:bg-slate-900 rounded-3xl p-4 shadow-sm border border-slate-200/80 dark:border-slate-800 transition-colors">
-        <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
-          <span>⚙️</span>
-          <span>Ajustes del Torneo Activo: {data.config.name}</span>
-        </h3>
-
+      <CollapsibleSection icon={<span>⚙️</span>} title={`Ajustes del Torneo Activo: ${data.config.name}`} defaultOpen={true}>
         <div className="space-y-3 text-xs">
           <div>
             <label className="block text-slate-500 dark:text-slate-400 font-bold mb-1">Nombre del Torneo</label>
@@ -540,15 +536,11 @@ export function ConfigView({
             <span>Regenerar Fixture de este Torneo</span>
           </button>
         </div>
-      </div>
+      </CollapsibleSection>
 
       {/* 1.5 Combined Event Linking (e.g. Damas + Varones, same jornada) */}
-      <div className="bg-white dark:bg-slate-900 rounded-3xl p-4 shadow-sm border border-slate-200/80 dark:border-slate-800 transition-colors">
-        <div className="flex items-center gap-2 pb-3 border-b border-slate-100 dark:border-slate-800 mb-3">
-          <Layers className="w-4 h-4 text-rose-600" />
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white">Combinar con Otra Categoría</h3>
-        </div>
-        <p className="text-[11px] text-slate-400 dark:text-slate-500 -mt-1 mb-3">
+      <CollapsibleSection icon={<Layers className="w-4 h-4 text-sky-600" />} title="Combinar con Otra Categoría">
+        <p className="text-xs text-slate-400 dark:text-slate-500 -mt-1 mb-3">
           Para torneos que juegan el mismo día (ej: Damas y Varones). Cada uno mantiene su propia tabla; solo se
           comparte el horario del día y un mensaje de WhatsApp en común.
         </p>
@@ -575,7 +567,7 @@ export function ConfigView({
                     Combinado con {linked.map((t) => t.config.category || t.config.name).join(', ')} — este torneo usa {courtRange}.
                   </p>
                 </div>
-                <p className="text-[11px] text-slate-400 dark:text-slate-500 px-1">
+                <p className="text-xs text-slate-400 dark:text-slate-500 px-1">
                   Andá a la pestaña <span className="font-bold">Fixture → Evento Combinado</span> para ver ambos juntos, o compartí el reporte "Jornada Combinada" por WhatsApp.
                 </p>
                 <button
@@ -619,7 +611,7 @@ export function ConfigView({
                   }
                 }}
                 disabled={linkTargetId === 'none'}
-                className="w-full py-2.5 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 disabled:bg-slate-200 disabled:dark:bg-slate-800 disabled:text-slate-400 text-white rounded-2xl font-bold text-xs flex items-center justify-center gap-1.5 min-h-[44px] transition-all"
+                className="w-full py-2.5 bg-sky-600 hover:bg-sky-700 active:bg-sky-800 disabled:bg-slate-200 disabled:dark:bg-slate-800 disabled:text-slate-400 text-white rounded-2xl font-bold text-xs flex items-center justify-center gap-1.5 min-h-[44px] transition-all"
               >
                 <Layers className="w-3.5 h-3.5" />
                 <span>Combinar Torneos</span>
@@ -627,19 +619,10 @@ export function ConfigView({
             </div>
           );
         })()}
-      </div>
+      </CollapsibleSection>
 
       {/* 2. Teams & Roster Manager */}
-      <div className="bg-white dark:bg-slate-900 rounded-3xl p-4 shadow-sm border border-slate-200/80 dark:border-slate-800 transition-colors">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 mb-3">
-          <div className="flex items-center gap-2">
-            <Users className="w-4 h-4 text-sky-600" />
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-              Equipos y Planteles ({data.teams.length})
-            </h3>
-          </div>
-        </div>
-
+      <CollapsibleSection icon={<Users className="w-4 h-4 text-sky-600" />} title={`Equipos y Planteles (${data.teams.length})`} defaultOpen={true}>
         {/* Add Team Form */}
         <form onSubmit={handleAddTeam} className="p-3 bg-slate-50 dark:bg-slate-800/70 rounded-2xl border border-slate-100 dark:border-slate-700 mb-4 space-y-3">
           <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300">Nuevo Equipo</label>
@@ -920,21 +903,21 @@ export function ConfigView({
             })
           )}
         </div>
-      </div>
+      </CollapsibleSection>
 
       {/* 3. WhatsApp Messages & Default Templates */}
-      <div className="bg-white dark:bg-slate-900 rounded-3xl p-4 sm:p-5 shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-4 transition-colors">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <span className="p-1.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl">
-              <MessageCircle className="w-4 h-4" />
-            </span>
-            <span>Mensajes y Plantilla de WhatsApp</span>
-          </h3>
-          <span className="text-[10px] font-bold px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 rounded-full border border-emerald-200/60 dark:border-emerald-800/60">
-            Auto-formato
+      <CollapsibleSection
+        icon={
+          <span className="p-1.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl">
+            <MessageCircle className="w-4 h-4" />
           </span>
-        </div>
+        }
+        title="Mensajes y Plantilla de WhatsApp"
+      >
+        <div className="space-y-4">
+        <span className="inline-block text-[10px] font-bold px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 rounded-full border border-emerald-200/60 dark:border-emerald-800/60 mb-2">
+          Auto-formato
+        </span>
 
         <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
           Personaliza los textos predeterminados que se añaden al principio y al final de todos los mensajes al compartir resultados, posiciones, fixture o goleadores.
@@ -1037,14 +1020,12 @@ export function ConfigView({
             </button>
           </div>
         </div>
-      </div>
+        </div>
+      </CollapsibleSection>
 
       {/* 4. Backup, Demo Data and Reset */}
-      <div className="bg-white dark:bg-slate-900 rounded-3xl p-4 shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-2.5 transition-colors">
-        <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
-          Respaldo & Muestra
-        </h3>
-
+      <CollapsibleSection icon={<span>💾</span>} title="Respaldo & Muestra">
+        <div className="space-y-2.5">
         <div className="grid grid-cols-2 gap-2">
           <button
             onClick={handleExportJson}
@@ -1072,7 +1053,8 @@ export function ConfigView({
           <RotateCcw className="w-3.5 h-3.5" />
           <span>Restablecer Torneos Demo</span>
         </button>
-      </div>
+        </div>
+      </CollapsibleSection>
 
       <p className="text-center text-[11px] font-medium text-slate-400 dark:text-slate-600 pt-1 pb-2">
         Hockey Torneos · Desarrollado por Rodrigo Gracia
