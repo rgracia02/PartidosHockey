@@ -60,7 +60,7 @@ export function Header({
             <h1 className="text-xl font-black tracking-tight text-slate-900 dark:text-white leading-tight truncate group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors">
               {tournamentName || 'Torneo de Hockey'}
             </h1>
-            <ChevronDown className="w-4 h-4 text-slate-400 dark:text-slate-500 group-hover:text-sky-600 dark:group-hover:text-sky-400 shrink-0 stroke-[2.5]" />
+            <ChevronDown className="w-4 h-4 text-slate-500 dark:text-slate-400 group-hover:text-sky-600 dark:group-hover:text-sky-400 shrink-0 stroke-[2.5]" />
           </div>
         </button>
 
