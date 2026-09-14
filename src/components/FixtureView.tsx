@@ -193,15 +193,21 @@ export function FixtureView({
 
   const isCombined = viewMode === 'combined' && linkedTournaments.length > 0;
 
-  // Get unique stage labels for filter bar (own tournament, or union with linked ones in combined mode)
+  // Get unique stage labels for filter bar (own tournament, or union with linked ones in combined mode),
+  // sorted by round number so a manually-reordered "Fecha 2" always appears after "Fecha 1"
+  // regardless of where that match sits in the underlying matches array.
+  const STAGE_SORT_WEIGHT: Record<string, number> = { group: 0, quarter: 1, semi: 2, third_place: 3, final: 4 };
   const roundLabels = Array.from(
-    new Set(
-      (isCombined
-        ? [matches, ...linkedTournaments.map((t) => t.matches)].flat()
-        : matches
-      ).map((m) => m.stageLabel || `Fecha ${m.round}`)
-    )
-  );
+    (isCombined ? [matches, ...linkedTournaments.map((t) => t.matches)].flat() : matches).reduce((map, m) => {
+      const label = m.stageLabel || `Fecha ${m.round}`;
+      if (!map.has(label)) {
+        map.set(label, { round: m.round, stageWeight: STAGE_SORT_WEIGHT[m.stage] ?? 0 });
+      }
+      return map;
+    }, new Map<string, { round: number; stageWeight: number }>())
+  )
+    .sort((a, b) => a[1].stageWeight - b[1].stageWeight || a[1].round - b[1].round)
+    .map(([label]) => label);
 
   // Build the list of entries to render in combined mode: one entry per match, tagged with its own tournament/category
   const combinedEntries = isCombined
