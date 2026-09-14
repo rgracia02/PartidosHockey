@@ -391,6 +391,21 @@ export default function App() {
     showToast('✓ Torneo desvinculado del evento combinado');
   };
 
+  // Manually move a group-stage match to a different Fecha (round) and/or Cancha,
+  // for when the user wants a different order than the auto-generated fixture.
+  const handleRescheduleMatch = (matchId: string, newRound: number, newCourt: string) => {
+    updateCurrentTournament((prev) => ({
+      ...prev,
+      matches: prev.matches.map((m) =>
+        m.id === matchId
+          ? { ...m, round: newRound, stageLabel: m.stage === 'group' ? `Fecha ${newRound}` : m.stageLabel, court: newCourt }
+          : m
+      ),
+      lastUpdated: new Date().toISOString(),
+    }));
+    showToast('✓ Partido reprogramado');
+  };
+
   // Manually set the two teams facing off in a playoff match (semi/third_place/final),
   // overriding the automatic standings-based assignment for that match.
   const handleSetManualCross = (matchId: string, teamAId: string, teamBId: string) => {
@@ -589,6 +604,7 @@ export default function App() {
             onUnlinkTournamentEvent={handleUnlinkTournamentEvent}
             onSetManualCross={handleSetManualCross}
             onResetManualCross={handleResetManualCross}
+            onRescheduleMatch={handleRescheduleMatch}
           />
         )}
       </main>
