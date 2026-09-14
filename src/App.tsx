@@ -321,24 +321,38 @@ export default function App() {
       target.config.eventGroupId ||
       `event_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
+    // Auto-assign the target a court range that starts right after the current
+    // tournament's own courts, so both can be regenerated without colliding
+    // on the same physical cancha (only if the target doesn't already have its own offset set).
+    const currentOffset = currentTournament.config.courtLabelOffset || 0;
+    const targetNeedsOffset = !target.config.courtLabelOffset;
+    const newTargetOffset = targetNeedsOffset
+      ? currentOffset + currentTournament.config.courtsCount
+      : target.config.courtLabelOffset;
+
     setTournaments((prev) =>
       prev.map((t) => {
-        if (t.config.id === currentTournament.config.id || t.config.id === targetId) {
+        if (t.config.id === currentTournament.config.id) {
           return { ...t, config: { ...t.config, eventGroupId: groupId } };
+        }
+        if (t.config.id === targetId) {
+          return { ...t, config: { ...t.config, eventGroupId: groupId, courtLabelOffset: newTargetOffset } };
         }
         return t;
       })
     );
-    showToast(`✓ Vinculado con "${target.config.name}" como el mismo evento`);
+    showToast(
+      `✓ Vinculado con "${target.config.name}". Regenerá el fixture de cada torneo para aplicar canchas sin choques.`
+    );
   };
 
   // Remove the active tournament from its combined-event group
   const handleUnlinkTournamentEvent = () => {
     updateCurrentTournament((prev) => ({
       ...prev,
-      config: { ...prev.config, eventGroupId: undefined },
+      config: { ...prev.config, eventGroupId: undefined, courtLabelOffset: 0 },
     }));
-    showToast('✓ Torneo desvinculado del evento combinado');
+    showToast('✓ Torneo desvinculado del evento combinado. Regenerá el fixture si querés volver a "Cancha 1".');
   };
 
   // Match & Config Handlers for Active Tournament
@@ -390,7 +404,8 @@ export default function App() {
       currentTournament.teams,
       currentTournament.config.format,
       currentTournament.config.courtsCount,
-      currentTournament.config.isDoubleRound || false
+      currentTournament.config.isDoubleRound || false,
+      currentTournament.config.courtLabelOffset || 0
     );
     updateCurrentTournament((prev) => ({
       ...prev,
@@ -471,6 +486,15 @@ export default function App() {
             onSelectMatch={(m) => setSelectedMatch(m)}
             onShareResults={(roundLabel) => handleOpenShareModal('results', roundLabel || 'all')}
             onShareSingleMatch={(m) => setMatchToShare(m)}
+            linkedTournaments={linkedTournaments}
+            currentTournamentId={currentTournament.config.id}
+            currentCategory={currentTournament.config.category || currentTournament.config.name}
+            onSelectForeignMatch={(tournamentId, match) => {
+              setActiveTournamentId(tournamentId);
+              setSelectedMatch(match);
+              const foreign = tournaments.find((t) => t.config.id === tournamentId);
+              showToast(`🏆 Cambiaste a "${foreign?.config.name}" para cargar este partido`);
+            }}
           />
         )}
 
