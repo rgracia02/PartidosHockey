@@ -1003,6 +1003,68 @@ export function generateFixture(
         sanctions: [],
       });
     }
+  } else if (format === 'groups_playoffs_top5') {
+    // 5 equipos: el 1° pasa directo a semifinales.
+    //   Partido B: 2° vs 5°        Partido C: 3° vs 4°
+    //   Partido D: Perdedor B vs Perdedor C
+    //   Semifinal 1: 1° vs Ganador D    Semifinal 2: Ganador B vs Ganador C
+    //   3° y 4°: Perdedor SF1 vs Perdedor SF2      Final: Ganador SF1 vs Ganador SF2
+    // Con una sola cancha cada partido va en su propia ronda; con 2+ canchas se juegan en paralelo.
+    const parallel = courts.length >= 2;
+    const stamp = Date.now().toString(36);
+    const mk = (
+      key: NonNullable<Match['bracketKey']> | 'FINAL' | 'THIRD',
+      round: number,
+      stage: Match['stage'],
+      stageLabel: string,
+      court: string,
+      placeholderA: string,
+      placeholderB: string
+    ): Match => ({
+      id: `po-${key.toLowerCase()}-${stamp}`,
+      round,
+      stage,
+      stageLabel,
+      court,
+      teamAId: '',
+      teamBId: '',
+      placeholderA,
+      placeholderB,
+      bracketKey: key === 'FINAL' || key === 'THIRD' ? undefined : key,
+      scoreA: null,
+      scoreB: null,
+      isCompleted: false,
+      isShootout: false,
+      goals: [],
+      sanctions: [],
+    });
+
+    let r = totalGroupRounds + 1;
+    const roundB = r;
+    const roundC = parallel ? r : r + 1;
+    r = roundC + 1;
+    const roundD = r++;
+    const roundSF1 = r;
+    const roundSF2 = parallel ? r : r + 1;
+    r = roundSF2 + 1;
+    const roundThird = r;
+    const roundFinal = includeThirdPlace && !parallel ? r + 1 : r;
+
+    matches.push(
+      mk('B', roundB, 'quarter', 'Partido B', courts[0], '2° Posición Fase Regular', '5° Posición Fase Regular'),
+      mk('C', roundC, 'quarter', 'Partido C', courts[1] || courts[0], '3° Posición Fase Regular', '4° Posición Fase Regular'),
+      mk('D', roundD, 'quarter', 'Partido D', courts[0], 'Perdedor Partido B', 'Perdedor Partido C'),
+      mk('SF1', roundSF1, 'semi', 'Semifinal 1', courts[0], '1° Posición Fase Regular (directo)', 'Ganador Partido D'),
+      mk('SF2', roundSF2, 'semi', 'Semifinal 2', courts[1] || courts[0], 'Ganador Partido B', 'Ganador Partido C')
+    );
+    if (includeThirdPlace) {
+      matches.push(
+        mk('THIRD', roundThird, 'third_place', '3er y 4to Puesto', courts[1] || courts[0], 'Perdedor Semifinal 1', 'Perdedor Semifinal 2')
+      );
+    }
+    matches.push(
+      mk('FINAL', roundFinal, 'final', 'Gran Final', courts[0], 'Ganador Semifinal 1', 'Ganador Semifinal 2')
+    );
   } else if (format === 'groups_playoffs_quarters') {
     const qRound = totalGroupRounds + 1;
     matches.push(
@@ -1370,6 +1432,50 @@ export function syncPlayoffMatches(
   updated.forEach((m) => {
     if (!m) return;
     if (m.isManualCross) return; // user picked the teams by hand — leave it alone
+
+    // Fixed 5-team bracket (groups_playoffs_top5): B, C, D, SF1 and SF2 are wired by bracketKey
+    if (m.bracketKey) {
+      const byKey = (k: string) => updated.find((x) => x && x.bracketKey === k);
+      const winnerOf = (k: string) => {
+        const mm = byKey(k);
+        return mm ? matchWinners[mm.id] || '' : '';
+      };
+      const loserOf = (k: string) => {
+        const mm = byKey(k);
+        const w = mm ? matchWinners[mm.id] : '';
+        if (!mm || !w) return '';
+        return w === mm.teamAId ? mm.teamBId : mm.teamAId;
+      };
+      const enough = safeStandings.length >= 5;
+      let a = '';
+      let b = '';
+      switch (m.bracketKey) {
+        case 'B':
+          a = enough ? safeStandings[1].teamId : '';
+          b = enough ? safeStandings[4].teamId : '';
+          break;
+        case 'C':
+          a = enough ? safeStandings[2].teamId : '';
+          b = enough ? safeStandings[3].teamId : '';
+          break;
+        case 'D':
+          a = loserOf('B');
+          b = loserOf('C');
+          break;
+        case 'SF1':
+          a = enough ? safeStandings[0].teamId : '';
+          b = winnerOf('D');
+          break;
+        case 'SF2':
+          a = winnerOf('B');
+          b = winnerOf('C');
+          break;
+      }
+      m.teamAId = a;
+      m.teamBId = b;
+      return;
+    }
+
     if (m.stage === 'semi') {
       if (m.stageLabel?.includes('1') && safeStandings.length >= 4) {
         if (!m.teamAId || m.teamAId !== safeStandings[0]?.teamId) {
