@@ -39,6 +39,7 @@ interface ConfigViewProps {
   onUpdateConfig: (config: TournamentConfig) => void;
   onUpdateTeams: (teams: Team[]) => void;
   onRegenerateFixture: () => void;
+  onRegeneratePlayoffs: () => void;
   onLoadDemoData: () => void;
   onOpenStandaloneModal: () => void;
   onImportJson: (imported: TournamentData) => void;
@@ -72,6 +73,7 @@ export function ConfigView({
   onUpdateConfig,
   onUpdateTeams,
   onRegenerateFixture,
+  onRegeneratePlayoffs,
   onLoadDemoData,
   onOpenStandaloneModal,
   onImportJson,
@@ -502,6 +504,7 @@ export function ConfigView({
                 <option value="groups_only">Liga Simple (Solo Grupos)</option>
                 <option value="groups_playoffs_final">Grupos + Final (1° vs 2°)</option>
                 <option value="groups_playoffs_semis">Grupos + Semis (Top 4) + Final</option>
+                <option value="groups_playoffs_top5">Grupos + Top 5 (1° directo a semis) + Final</option>
                 <option value="groups_playoffs_quarters">Grupos + Cuartos + Semis + Final</option>
                 <option value="knockout_only">Eliminación Directa Pura</option>
               </select>
@@ -526,7 +529,9 @@ export function ConfigView({
               </select>
             </div>
 
-            {(data.config.format === 'groups_playoffs_semis' || data.config.format === 'groups_playoffs_final') && (
+            {(data.config.format === 'groups_playoffs_semis' ||
+              data.config.format === 'groups_playoffs_top5' ||
+              data.config.format === 'groups_playoffs_final') && (
               <div>
                 <label className="block text-slate-500 dark:text-slate-400 font-bold mb-1">
                   Partido por el 3° y 4° Puesto
@@ -562,6 +567,22 @@ export function ConfigView({
           >
             <RefreshCw className="w-3.5 h-3.5" />
             <span>Regenerar Fixture de este Torneo</span>
+          </button>
+
+          <button
+            onClick={() => {
+              if (
+                confirm(
+                  '¿Regenerar solo los playoffs con el formato actual? Se conservan los partidos y resultados de la fase regular; se reinician los cruces y resultados de playoffs.'
+                )
+              ) {
+                onRegeneratePlayoffs();
+              }
+            }}
+            className="w-full py-3 bg-sky-50 dark:bg-sky-950/40 active:bg-sky-100 dark:active:bg-sky-950/70 text-sky-700 dark:text-sky-300 font-bold rounded-2xl text-xs flex items-center justify-center gap-2 min-h-[44px] active:scale-95 transition-all"
+          >
+            <Trophy className="w-3.5 h-3.5" />
+            <span>Regenerar solo Playoffs (conserva resultados)</span>
           </button>
         </div>
       </CollapsibleSection>

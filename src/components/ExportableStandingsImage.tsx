@@ -4,6 +4,7 @@ import { StandingsRow, TournamentFormat } from '../types';
 const QUALIFY_CUTOFF_BY_FORMAT: Partial<Record<TournamentFormat, number>> = {
   groups_playoffs_final: 2,
   groups_playoffs_semis: 4,
+  groups_playoffs_top5: 5,
   groups_playoffs_quarters: 8,
 };
 

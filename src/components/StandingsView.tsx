@@ -19,6 +19,9 @@ export function StandingsView({ standings, format, onShareStandings, onShareStan
   } else if (format === 'groups_playoffs_semis') {
     playoffCutoff = 4;
     playoffLabel = 'Pasan a Semifinales';
+  } else if (format === 'groups_playoffs_top5') {
+    playoffCutoff = 5;
+    playoffLabel = 'Clasifican a playoffs (el 1° pasa directo a semifinales)';
   } else if (format === 'groups_playoffs_quarters') {
     playoffCutoff = 8;
     playoffLabel = 'Pasan a Cuartos de Final';

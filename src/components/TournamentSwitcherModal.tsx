@@ -190,6 +190,7 @@ export function TournamentSwitcherModal({
                   className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-semibold text-slate-900 dark:text-white min-h-[44px]"
                 >
                   <option value="groups_playoffs_semis">Grupos + Semis + Final</option>
+                  <option value="groups_playoffs_top5">Grupos + Top 5 (1° directo a semis)</option>
                   <option value="groups_playoffs_final">Grupos + Final Directa</option>
                   <option value="groups_playoffs_quarters">Grupos + Cuartos + Semis + Final</option>
                   <option value="groups_only">Liga Simple (Solo grupos)</option>
