@@ -56,6 +56,8 @@ export interface Match {
   photoUrl?: string; // Optional match photo (base64 data URL or uploaded image)
   date?: string;
   time?: string;
+  // Identifies a match inside the fixed 5-team bracket (groups_playoffs_top5) so it can be wired to the right teams
+  bracketKey?: 'B' | 'C' | 'D' | 'SF1' | 'SF2';
   isManualCross?: boolean; // true if the user manually picked the teams for this playoff match, so auto-sync from standings should leave it alone
 }
 
@@ -63,6 +65,7 @@ export type TournamentFormat =
   | 'groups_only'
   | 'groups_playoffs_final'
   | 'groups_playoffs_semis'
+  | 'groups_playoffs_top5'
   | 'groups_playoffs_quarters'
   | 'knockout_only';
 

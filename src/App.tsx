@@ -41,6 +41,12 @@ function sanitizeTournament(t: any): TournamentData {
     courtsCount: Number(t.config?.courtsCount) || 1,
     format: t.config?.format || 'groups_playoffs_semis',
     isDoubleRound: Boolean(t.config?.isDoubleRound),
+    includeThirdPlace: Boolean(t.config?.includeThirdPlace),
+    whatsappHeader: t.config?.whatsappHeader,
+    whatsappFooter: t.config?.whatsappFooter,
+    eventGroupId: t.config?.eventGroupId,
+    eventLabel: t.config?.eventLabel,
+    courtLabelOffset: Number(t.config?.courtLabelOffset) || 0,
     pointsWin: t.config?.pointsWin ?? 3,
     pointsDraw: t.config?.pointsDraw ?? 1,
     pointsLoss: t.config?.pointsLoss ?? 0,
@@ -71,6 +77,10 @@ function sanitizeTournament(t: any): TournamentData {
         teamBId: m?.teamBId || '',
         placeholderA: m?.placeholderA,
         placeholderB: m?.placeholderB,
+        bracketKey: m?.bracketKey,
+        isManualCross: Boolean(m?.isManualCross),
+        date: m?.date,
+        time: m?.time,
         scoreA: typeof m?.scoreA === 'number' ? m.scoreA : null,
         scoreB: typeof m?.scoreB === 'number' ? m.scoreB : null,
         isCompleted: Boolean(m?.isCompleted),
@@ -479,6 +489,31 @@ export default function App() {
     }));
   };
 
+  // Rebuild only the playoff bracket (e.g. after changing the format) and keep every
+  // group-stage match and result that is already loaded.
+  const handleRegeneratePlayoffs = () => {
+    updateCurrentTournament((prev) => {
+      const fresh = generateFixture(
+        prev.teams,
+        prev.config.format,
+        prev.config.courtsCount,
+        prev.config.isDoubleRound || false,
+        prev.config.courtLabelOffset || 0,
+        prev.config.includeThirdPlace || false
+      );
+      const groupMatches = prev.matches.filter((m) => m.stage === 'group');
+      const playoffMatches = fresh.filter((m) => m.stage !== 'group');
+      const combined = [...groupMatches, ...playoffMatches];
+      const curStandings = calculateStandings(prev.teams, combined, prev.config);
+      return {
+        ...prev,
+        matches: syncPlayoffMatches(combined, curStandings, prev.teams),
+        lastUpdated: new Date().toISOString(),
+      };
+    });
+    showToast('✓ Playoffs regenerados (se conservaron los resultados de la fase regular)');
+  };
+
   const handleRegenerateFixture = () => {
     const newMatches = generateFixture(
       currentTournament.teams,
@@ -607,6 +642,7 @@ export default function App() {
             onUpdateConfig={handleUpdateConfig}
             onUpdateTeams={handleUpdateTeams}
             onRegenerateFixture={handleRegenerateFixture}
+            onRegeneratePlayoffs={handleRegeneratePlayoffs}
             onLoadDemoData={handleLoadDemo}
             onOpenStandaloneModal={() => setShowStandaloneModal(true)}
             onImportJson={handleImportJson}
