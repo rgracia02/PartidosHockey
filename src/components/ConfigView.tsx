@@ -29,7 +29,7 @@ import {
   TournamentStatus,
 } from '../types';
 import { CollapsibleSection } from './CollapsibleSection';
-import { getEditorName, setEditorName as saveEditorName } from '../utils/editorIdentity';
+import { GoogleUser } from '../utils/googleAuth';
 
 interface ConfigViewProps {
   data: TournamentData;
@@ -61,9 +61,14 @@ interface ConfigViewProps {
   onClearStageSchedule: (stageLabel: string) => void;
   cloudConfigured: boolean;
   cloudStatus: 'idle' | 'loading' | 'synced' | 'error';
-  cloudCanEdit: boolean;
-  onPublishTournament: (editPassword: string) => void;
-  onUnlockCloudEditing: (pin: string) => void;
+  googleUser: GoogleUser | null;
+  isCloudOwner: boolean;
+  isCloudEditor: boolean;
+  onGoogleSignIn: () => void;
+  onGoogleSignOut: () => void;
+  onPublishTournament: () => void;
+  onGrantEditor: (email: string) => void;
+  onRevokeEditor: (email: string) => void;
 }
 
 function formatLogTime(iso: string): string {
@@ -115,17 +120,21 @@ export function ConfigView({
   onClearStageSchedule,
   cloudConfigured,
   cloudStatus,
-  cloudCanEdit,
+  googleUser,
+  isCloudOwner,
+  isCloudEditor,
+  onGoogleSignIn,
+  onGoogleSignOut,
   onPublishTournament,
-  onUnlockCloudEditing,
+  onGrantEditor,
+  onRevokeEditor,
 }: ConfigViewProps) {
   const [linkTargetId, setLinkTargetId] = useState('none');
   const [useSeparateCourts, setUseSeparateCourts] = useState(false);
   // Cloud sharing state
   const [newSharePin, setNewSharePin] = useState('');
-  const [unlockPinInput, setUnlockPinInput] = useState('');
+  const [newEditorEmail, setNewEditorEmail] = useState('');
   const [linkCopied, setLinkCopied] = useState(false);
-  const [editorName, setEditorName] = useState(() => getEditorName());
   // Matchday (Jornada) scheduling state
   const [matchdayDate, setMatchdayDate] = useState('');
   const [matchdayStart, setMatchdayStart] = useState('09:00');
@@ -634,118 +643,143 @@ export function ConfigView({
         </div>
       </CollapsibleSection>
 
-      {/* 1.45 Cloud sharing: view-only link + PIN-gated editing */}
+      {/* 1.45 Cloud sharing: view-only link + Google-account permissions */}
       <CollapsibleSection icon={<span>🔗</span>} title="Compartir Torneo" defaultOpen={!!data.config.shareCode}>
-        {cloudConfigured && (
-          <div className="mb-3">
-            <label className="block text-[10px] text-slate-500 dark:text-slate-400 font-bold mb-1">
-              Tu nombre (para saber quién cargó qué)
-            </label>
-            <input
-              type="text"
-              value={editorName}
-              onChange={(e) => {
-                setEditorName(e.target.value);
-                saveEditorName(e.target.value);
-              }}
-              placeholder="Ej: Ana"
-              className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-semibold text-slate-900 dark:text-white min-h-[44px]"
-            />
-          </div>
-        )}
         {!cloudConfigured ? (
           <p className="text-xs text-slate-500 dark:text-slate-500">
-            Esta función todavía no está activada: hace falta conectar un proyecto de Firebase (ver las
-            instrucciones que te pasaron junto con este código, archivo <code className="font-mono">.env.example</code>).
-            Mientras tanto, el torneo sigue guardándose solo en este dispositivo, como siempre.
+            Esta función todavía no está activada: hace falta conectar un proyecto de Firebase con el login de
+            Google habilitado (ver las instrucciones que te pasaron junto con este código). Mientras tanto, el
+            torneo sigue guardándose solo en este dispositivo, como siempre.
           </p>
-        ) : !data.config.shareCode ? (
+        ) : !googleUser ? (
           <div className="space-y-3">
             <p className="text-xs text-slate-500 dark:text-slate-500 -mt-1">
-              Publicá este torneo para que cualquiera con el link lo vea actualizarse en vivo desde su celular.
-              Para cargar resultados van a necesitar la clave que definas acá.
+              Iniciá sesión con Google para poder publicar este torneo, o para que quede identificado quién
+              carga cada resultado.
             </p>
-            <div>
-              <label className="block text-[10px] text-slate-500 dark:text-slate-400 font-bold mb-1">
-                Clave para cargar resultados
-              </label>
-              <input
-                type="text"
-                value={newSharePin}
-                onChange={(e) => setNewSharePin(e.target.value)}
-                placeholder="Ej: hockey2026"
-                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-semibold text-slate-900 dark:text-white min-h-[44px]"
-              />
-            </div>
             <button
-              onClick={() => {
-                if (!newSharePin.trim()) return;
-                onPublishTournament(newSharePin.trim());
-                setNewSharePin('');
-              }}
-              disabled={!newSharePin.trim()}
-              className="w-full py-2.5 bg-sky-600 hover:bg-sky-700 active:bg-sky-800 disabled:bg-slate-200 disabled:dark:bg-slate-700 disabled:text-slate-400 text-white rounded-2xl font-bold text-xs flex items-center justify-center gap-1.5 min-h-[44px] transition-all"
+              onClick={onGoogleSignIn}
+              className="w-full py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 min-h-[44px]"
             >
-              <span>Publicar y generar link</span>
+              <span>Iniciar sesión con Google</span>
             </button>
           </div>
         ) : (
           <div className="space-y-3">
-            <div className="flex items-center gap-2 text-[11px] font-bold">
-              {cloudStatus === 'synced' && <span className="text-sky-700 dark:text-sky-300">☁️ Sincronizado</span>}
-              {cloudStatus === 'loading' && <span className="text-slate-500">☁️ Conectando…</span>}
-              {cloudStatus === 'error' && <span className="text-rose-600 dark:text-rose-400">⚠️ Sin sincronizar (revisá la clave o la conexión)</span>}
-            </div>
-
-            <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-3.5 py-2.5">
-              <span className="flex-1 text-xs font-semibold text-slate-700 dark:text-slate-200 truncate">
-                {`${window.location.origin}${window.location.pathname}?t=${data.config.shareCode}`}
-              </span>
-              <button
-                onClick={() => {
-                  navigator.clipboard
-                    ?.writeText(`${window.location.origin}${window.location.pathname}?t=${data.config.shareCode}`)
-                    .then(() => {
-                      setLinkCopied(true);
-                      setTimeout(() => setLinkCopied(false), 2000);
-                    });
-                }}
-                className="shrink-0 px-3 py-1.5 bg-sky-600 hover:bg-sky-700 active:bg-sky-800 text-white rounded-xl font-bold text-[11px] min-h-[32px]"
-              >
-                {linkCopied ? '✓ Copiado' : 'Copiar'}
+            <div className="flex items-center gap-2.5 bg-slate-50 dark:bg-slate-800/70 rounded-2xl px-3 py-2.5">
+              {googleUser.photoURL && (
+                <img src={googleUser.photoURL} alt="" className="w-8 h-8 rounded-full shrink-0" referrerPolicy="no-referrer" />
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">{googleUser.displayName}</p>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{googleUser.email}</p>
+              </div>
+              <button onClick={onGoogleSignOut} className="shrink-0 text-[10px] font-bold text-rose-600 dark:text-rose-400 hover:underline">
+                Salir
               </button>
             </div>
-            <p className="text-[11px] text-slate-500 dark:text-slate-500">
-              Cualquiera con este link ve el torneo actualizarse solo. Para cargar resultados necesitan la clave
-              que definiste.
-            </p>
 
-            {!cloudCanEdit && (
-              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2">
-                <p className="text-[11px] text-slate-500 dark:text-slate-500">
-                  Este dispositivo todavía no tiene la clave guardada, así que solo puede ver el torneo. Si sos
-                  vos el organizador en otro celular, ingresala acá para poder cargar resultados desde este.
+            {!data.config.shareCode ? (
+              <div className="space-y-2">
+                <p className="text-xs text-slate-500 dark:text-slate-500">
+                  Publicá este torneo para que cualquiera con el link lo vea actualizarse en vivo. Vos vas a
+                  quedar como el organizador, y desde acá podés decidir qué otras cuentas de Google pueden
+                  cargar resultados.
                 </p>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={unlockPinInput}
-                    onChange={(e) => setUnlockPinInput(e.target.value)}
-                    placeholder="Clave del torneo"
-                    className="flex-1 px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-900 dark:text-white min-h-[40px]"
-                  />
+                <button
+                  onClick={onPublishTournament}
+                  className="w-full py-2.5 bg-sky-600 hover:bg-sky-700 active:bg-sky-800 text-white rounded-2xl font-bold text-xs flex items-center justify-center gap-1.5 min-h-[44px] transition-all"
+                >
+                  <span>Publicar y generar link</span>
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-[11px] font-bold">
+                  {cloudStatus === 'synced' && <span className="text-sky-700 dark:text-sky-300">☁️ Sincronizado</span>}
+                  {cloudStatus === 'loading' && <span className="text-slate-500">☁️ Conectando…</span>}
+                  {cloudStatus === 'error' && (
+                    <span className="text-rose-600 dark:text-rose-400">⚠️ Sin sincronizar (¿tenés permiso de edición?)</span>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-3.5 py-2.5">
+                  <span className="flex-1 text-xs font-semibold text-slate-700 dark:text-slate-200 truncate">
+                    {`${window.location.origin}${window.location.pathname}?t=${data.config.shareCode}`}
+                  </span>
                   <button
                     onClick={() => {
-                      if (!unlockPinInput.trim()) return;
-                      onUnlockCloudEditing(unlockPinInput.trim());
-                      setUnlockPinInput('');
+                      navigator.clipboard
+                        ?.writeText(`${window.location.origin}${window.location.pathname}?t=${data.config.shareCode}`)
+                        .then(() => {
+                          setLinkCopied(true);
+                          setTimeout(() => setLinkCopied(false), 2000);
+                        });
                     }}
-                    disabled={!unlockPinInput.trim()}
-                    className="shrink-0 px-3 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 disabled:bg-slate-200 disabled:text-slate-400 rounded-xl font-bold text-[11px] min-h-[40px]"
+                    className="shrink-0 px-3 py-1.5 bg-sky-600 hover:bg-sky-700 active:bg-sky-800 text-white rounded-xl font-bold text-[11px] min-h-[32px]"
                   >
-                    Desbloquear
+                    {linkCopied ? '✓ Copiado' : 'Copiar'}
                   </button>
                 </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-500">
+                  Cualquiera con este link ve el torneo actualizarse solo. Para cargar resultados necesitan
+                  iniciar sesión con una cuenta de Google que vos hayas autorizado.
+                </p>
+
+                {isCloudOwner ? (
+                  <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2">
+                    <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                      Quién puede cargar resultados
+                    </p>
+                    <div className="flex items-center justify-between text-xs bg-slate-50 dark:bg-slate-800/70 rounded-xl px-3 py-2">
+                      <span className="font-semibold text-slate-700 dark:text-slate-200 truncate">{data.config.shareOwnerEmail}</span>
+                      <span className="text-[10px] font-bold text-sky-600 dark:text-sky-400 shrink-0">Organizador</span>
+                    </div>
+                    {(data.config.shareEditorEmails || []).map((email) => (
+                      <div key={email} className="flex items-center justify-between text-xs bg-slate-50 dark:bg-slate-800/70 rounded-xl px-3 py-2">
+                        <span className="font-semibold text-slate-700 dark:text-slate-200 truncate">{email}</span>
+                        <button
+                          onClick={() => onRevokeEditor(email)}
+                          className="shrink-0 text-[10px] font-bold text-rose-600 dark:text-rose-400 hover:underline"
+                        >
+                          Quitar
+                        </button>
+                      </div>
+                    ))}
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="email"
+                        value={newEditorEmail}
+                        onChange={(e) => setNewEditorEmail(e.target.value)}
+                        placeholder="email@gmail.com"
+                        className="flex-1 px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-900 dark:text-white min-h-[40px]"
+                      />
+                      <button
+                        onClick={() => {
+                          if (!newEditorEmail.trim()) return;
+                          onGrantEditor(newEditorEmail.trim());
+                          setNewEditorEmail('');
+                        }}
+                        disabled={!newEditorEmail.trim()}
+                        className="shrink-0 px-3 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 disabled:bg-slate-200 disabled:text-slate-400 rounded-xl font-bold text-[11px] min-h-[40px]"
+                      >
+                        Dar permiso
+                      </button>
+                    </div>
+                  </div>
+                ) : isCloudEditor ? (
+                  <p className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 pt-2 border-t border-slate-100 dark:border-slate-800">
+                    ✓ Tenés permiso para cargar resultados en este torneo.
+                  </p>
+                ) : (
+                  <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <p className="text-[11px] text-slate-500 dark:text-slate-500">
+                      Por ahora solo podés ver el torneo. Para cargar resultados, pasale este mail al organizador
+                      para que te dé permiso:
+                    </p>
+                    <p className="text-xs font-bold text-slate-800 dark:text-slate-100 mt-1">{googleUser.email}</p>
+                  </div>
+                )}
               </div>
             )}
 
