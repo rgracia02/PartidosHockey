@@ -1544,6 +1544,51 @@ export function clearScheduleForStage(matches: Match[], stageLabel: string): Mat
 }
 
 /**
+ * When a match is pulled out of a day/time/court slot it was occupying (e.g. a team can't travel
+ * that day), this looks for the best not-yet-scheduled group-stage match to slot into the gap
+ * instead, so the court doesn't sit empty.
+ *
+ * "Best" means: the earliest Fecha (by round number) among the matches still without a date, whose
+ * two teams are BOTH free that day (neither of them already has another match on that same date) -
+ * so nobody ends up needing to play twice, or travel twice, on the same day.
+ */
+export function fillScheduleGap(
+  matches: Match[],
+  gap: { date: string; time: string; court: string },
+  excludeMatchId?: string
+): { matches: Match[]; filledMatch?: Match } {
+  if (!gap.date || !gap.time || !gap.court) return { matches };
+
+  const teamsBusyThatDay = new Set<string>();
+  matches.forEach((m) => {
+    if (m.date === gap.date && m.id !== excludeMatchId) {
+      teamsBusyThatDay.add(m.teamAId);
+      teamsBusyThatDay.add(m.teamBId);
+    }
+  });
+
+  const candidate = matches
+    .filter(
+      (m) =>
+        m.stage === 'group' &&
+        m.id !== excludeMatchId &&
+        !m.date &&
+        m.teamAId &&
+        m.teamBId &&
+        !teamsBusyThatDay.has(m.teamAId) &&
+        !teamsBusyThatDay.has(m.teamBId)
+    )
+    .sort((a, b) => a.round - b.round)[0];
+
+  if (!candidate) return { matches };
+
+  const updated = matches.map((m) =>
+    m.id === candidate.id ? { ...m, date: gap.date, time: gap.time, court: gap.court } : m
+  );
+  return { matches: updated, filledMatch: { ...candidate, date: gap.date, time: gap.time, court: gap.court } };
+}
+
+/**
  * Updates dynamic playoff match teams based on group stage standings and previous playoff winners
  */
 export function syncPlayoffMatches(
