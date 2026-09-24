@@ -13,10 +13,10 @@ import { ShareType, WhatsAppShareModal } from './components/WhatsAppShareModal';
 import { ImageShareModal, ImageShareType } from './components/ImageShareModal';
 import { Match, Team, TournamentConfig, TournamentData, TournamentFormat, TournamentStatus } from './types';
 import {
-  assignScheduleToRound,
   calculatePlayerCards,
   calculateStandings,
   calculateTopScorers,
+  clearScheduleForStage,
   createNewTournament,
   DEFAULT_TOURNAMENTS,
   formatWhatsAppResults,
@@ -25,6 +25,7 @@ import {
   formatWhatsAppSummary,
   generateFixture,
   INITIAL_DEMO_DATA,
+  scheduleMatchday,
   syncPlayoffMatches,
 } from './utils/tournamentEngine';
 
@@ -421,27 +422,61 @@ export default function App() {
     showToast('✓ Partido reprogramado');
   };
 
-  // Assign a real date + kickoff time to every match of a given Fecha (round), stacking matches
-  // that share a court so they don't overlap. If this tournament is linked to another category
-  // (e.g. Damas + Varones) sharing the same physical courts, their already-scheduled matches on
-  // that same date are taken into account so the two categories interleave instead of colliding.
-  const handleAssignSchedule = (stageLabel: string, date: string, startTime: string, durationMinutes: number) => {
+  // Given the physical capacity of a single playing day (courts available + time window), figures
+  // out on its own how many whole Fechas fit and assigns real court + kickoff time to each match in
+  // them. If linked to another category sharing the same physical courts, its matches on that same
+  // date are taken into account so the two categories share the time grid without overlapping.
+  const handleScheduleMatchday = (
+    date: string,
+    startTime: string,
+    endTime: string,
+    courtsAvailable: number,
+    durationMinutes: number
+  ) => {
+    let scheduledLabels: string[] = [];
+    let leftover: string | undefined;
     updateCurrentTournament((prev) => {
       const otherMatches = linkedTournaments.flatMap((t) => t.matches);
-      const updatedMatches = assignScheduleToRound(
+      const result = scheduleMatchday(
         prev.matches,
-        stageLabel,
-        { date, startTime, durationMinutes },
+        {
+          date,
+          startTime,
+          endTime,
+          courtsAvailable,
+          durationMinutes,
+          courtLabelOffset: prev.config.courtLabelOffset || 0,
+        },
         otherMatches
       );
+      scheduledLabels = result.scheduledStageLabels;
+      leftover = result.leftoverStageLabel;
       return {
         ...prev,
         config: { ...prev.config, matchDurationMinutes: durationMinutes },
-        matches: updatedMatches,
+        matches: result.matches,
         lastUpdated: new Date().toISOString(),
       };
     });
-    showToast(`✓ Horario asignado a ${stageLabel}`);
+
+    if (scheduledLabels.length === 0) {
+      showToast(
+        leftover
+          ? `⚠️ ${leftover} no entra en ese horario/canchas. Probá agrandar la ventana o sumar canchas.`
+          : '⚠️ No hay Fechas pendientes de asignar.'
+      );
+    } else {
+      showToast(`✓ Se asignaron ${scheduledLabels.join(', ')} a ese día${leftover ? ` (${leftover} queda para otro día)` : ''}`);
+    }
+  };
+
+  const handleClearStageSchedule = (stageLabel: string) => {
+    updateCurrentTournament((prev) => ({
+      ...prev,
+      matches: clearScheduleForStage(prev.matches, stageLabel),
+      lastUpdated: new Date().toISOString(),
+    }));
+    showToast(`✓ Se quitó el horario de ${stageLabel}`);
   };
 
   // Manually set the two teams facing off in a playoff match (semi/third_place/final),
@@ -676,7 +711,8 @@ export default function App() {
             onSetManualCross={handleSetManualCross}
             onResetManualCross={handleResetManualCross}
             onRescheduleMatch={handleRescheduleMatch}
-            onAssignSchedule={handleAssignSchedule}
+            onScheduleMatchday={handleScheduleMatchday}
+            onClearStageSchedule={handleClearStageSchedule}
           />
         )}
       </main>
