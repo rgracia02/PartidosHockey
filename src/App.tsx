@@ -310,15 +310,20 @@ export default function App() {
 
   // Publishes the CURRENT tournament to the cloud for the first time, generating its share link.
   const handlePublishTournament = async (editPassword: string) => {
-    const result = await publishTournament(currentTournament, editPassword);
-    if (!result) {
-      showToast('⚠️ Falta configurar Firebase para poder compartir (mirá .env.example).');
-      return;
+    try {
+      const result = await publishTournament(currentTournament, editPassword);
+      if (!result) {
+        showToast('⚠️ Falta configurar Firebase para poder compartir (mirá .env.example).');
+        return;
+      }
+      savePin(result.shareCode, result.editPassword);
+      updateCurrentTournament((prev) => ({ ...prev, config: { ...prev.config, shareCode: result.shareCode } }));
+      setCloudStatus('synced');
+      showToast('✓ Torneo publicado. Ya podés compartir el link.');
+    } catch (err) {
+      console.error('Error al publicar el torneo en la nube:', err);
+      showToast('⚠️ No se pudo publicar (revisá la consola del navegador con F12 para ver el detalle).');
     }
-    savePin(result.shareCode, result.editPassword);
-    updateCurrentTournament((prev) => ({ ...prev, config: { ...prev.config, shareCode: result.shareCode } }));
-    setCloudStatus('synced');
-    showToast('✓ Torneo publicado. Ya podés compartir el link.');
   };
 
   // Lets someone on a fresh device (who already knows the PIN) unlock editing for this shared
