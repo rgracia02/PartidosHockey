@@ -134,9 +134,17 @@ export interface PlayerCardStat {
   totalCards: number;
 }
 
+export interface ActivityLogEntry {
+  id: string;
+  at: string; // ISO timestamp
+  by: string; // display name of whoever made the change, on their device
+  message: string; // human-readable description, e.g. "cargó el resultado de Cancha 2"
+}
+
 export interface TournamentData {
   config: TournamentConfig;
   teams: Team[];
   matches: Match[];
   lastUpdated: string;
+  activityLog?: ActivityLogEntry[]; // most recent first; who did what, for shared/cloud tournaments
 }
