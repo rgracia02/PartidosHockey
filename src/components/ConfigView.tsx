@@ -840,7 +840,8 @@ export function ConfigView({
             <p className="text-xs text-slate-500 dark:text-slate-500 -mt-1 mb-3">
               Cambiá la fecha y/o cancha de cualquier partido de la fase de liga si preferís otro orden al que se generó automático.
               Si un equipo no puede jugar el día que le tocó (ej: no puede viajar), movés <strong>ese partido puntual</strong> a otro
-              día/horario acá abajo, sin tocar el resto de la Fecha.
+              día/horario acá abajo. Si ese partido ya tenía un lugar asignado (día + cancha), la app va a intentar completar ese
+              hueco automáticamente con el próximo partido pendiente cuyos dos equipos estén libres ese día.
             </p>
             <div className="space-y-2.5">
               {sortedGroupMatches.map((m) => {
