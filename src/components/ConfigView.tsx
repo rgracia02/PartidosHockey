@@ -58,6 +58,11 @@ interface ConfigViewProps {
     durationMinutes: number
   ) => void;
   onClearStageSchedule: (stageLabel: string) => void;
+  cloudConfigured: boolean;
+  cloudStatus: 'idle' | 'loading' | 'synced' | 'error';
+  cloudCanEdit: boolean;
+  onPublishTournament: (editPassword: string) => void;
+  onUnlockCloudEditing: (pin: string) => void;
 }
 
 const COLOR_PRESETS = [
@@ -95,9 +100,18 @@ export function ConfigView({
   onSetMatchDateTime,
   onScheduleMatchday,
   onClearStageSchedule,
+  cloudConfigured,
+  cloudStatus,
+  cloudCanEdit,
+  onPublishTournament,
+  onUnlockCloudEditing,
 }: ConfigViewProps) {
   const [linkTargetId, setLinkTargetId] = useState('none');
   const [useSeparateCourts, setUseSeparateCourts] = useState(false);
+  // Cloud sharing state
+  const [newSharePin, setNewSharePin] = useState('');
+  const [unlockPinInput, setUnlockPinInput] = useState('');
+  const [linkCopied, setLinkCopied] = useState(false);
   // Matchday (Jornada) scheduling state
   const [matchdayDate, setMatchdayDate] = useState('');
   const [matchdayStart, setMatchdayStart] = useState('09:00');
@@ -604,6 +618,107 @@ export function ConfigView({
             <span>Regenerar solo Playoffs (conserva resultados)</span>
           </button>
         </div>
+      </CollapsibleSection>
+
+      {/* 1.45 Cloud sharing: view-only link + PIN-gated editing */}
+      <CollapsibleSection icon={<span>🔗</span>} title="Compartir Torneo" defaultOpen={!!data.config.shareCode}>
+        {!cloudConfigured ? (
+          <p className="text-xs text-slate-500 dark:text-slate-500">
+            Esta función todavía no está activada: hace falta conectar un proyecto de Firebase (ver las
+            instrucciones que te pasaron junto con este código, archivo <code className="font-mono">.env.example</code>).
+            Mientras tanto, el torneo sigue guardándose solo en este dispositivo, como siempre.
+          </p>
+        ) : !data.config.shareCode ? (
+          <div className="space-y-3">
+            <p className="text-xs text-slate-500 dark:text-slate-500 -mt-1">
+              Publicá este torneo para que cualquiera con el link lo vea actualizarse en vivo desde su celular.
+              Para cargar resultados van a necesitar la clave que definas acá.
+            </p>
+            <div>
+              <label className="block text-[10px] text-slate-500 dark:text-slate-400 font-bold mb-1">
+                Clave para cargar resultados
+              </label>
+              <input
+                type="text"
+                value={newSharePin}
+                onChange={(e) => setNewSharePin(e.target.value)}
+                placeholder="Ej: hockey2026"
+                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-semibold text-slate-900 dark:text-white min-h-[44px]"
+              />
+            </div>
+            <button
+              onClick={() => {
+                if (!newSharePin.trim()) return;
+                onPublishTournament(newSharePin.trim());
+                setNewSharePin('');
+              }}
+              disabled={!newSharePin.trim()}
+              className="w-full py-2.5 bg-sky-600 hover:bg-sky-700 active:bg-sky-800 disabled:bg-slate-200 disabled:dark:bg-slate-700 disabled:text-slate-400 text-white rounded-2xl font-bold text-xs flex items-center justify-center gap-1.5 min-h-[44px] transition-all"
+            >
+              <span>Publicar y generar link</span>
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 text-[11px] font-bold">
+              {cloudStatus === 'synced' && <span className="text-sky-700 dark:text-sky-300">☁️ Sincronizado</span>}
+              {cloudStatus === 'loading' && <span className="text-slate-500">☁️ Conectando…</span>}
+              {cloudStatus === 'error' && <span className="text-rose-600 dark:text-rose-400">⚠️ Sin sincronizar (revisá la clave o la conexión)</span>}
+            </div>
+
+            <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-3.5 py-2.5">
+              <span className="flex-1 text-xs font-semibold text-slate-700 dark:text-slate-200 truncate">
+                {`${window.location.origin}${window.location.pathname}?t=${data.config.shareCode}`}
+              </span>
+              <button
+                onClick={() => {
+                  navigator.clipboard
+                    ?.writeText(`${window.location.origin}${window.location.pathname}?t=${data.config.shareCode}`)
+                    .then(() => {
+                      setLinkCopied(true);
+                      setTimeout(() => setLinkCopied(false), 2000);
+                    });
+                }}
+                className="shrink-0 px-3 py-1.5 bg-sky-600 hover:bg-sky-700 active:bg-sky-800 text-white rounded-xl font-bold text-[11px] min-h-[32px]"
+              >
+                {linkCopied ? '✓ Copiado' : 'Copiar'}
+              </button>
+            </div>
+            <p className="text-[11px] text-slate-500 dark:text-slate-500">
+              Cualquiera con este link ve el torneo actualizarse solo. Para cargar resultados necesitan la clave
+              que definiste.
+            </p>
+
+            {!cloudCanEdit && (
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2">
+                <p className="text-[11px] text-slate-500 dark:text-slate-500">
+                  Este dispositivo todavía no tiene la clave guardada, así que solo puede ver el torneo. Si sos
+                  vos el organizador en otro celular, ingresala acá para poder cargar resultados desde este.
+                </p>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={unlockPinInput}
+                    onChange={(e) => setUnlockPinInput(e.target.value)}
+                    placeholder="Clave del torneo"
+                    className="flex-1 px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-900 dark:text-white min-h-[40px]"
+                  />
+                  <button
+                    onClick={() => {
+                      if (!unlockPinInput.trim()) return;
+                      onUnlockCloudEditing(unlockPinInput.trim());
+                      setUnlockPinInput('');
+                    }}
+                    disabled={!unlockPinInput.trim()}
+                    className="shrink-0 px-3 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 disabled:bg-slate-200 disabled:text-slate-400 rounded-xl font-bold text-[11px] min-h-[40px]"
+                  >
+                    Desbloquear
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </CollapsibleSection>
 
       {/* 1.5 Combined Event Linking (e.g. Damas + Varones, same jornada) */}

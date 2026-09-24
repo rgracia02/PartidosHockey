@@ -10,6 +10,7 @@ interface HeaderProps {
   onToggleTheme: () => void;
   onShareWhatsApp: () => void;
   onOpenTournamentSwitcher: () => void;
+  cloudStatus?: 'idle' | 'loading' | 'synced' | 'error';
 }
 
 export function Header({
@@ -21,6 +22,7 @@ export function Header({
   onToggleTheme,
   onShareWhatsApp,
   onOpenTournamentSwitcher,
+  cloudStatus = 'idle',
 }: HeaderProps) {
   return (
     <header
@@ -52,6 +54,21 @@ export function Header({
             {status === 'upcoming' && (
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 text-[10px] font-bold">
                 ⏳ Próximo
+              </span>
+            )}
+            {cloudStatus === 'synced' && (
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-sky-100 dark:bg-sky-950/80 text-sky-800 dark:text-sky-300 text-[10px] font-bold" title="Este torneo está compartido y se sincroniza en la nube">
+                ☁️ Sincronizado
+              </span>
+            )}
+            {cloudStatus === 'loading' && (
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[10px] font-bold">
+                ☁️ Conectando...
+              </span>
+            )}
+            {cloudStatus === 'error' && (
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-rose-100 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 text-[10px] font-bold" title="No se pudo sincronizar (revisá la clave o la conexión)">
+                ⚠️ Sin sincronizar
               </span>
             )}
           </div>
