@@ -73,6 +73,11 @@ interface ConfigViewProps {
   onPublishTournament: () => void;
   onGrantEditor: (email: string) => void;
   onRevokeEditor: (email: string) => void;
+  canPublish: boolean;
+  authorizedCreators: string[];
+  canManageCreators: boolean;
+  onAddAuthorizedCreator: (email: string) => void;
+  onRemoveAuthorizedCreator: (email: string) => void;
   readOnly: boolean;
 }
 
@@ -133,6 +138,11 @@ export function ConfigView({
   onPublishTournament,
   onGrantEditor,
   onRevokeEditor,
+  canPublish,
+  authorizedCreators,
+  canManageCreators,
+  onAddAuthorizedCreator,
+  onRemoveAuthorizedCreator,
   readOnly,
 }: ConfigViewProps) {
   const [linkTargetId, setLinkTargetId] = useState('none');
@@ -143,6 +153,7 @@ export function ConfigView({
   // Cloud sharing state
   const [newSharePin, setNewSharePin] = useState('');
   const [newEditorEmail, setNewEditorEmail] = useState('');
+  const [newCreatorEmail, setNewCreatorEmail] = useState('');
   const [linkCopied, setLinkCopied] = useState(false);
   // Matchday (Jornada) scheduling state
   const [matchdayDate, setMatchdayDate] = useState('');
@@ -764,19 +775,69 @@ export function ConfigView({
               </button>
             </div>
 
+            {canManageCreators && (
+              <div className="space-y-2 pb-2 border-b border-slate-100 dark:border-slate-800">
+                <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                  Quién puede publicar torneos nuevos
+                </p>
+                {authorizedCreators.map((email) => (
+                  <div key={email} className="flex items-center justify-between text-xs bg-slate-50 dark:bg-slate-800/70 rounded-xl px-3 py-2">
+                    <span className="font-semibold text-slate-700 dark:text-slate-200 truncate">{email}</span>
+                    {email !== googleUser.email && (
+                      <button
+                        onClick={() => onRemoveAuthorizedCreator(email)}
+                        className="shrink-0 text-[10px] font-bold text-rose-600 dark:text-rose-400 hover:underline"
+                      >
+                        Quitar
+                      </button>
+                    )}
+                  </div>
+                ))}
+                <div className="flex items-center gap-2">
+                  <input
+                    type="email"
+                    value={newCreatorEmail}
+                    onChange={(e) => setNewCreatorEmail(e.target.value)}
+                    placeholder="email@gmail.com"
+                    className="flex-1 px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-900 dark:text-white min-h-[40px]"
+                  />
+                  <button
+                    onClick={() => {
+                      if (!newCreatorEmail.trim()) return;
+                      onAddAuthorizedCreator(newCreatorEmail.trim());
+                      setNewCreatorEmail('');
+                    }}
+                    disabled={!newCreatorEmail.trim()}
+                    className="shrink-0 px-3 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 disabled:bg-slate-200 disabled:text-slate-400 rounded-xl font-bold text-[11px] min-h-[40px]"
+                  >
+                    Agregar
+                  </button>
+                </div>
+              </div>
+            )}
+
             {!data.config.shareCode ? (
               <div className="space-y-2">
-                <p className="text-xs text-slate-500 dark:text-slate-500">
-                  Publicá este torneo para que cualquiera con el link lo vea actualizarse en vivo. Vos vas a
-                  quedar como el organizador, y desde acá podés decidir qué otras cuentas de Google pueden
-                  cargar resultados.
-                </p>
-                <button
-                  onClick={onPublishTournament}
-                  className="w-full py-2.5 bg-sky-600 hover:bg-sky-700 active:bg-sky-800 text-white rounded-2xl font-bold text-xs flex items-center justify-center gap-1.5 min-h-[44px] transition-all"
-                >
-                  <span>Publicar y generar link</span>
-                </button>
+                {canPublish ? (
+                  <>
+                    <p className="text-xs text-slate-500 dark:text-slate-500">
+                      Publicá este torneo para que cualquiera con el link lo vea actualizarse en vivo. Vos vas a
+                      quedar como el organizador, y desde acá podés decidir qué otras cuentas de Google pueden
+                      cargar resultados.
+                    </p>
+                    <button
+                      onClick={onPublishTournament}
+                      className="w-full py-2.5 bg-sky-600 hover:bg-sky-700 active:bg-sky-800 text-white rounded-2xl font-bold text-xs flex items-center justify-center gap-1.5 min-h-[44px] transition-all"
+                    >
+                      <span>Publicar y generar link</span>
+                    </button>
+                  </>
+                ) : (
+                  <p className="text-xs text-slate-500 dark:text-slate-500">
+                    Tu cuenta ({googleUser.email}) no está autorizada para publicar torneos nuevos en la nube.
+                    Pedile a alguien de la lista de arriba que te agregue.
+                  </p>
+                )}
               </div>
             ) : (
               <div className="space-y-3">
