@@ -11,8 +11,9 @@ import { TabBar, TabType } from './components/TabBar';
 import { TournamentSwitcherModal } from './components/TournamentSwitcherModal';
 import { ShareType, WhatsAppShareModal } from './components/WhatsAppShareModal';
 import { ImageShareModal, ImageShareType } from './components/ImageShareModal';
-import { Match, Team, TournamentConfig, TournamentData, TournamentFormat, TournamentStatus } from './types';
+import { ActivityLogEntry, Match, Team, TournamentConfig, TournamentData, TournamentFormat, TournamentStatus } from './types';
 import { fetchSharedTournament, publishTournament, pushTournamentUpdate, subscribeToSharedTournament } from './utils/cloudSync';
+import { getEditorName } from './utils/editorIdentity';
 import { isFirebaseConfigured } from './utils/firebase';
 import { getSavedPin, savePin } from './utils/sharePins';
 import {
@@ -35,6 +36,18 @@ import {
 
 const LOCAL_STORAGE_KEY_V3 = 'hockey_torneos_state_v3';
 const LEGACY_STORAGE_KEY_V2 = 'hockey_torneos_state_v2';
+
+// Builds a new activity-log entry attributed to whoever is editing on THIS device, and prepends it
+// to the tournament's existing log (most recent first, capped so the document doesn't grow forever).
+function appendActivityLog(prev: TournamentData, message: string): ActivityLogEntry[] {
+  const entry: ActivityLogEntry = {
+    id: `log-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+    at: new Date().toISOString(),
+    by: getEditorName().trim() || 'Alguien',
+    message,
+  };
+  return [entry, ...(prev.activityLog || [])].slice(0, 30);
+}
 
 function sanitizeTournament(t: any): TournamentData {
   if (!t || typeof t !== 'object') return INITIAL_DEMO_DATA;
@@ -107,6 +120,7 @@ function sanitizeTournament(t: any): TournamentData {
     teams,
     matches,
     lastUpdated: t.lastUpdated || new Date().toISOString(),
+    activityLog: Array.isArray(t.activityLog) ? t.activityLog.slice(0, 30) : [],
   };
 }
 
@@ -317,7 +331,11 @@ export default function App() {
         return;
       }
       savePin(result.shareCode, result.editPassword);
-      updateCurrentTournament((prev) => ({ ...prev, config: { ...prev.config, shareCode: result.shareCode } }));
+      updateCurrentTournament((prev) => ({
+        ...prev,
+        config: { ...prev.config, shareCode: result.shareCode },
+        activityLog: appendActivityLog(prev, 'publicó el torneo en la nube'),
+      }));
       setCloudStatus('synced');
       showToast('✓ Torneo publicado. Ya podés compartir el link.');
     } catch (err) {
@@ -527,15 +545,21 @@ export default function App() {
   // Manually move a group-stage match to a different Fecha (round) and/or Cancha,
   // for when the user wants a different order than the auto-generated fixture.
   const handleRescheduleMatch = (matchId: string, newRound: number, newCourt: string) => {
-    updateCurrentTournament((prev) => ({
-      ...prev,
-      matches: prev.matches.map((m) =>
-        m.id === matchId
-          ? { ...m, round: newRound, stageLabel: m.stage === 'group' ? `Fecha ${newRound}` : m.stageLabel, court: newCourt }
-          : m
-      ),
-      lastUpdated: new Date().toISOString(),
-    }));
+    updateCurrentTournament((prev) => {
+      const m = prev.matches.find((x) => x.id === matchId);
+      const teamA = prev.teams.find((t) => t.id === m?.teamAId)?.name || 'Equipo';
+      const teamB = prev.teams.find((t) => t.id === m?.teamBId)?.name || 'Equipo';
+      return {
+        ...prev,
+        matches: prev.matches.map((mm) =>
+          mm.id === matchId
+            ? { ...mm, round: newRound, stageLabel: mm.stage === 'group' ? `Fecha ${newRound}` : mm.stageLabel, court: newCourt }
+            : mm
+        ),
+        activityLog: appendActivityLog(prev, `reprogramó ${teamA} vs ${teamB} a Fecha ${newRound}, ${newCourt}`),
+        lastUpdated: new Date().toISOString(),
+      };
+    });
     showToast('✓ Partido reprogramado');
   };
 
@@ -563,7 +587,18 @@ export default function App() {
         filledMatch = result.filledMatch;
       }
 
-      return { ...prev, matches: updatedMatches, lastUpdated: new Date().toISOString() };
+      const teamA = prev.teams.find((t) => t.id === original?.teamAId)?.name || 'Equipo';
+      const teamB = prev.teams.find((t) => t.id === original?.teamBId)?.name || 'Equipo';
+      const logMsg = date
+        ? `movió ${teamA} vs ${teamB} a ${date} ${time || ''}`.trim()
+        : `quitó el horario de ${teamA} vs ${teamB}`;
+
+      return {
+        ...prev,
+        matches: updatedMatches,
+        activityLog: appendActivityLog(prev, logMsg),
+        lastUpdated: new Date().toISOString(),
+      };
     });
 
     if (filledMatch) {
@@ -608,6 +643,10 @@ export default function App() {
         ...prev,
         config: { ...prev.config, matchDurationMinutes: durationMinutes },
         matches: result.matches,
+        activityLog:
+          result.scheduledStageLabels.length > 0
+            ? appendActivityLog(prev, `armó el horario del ${date} para ${result.scheduledStageLabels.join(', ')}`)
+            : prev.activityLog,
         lastUpdated: new Date().toISOString(),
       };
     });
@@ -627,6 +666,7 @@ export default function App() {
     updateCurrentTournament((prev) => ({
       ...prev,
       matches: clearScheduleForStage(prev.matches, stageLabel),
+      activityLog: appendActivityLog(prev, `quitó el horario de ${stageLabel}`),
       lastUpdated: new Date().toISOString(),
     }));
     showToast(`✓ Se quitó el horario de ${stageLabel}`);
@@ -664,9 +704,16 @@ export default function App() {
       const updatedMatches = prev.matches.map((m) => (m.id === updatedMatch.id ? updatedMatch : m));
       const curStandings = calculateStandings(prev.teams, updatedMatches, prev.config);
       const syncedMatches = syncPlayoffMatches(updatedMatches, curStandings, prev.teams);
+      const teamA = prev.teams.find((t) => t.id === updatedMatch.teamAId)?.name || updatedMatch.placeholderA || 'Equipo';
+      const teamB = prev.teams.find((t) => t.id === updatedMatch.teamBId)?.name || updatedMatch.placeholderB || 'Equipo';
+      const logMsg =
+        updatedMatch.scoreA !== null && updatedMatch.scoreB !== null
+          ? `cargó el resultado de ${teamA} ${updatedMatch.scoreA}-${updatedMatch.scoreB} ${teamB} (${updatedMatch.court})`
+          : `editó el partido ${teamA} vs ${teamB} (${updatedMatch.court})`;
       return {
         ...prev,
         matches: syncedMatches,
+        activityLog: appendActivityLog(prev, logMsg),
         lastUpdated: new Date().toISOString(),
       };
     });
