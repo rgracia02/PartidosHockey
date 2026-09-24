@@ -422,6 +422,19 @@ export default function App() {
     showToast('✓ Partido reprogramado');
   };
 
+  // Manually move a single match to a different day/time (e.g. a team can't travel that day),
+  // without touching the rest of that Fecha's schedule. Empty strings clear the match's schedule.
+  const handleSetMatchDateTime = (matchId: string, date: string, time: string) => {
+    updateCurrentTournament((prev) => ({
+      ...prev,
+      matches: prev.matches.map((m) =>
+        m.id === matchId ? { ...m, date: date || undefined, time: time || undefined } : m
+      ),
+      lastUpdated: new Date().toISOString(),
+    }));
+    showToast(date ? '✓ Horario del partido actualizado' : '✓ Se quitó el horario del partido');
+  };
+
   // Given the physical capacity of a single playing day (courts available + time window), figures
   // out on its own how many whole Fechas fit and assigns real court + kickoff time to each match in
   // them. If linked to another category sharing the same physical courts, its matches on that same
@@ -711,6 +724,7 @@ export default function App() {
             onSetManualCross={handleSetManualCross}
             onResetManualCross={handleResetManualCross}
             onRescheduleMatch={handleRescheduleMatch}
+            onSetMatchDateTime={handleSetMatchDateTime}
             onScheduleMatchday={handleScheduleMatchday}
             onClearStageSchedule={handleClearStageSchedule}
           />
