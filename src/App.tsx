@@ -12,10 +12,17 @@ import { TournamentSwitcherModal } from './components/TournamentSwitcherModal';
 import { ShareType, WhatsAppShareModal } from './components/WhatsAppShareModal';
 import { ImageShareModal, ImageShareType } from './components/ImageShareModal';
 import { ActivityLogEntry, Match, Team, TournamentConfig, TournamentData, TournamentFormat, TournamentStatus } from './types';
-import { fetchSharedTournament, publishTournament, pushTournamentUpdate, subscribeToSharedTournament } from './utils/cloudSync';
+import {
+  fetchSharedTournament,
+  grantEditorAccess,
+  publishTournament,
+  pushTournamentUpdate,
+  revokeEditorAccess,
+  subscribeToSharedTournament,
+} from './utils/cloudSync';
 import { getEditorName } from './utils/editorIdentity';
 import { isFirebaseConfigured } from './utils/firebase';
-import { getSavedPin, savePin } from './utils/sharePins';
+import { GoogleUser, signInWithGoogle, signOutOfGoogle, subscribeToGoogleUser } from './utils/googleAuth';
 import {
   calculatePlayerCards,
   calculateStandings,
@@ -39,11 +46,11 @@ const LEGACY_STORAGE_KEY_V2 = 'hockey_torneos_state_v2';
 
 // Builds a new activity-log entry attributed to whoever is editing on THIS device, and prepends it
 // to the tournament's existing log (most recent first, capped so the document doesn't grow forever).
-function appendActivityLog(prev: TournamentData, message: string): ActivityLogEntry[] {
+function appendActivityLog(prev: TournamentData, message: string, by: string): ActivityLogEntry[] {
   const entry: ActivityLogEntry = {
     id: `log-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
     at: new Date().toISOString(),
-    by: getEditorName().trim() || 'Alguien',
+    by: by.trim() || 'Alguien',
     message,
   };
   return [entry, ...(prev.activityLog || [])].slice(0, 30);
@@ -68,6 +75,9 @@ function sanitizeTournament(t: any): TournamentData {
     courtLabelOffset: Number(t.config?.courtLabelOffset) || 0,
     matchDurationMinutes: t.config?.matchDurationMinutes ? Number(t.config.matchDurationMinutes) : undefined,
     shareCode: t.config?.shareCode || undefined,
+    shareOwnerUid: t.config?.shareOwnerUid || undefined,
+    shareOwnerEmail: t.config?.shareOwnerEmail || undefined,
+    shareEditorEmails: Array.isArray(t.config?.shareEditorEmails) ? t.config.shareEditorEmails : undefined,
     pointsWin: t.config?.pointsWin ?? 3,
     pointsDraw: t.config?.pointsDraw ?? 1,
     pointsLoss: t.config?.pointsLoss ?? 0,
@@ -239,7 +249,8 @@ export default function App() {
   // ---------------------------------------------------------------------------------------------
   // Cloud sync ("Compartir Torneo"): if the app was opened with ?t=CODE in the URL, this device is
   // viewing/editing a tournament that lives in Firebase instead of (or in addition to) its own
-  // localStorage copy. Reading is open to anyone with the link; editing needs the tournament's PIN.
+  // localStorage copy. Reading is open to anyone with the link; editing needs a Google account the
+  // tournament's owner has approved (or being that owner).
   // ---------------------------------------------------------------------------------------------
   const [cloudLinkCode] = useState<string | null>(() => {
     try {
@@ -250,13 +261,26 @@ export default function App() {
   });
   const [cloudStatus, setCloudStatus] = useState<'idle' | 'loading' | 'synced' | 'error'>('idle');
   const [cloudBootstrapped, setCloudBootstrapped] = useState(false);
+  const [googleUser, setGoogleUser] = useState<GoogleUser | null>(null);
   // While true, an incoming update from Firestore is being applied locally, so the "push local
   // changes back up" effect below should skip this cycle (otherwise every remote update would
   // immediately get echoed straight back up as if it were a new local edit).
   const suppressCloudPushRef = useRef(false);
 
   const activeShareCode = currentTournament?.config.shareCode || null;
-  const activeCloudPin = activeShareCode ? getSavedPin(activeShareCode) : '';
+  const activeOwnerUid = currentTournament?.config.shareOwnerUid || '';
+  const activeEditorEmails = currentTournament?.config.shareEditorEmails || [];
+  const isCloudOwner = !!googleUser && googleUser.uid === activeOwnerUid;
+  const isCloudEditor = !!googleUser && (isCloudOwner || activeEditorEmails.includes(googleUser.email));
+  // Whichever name should label this device's edits in the activity log: prefer the signed-in
+  // Google name, fall back to a manually-typed local name, then a generic placeholder.
+  const editorLabel = googleUser?.displayName || getEditorName().trim() || 'Alguien';
+
+  // Keep track of the signed-in Google account across the whole app.
+  useEffect(() => {
+    const unsubscribe = subscribeToGoogleUser(setGoogleUser);
+    return () => unsubscribe();
+  }, []);
 
   // First load via a shared link (?t=CODE): pull that tournament in once and make it the active
   // one, even if this device never had it locally before. Live updates from then on are handled
@@ -289,14 +313,23 @@ export default function App() {
 
   // While the currently open tournament has a shareCode (whether we got here via a link, or it's
   // just this device's own tournament that was published earlier), keep it live: apply whatever
-  // change comes down from Firestore, from ANY device.
+  // change comes down from Firestore, from ANY device, and keep the owner/editors list in sync too.
   useEffect(() => {
     if (!activeShareCode || !isFirebaseConfigured()) return;
     const thisId = currentTournament.config.id;
-    const unsubscribe = subscribeToSharedTournament(activeShareCode, (data) => {
-      if (!data) return;
+    const unsubscribe = subscribeToSharedTournament(activeShareCode, (snapshot) => {
+      if (!snapshot) return;
       suppressCloudPushRef.current = true;
-      const tagged: TournamentData = { ...data, config: { ...data.config, shareCode: activeShareCode } };
+      const tagged: TournamentData = {
+        ...snapshot.data,
+        config: {
+          ...snapshot.data.config,
+          shareCode: activeShareCode,
+          shareOwnerUid: snapshot.ownerUid,
+          shareOwnerEmail: snapshot.ownerEmail,
+          shareEditorEmails: snapshot.editorEmails,
+        },
+      };
       setTournaments((prev) => prev.map((t) => (t.config.id === thisId ? tagged : t)));
       setCloudStatus('synced');
       setTimeout(() => {
@@ -307,14 +340,16 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeShareCode]);
 
-  // Push local edits up to the cloud whenever the active shared tournament changes, as long as we
-  // have its PIN on this device and the change didn't just come FROM the cloud itself.
+  // Push local edits up to the cloud whenever the active shared tournament changes, as long as
+  // this account is allowed to edit it and the change didn't just come FROM the cloud itself.
+  // Firestore rules are the real gatekeeper - this is just so we don't bother trying when we
+  // already know it'll be rejected.
   useEffect(() => {
-    if (!activeShareCode || !activeCloudPin) return;
+    if (!activeShareCode || !isCloudEditor) return;
     if (suppressCloudPushRef.current) return;
 
     const timer = setTimeout(() => {
-      pushTournamentUpdate(activeShareCode, activeCloudPin, currentTournament).then((ok) => {
+      pushTournamentUpdate(activeShareCode, currentTournament).then((ok) => {
         setCloudStatus(ok ? 'synced' : 'error');
       });
     }, 600);
@@ -322,19 +357,43 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentTournament?.lastUpdated]);
 
-  // Publishes the CURRENT tournament to the cloud for the first time, generating its share link.
-  const handlePublishTournament = async (editPassword: string) => {
+  const handleGoogleSignIn = async () => {
     try {
-      const result = await publishTournament(currentTournament, editPassword);
+      await signInWithGoogle();
+    } catch (err) {
+      console.error('Error al iniciar sesión con Google:', err);
+      showToast('⚠️ No se pudo iniciar sesión (¿está activado el proveedor Google en Firebase?).');
+    }
+  };
+
+  const handleGoogleSignOut = async () => {
+    await signOutOfGoogle();
+    showToast('Sesión cerrada.');
+  };
+
+  // Publishes the CURRENT tournament to the cloud for the first time, owned by the signed-in
+  // Google account, generating its share link.
+  const handlePublishTournament = async () => {
+    if (!googleUser) {
+      showToast('⚠️ Iniciá sesión con Google primero para poder publicar.');
+      return;
+    }
+    try {
+      const result = await publishTournament(currentTournament, googleUser.uid, googleUser.email);
       if (!result) {
         showToast('⚠️ Falta configurar Firebase para poder compartir (mirá .env.example).');
         return;
       }
-      savePin(result.shareCode, result.editPassword);
       updateCurrentTournament((prev) => ({
         ...prev,
-        config: { ...prev.config, shareCode: result.shareCode },
-        activityLog: appendActivityLog(prev, 'publicó el torneo en la nube'),
+        config: {
+          ...prev.config,
+          shareCode: result.shareCode,
+          shareOwnerUid: result.ownerUid,
+          shareOwnerEmail: result.ownerEmail,
+          shareEditorEmails: [],
+        },
+        activityLog: appendActivityLog(prev, 'publicó el torneo en la nube', editorLabel),
       }));
       setCloudStatus('synced');
       showToast('✓ Torneo publicado. Ya podés compartir el link.');
@@ -344,12 +403,17 @@ export default function App() {
     }
   };
 
-  // Lets someone on a fresh device (who already knows the PIN) unlock editing for this shared
-  // tournament, without having to be the one who originally published it.
-  const handleUnlockCloudEditing = (pin: string) => {
+  // Owner-only: grants/revokes edit access to another Google account by email.
+  const handleGrantEditor = async (email: string) => {
+    if (!activeShareCode || !email.trim()) return;
+    const ok = await grantEditorAccess(activeShareCode, email);
+    showToast(ok ? `✓ ${email.trim()} ya puede cargar resultados.` : '⚠️ No se pudo dar el permiso.');
+  };
+
+  const handleRevokeEditor = async (email: string) => {
     if (!activeShareCode) return;
-    savePin(activeShareCode, pin);
-    showToast('✓ Clave guardada en este dispositivo. Ya podés cargar resultados.');
+    const ok = await revokeEditorAccess(activeShareCode, email);
+    showToast(ok ? `✓ Se le quitó el permiso a ${email}.` : '⚠️ No se pudo quitar el permiso.');
   };
 
   // Standings calculation for active tournament
@@ -556,7 +620,7 @@ export default function App() {
             ? { ...mm, round: newRound, stageLabel: mm.stage === 'group' ? `Fecha ${newRound}` : mm.stageLabel, court: newCourt }
             : mm
         ),
-        activityLog: appendActivityLog(prev, `reprogramó ${teamA} vs ${teamB} a Fecha ${newRound}, ${newCourt}`),
+        activityLog: appendActivityLog(prev, `reprogramó ${teamA} vs ${teamB} a Fecha ${newRound}, ${newCourt}`, editorLabel),
         lastUpdated: new Date().toISOString(),
       };
     });
@@ -596,7 +660,7 @@ export default function App() {
       return {
         ...prev,
         matches: updatedMatches,
-        activityLog: appendActivityLog(prev, logMsg),
+        activityLog: appendActivityLog(prev, logMsg, editorLabel),
         lastUpdated: new Date().toISOString(),
       };
     });
@@ -645,7 +709,7 @@ export default function App() {
         matches: result.matches,
         activityLog:
           result.scheduledStageLabels.length > 0
-            ? appendActivityLog(prev, `armó el horario del ${date} para ${result.scheduledStageLabels.join(', ')}`)
+            ? appendActivityLog(prev, `armó el horario del ${date} para ${result.scheduledStageLabels.join(', ')}`, editorLabel)
             : prev.activityLog,
         lastUpdated: new Date().toISOString(),
       };
@@ -666,7 +730,7 @@ export default function App() {
     updateCurrentTournament((prev) => ({
       ...prev,
       matches: clearScheduleForStage(prev.matches, stageLabel),
-      activityLog: appendActivityLog(prev, `quitó el horario de ${stageLabel}`),
+      activityLog: appendActivityLog(prev, `quitó el horario de ${stageLabel}`, editorLabel),
       lastUpdated: new Date().toISOString(),
     }));
     showToast(`✓ Se quitó el horario de ${stageLabel}`);
@@ -713,7 +777,7 @@ export default function App() {
       return {
         ...prev,
         matches: syncedMatches,
-        activityLog: appendActivityLog(prev, logMsg),
+        activityLog: appendActivityLog(prev, logMsg, editorLabel),
         lastUpdated: new Date().toISOString(),
       };
     });
@@ -917,9 +981,14 @@ export default function App() {
             onClearStageSchedule={handleClearStageSchedule}
             cloudConfigured={isFirebaseConfigured()}
             cloudStatus={activeShareCode ? cloudStatus : 'idle'}
-            cloudCanEdit={!!activeCloudPin}
+            googleUser={googleUser}
+            isCloudOwner={isCloudOwner}
+            isCloudEditor={isCloudEditor}
+            onGoogleSignIn={handleGoogleSignIn}
+            onGoogleSignOut={handleGoogleSignOut}
             onPublishTournament={handlePublishTournament}
-            onUnlockCloudEditing={handleUnlockCloudEditing}
+            onGrantEditor={handleGrantEditor}
+            onRevokeEditor={handleRevokeEditor}
           />
         )}
       </main>

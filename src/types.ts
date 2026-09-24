@@ -91,6 +91,9 @@ export interface TournamentConfig {
   courtLabelOffset?: number; // shifts generated court numbers (e.g. offset=2 -> "Cancha 3", "Cancha 4"...) so linked tournaments don't collide on the same physical courts
   matchDurationMinutes?: number; // default duration used to auto-stack kickoff times when assigning a schedule to a Fecha
   shareCode?: string; // if set, this tournament is published to the cloud under this code (see "Compartir Torneo")
+  shareOwnerUid?: string; // Google UID of whoever published it - always allowed to edit and manage access
+  shareOwnerEmail?: string; // that owner's Google email, shown in the access-management UI
+  shareEditorEmails?: string[]; // Google emails the owner has granted edit access to, besides themselves
 }
 
 export interface StandingsRow {
