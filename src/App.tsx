@@ -13,11 +13,14 @@ import { ShareType, WhatsAppShareModal } from './components/WhatsAppShareModal';
 import { ImageShareModal, ImageShareType } from './components/ImageShareModal';
 import { ActivityLogEntry, Match, Team, TournamentConfig, TournamentData, TournamentFormat, TournamentStatus } from './types';
 import {
+  addAuthorizedCreator,
   fetchSharedTournament,
   grantEditorAccess,
   publishTournament,
   pushTournamentUpdate,
+  removeAuthorizedCreator,
   revokeEditorAccess,
+  subscribeToAuthorizedCreators,
   subscribeToSharedTournament,
 } from './utils/cloudSync';
 import { getEditorName } from './utils/editorIdentity';
@@ -262,6 +265,7 @@ export default function App() {
   const [cloudStatus, setCloudStatus] = useState<'idle' | 'loading' | 'synced' | 'error'>('idle');
   const [cloudBootstrapped, setCloudBootstrapped] = useState(false);
   const [googleUser, setGoogleUser] = useState<GoogleUser | null>(null);
+  const [authorizedCreators, setAuthorizedCreators] = useState<string[]>([]);
   // While true, an incoming update from Firestore is being applied locally, so the "push local
   // changes back up" effect below should skip this cycle (otherwise every remote update would
   // immediately get echoed straight back up as if it were a new local edit).
@@ -276,9 +280,20 @@ export default function App() {
   // Google name, fall back to a manually-typed local name, then a generic placeholder.
   const editorLabel = googleUser?.displayName || getEditorName().trim() || 'Alguien';
 
+  const canPublish = !!googleUser && authorizedCreators.includes(googleUser.email);
+  const canManageCreators = canPublish; // anyone already on the list can add/remove others
+
   // Keep track of the signed-in Google account across the whole app.
   useEffect(() => {
     const unsubscribe = subscribeToGoogleUser(setGoogleUser);
+    return () => unsubscribe();
+  }, []);
+
+  // Keep the list of accounts allowed to publish new tournaments in sync, for as long as Firebase
+  // is configured (no need to be signed in to know the list exists, but reading it does require it).
+  useEffect(() => {
+    if (!isFirebaseConfigured()) return;
+    const unsubscribe = subscribeToAuthorizedCreators(setAuthorizedCreators);
     return () => unsubscribe();
   }, []);
 
@@ -378,6 +393,10 @@ export default function App() {
       showToast('⚠️ Iniciá sesión con Google primero para poder publicar.');
       return;
     }
+    if (!canPublish) {
+      showToast('⚠️ Tu cuenta no está autorizada para publicar torneos en la nube.');
+      return;
+    }
     try {
       const result = await publishTournament(currentTournament, googleUser.uid, googleUser.email);
       if (!result) {
@@ -414,6 +433,17 @@ export default function App() {
     if (!activeShareCode) return;
     const ok = await revokeEditorAccess(activeShareCode, email);
     showToast(ok ? `✓ Se le quitó el permiso a ${email}.` : '⚠️ No se pudo quitar el permiso.');
+  };
+
+  // Owner-of-the-app-level actions: who is allowed to publish NEW tournaments to the cloud at all.
+  const handleAddAuthorizedCreator = async (email: string) => {
+    const ok = await addAuthorizedCreator(email);
+    showToast(ok ? `✓ ${email.trim()} ya puede publicar torneos.` : '⚠️ No se pudo agregar (¿tenés vos permiso?).');
+  };
+
+  const handleRemoveAuthorizedCreator = async (email: string) => {
+    const ok = await removeAuthorizedCreator(email);
+    showToast(ok ? `✓ Se le quitó el permiso de publicar a ${email}.` : '⚠️ No se pudo quitar el permiso.');
   };
 
   const isReadOnlyCloud = !!activeShareCode && !isCloudEditor;
@@ -1010,6 +1040,11 @@ export default function App() {
             onPublishTournament={handlePublishTournament}
             onGrantEditor={handleGrantEditor}
             onRevokeEditor={handleRevokeEditor}
+            canPublish={canPublish}
+            authorizedCreators={authorizedCreators}
+            canManageCreators={canManageCreators}
+            onAddAuthorizedCreator={handleAddAuthorizedCreator}
+            onRemoveAuthorizedCreator={handleRemoveAuthorizedCreator}
             readOnly={isReadOnlyCloud}
           />
         )}
