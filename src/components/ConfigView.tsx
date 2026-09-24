@@ -49,7 +49,14 @@ interface ConfigViewProps {
   onSetManualCross: (matchId: string, teamAId: string, teamBId: string) => void;
   onResetManualCross: (matchId: string) => void;
   onRescheduleMatch: (matchId: string, newRound: number, newCourt: string) => void;
-  onAssignSchedule: (stageLabel: string, date: string, startTime: string, durationMinutes: number) => void;
+  onScheduleMatchday: (
+    date: string,
+    startTime: string,
+    endTime: string,
+    courtsAvailable: number,
+    durationMinutes: number
+  ) => void;
+  onClearStageSchedule: (stageLabel: string) => void;
 }
 
 const COLOR_PRESETS = [
@@ -84,13 +91,17 @@ export function ConfigView({
   onSetManualCross,
   onResetManualCross,
   onRescheduleMatch,
-  onAssignSchedule,
+  onScheduleMatchday,
+  onClearStageSchedule,
 }: ConfigViewProps) {
   const [linkTargetId, setLinkTargetId] = useState('none');
   const [useSeparateCourts, setUseSeparateCourts] = useState(false);
-  // Schedule assignment (per Fecha) state
-  const [scheduleDuration, setScheduleDuration] = useState(data.config.matchDurationMinutes || 40);
-  const [scheduleDrafts, setScheduleDrafts] = useState<Record<string, { date: string; time: string }>>({});
+  // Matchday (Jornada) scheduling state
+  const [matchdayDate, setMatchdayDate] = useState('');
+  const [matchdayStart, setMatchdayStart] = useState('09:00');
+  const [matchdayEnd, setMatchdayEnd] = useState('13:00');
+  const [matchdayCourts, setMatchdayCourts] = useState(data.config.courtsCount || 2);
+  const [matchdayDuration, setMatchdayDuration] = useState(data.config.matchDurationMinutes || 40);
   // New team form state
   const [newTeamName, setNewTeamName] = useState('');
   const [newTeamColor, setNewTeamColor] = useState(COLOR_PRESETS[0]);
@@ -692,12 +703,11 @@ export function ConfigView({
         })()}
       </CollapsibleSection>
 
-      {/* 1.55 Schedule Assignment (date + kickoff time per Fecha) */}
+      {/* 1.55 Matchday scheduling: "tengo N canchas tal día en tal horario" → arma solas las Fechas que entren */}
       {(() => {
         const groupMatches = data.matches.filter((m) => m.stage === 'group');
         if (groupMatches.length === 0) return null;
 
-        // Distinct Fecha labels, in round order.
         const stageLabelsMap = new Map<string, number>();
         groupMatches.forEach((m) => {
           const label = m.stageLabel || `Fecha ${m.round}`;
@@ -705,90 +715,107 @@ export function ConfigView({
         });
         const stageLabels = Array.from(stageLabelsMap.entries()).sort((a, b) => a[1] - b[1]);
 
+        const scheduledStages = stageLabels.filter(([label]) =>
+          groupMatches.some((m) => (m.stageLabel || `Fecha ${m.round}`) === label && m.date)
+        );
+        const nextUnscheduled = stageLabels.find(
+          ([label]) => !groupMatches.some((m) => (m.stageLabel || `Fecha ${m.round}`) === label && m.date)
+        );
+
         const isCombinedSharedCourts = !!data.config.eventGroupId && !data.config.courtLabelOffset;
 
         return (
-          <CollapsibleSection icon={<Clock className="w-4 h-4" />} title="Horarios y Duración de Partidos">
+          <CollapsibleSection icon={<Clock className="w-4 h-4" />} title="Armar Jornada (Horarios)">
             <p className="text-xs text-slate-500 dark:text-slate-500 -mt-1 mb-3">
-              Elegí la fecha y la hora de inicio de cada Fecha del fixture. La app arma solo el horario de cada
-              partido, encadenándolos por cancha según la duración que pongas.
-              {isCombinedSharedCourts && ' Como este torneo comparte canchas con otra categoría del mismo evento, sus horarios no se van a superponer entre sí.'}
+              Contale cuántas canchas tenés disponibles un día y en qué horario, y la app calcula sola cuántas
+              Fechas completas entran y les arma el horario. Cada vez que agregues otro día de partidos, va a
+              seguir desde la primera Fecha que todavía no tenga fecha asignada.
+              {isCombinedSharedCourts && ' Como este torneo comparte canchas con otra categoría del mismo evento, los horarios de ambas no se van a superponer.'}
             </p>
 
-            <div className="mb-3">
-              <label className="block text-[10px] text-slate-500 dark:text-slate-400 font-bold mb-1">
-                Duración de cada partido (minutos)
-              </label>
-              <input
-                type="number"
-                min={1}
-                value={scheduleDuration}
-                onChange={(e) => setScheduleDuration(Math.max(1, Number(e.target.value) || 1))}
-                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-semibold text-slate-900 dark:text-white min-h-[44px]"
-              />
+            <div className="grid grid-cols-2 gap-2.5 mb-3">
+              <div className="col-span-2">
+                <label className="block text-[10px] text-slate-500 dark:text-slate-400 font-bold mb-1">Día</label>
+                <input
+                  type="date"
+                  value={matchdayDate}
+                  onChange={(e) => setMatchdayDate(e.target.value)}
+                  className="w-full px-2.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-900 dark:text-white min-h-[40px]"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] text-slate-500 dark:text-slate-400 font-bold mb-1">Desde</label>
+                <input
+                  type="time"
+                  value={matchdayStart}
+                  onChange={(e) => setMatchdayStart(e.target.value)}
+                  className="w-full px-2.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-900 dark:text-white min-h-[40px]"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] text-slate-500 dark:text-slate-400 font-bold mb-1">Hasta</label>
+                <input
+                  type="time"
+                  value={matchdayEnd}
+                  onChange={(e) => setMatchdayEnd(e.target.value)}
+                  className="w-full px-2.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-900 dark:text-white min-h-[40px]"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] text-slate-500 dark:text-slate-400 font-bold mb-1">Canchas disponibles</label>
+                <input
+                  type="number"
+                  min={1}
+                  value={matchdayCourts}
+                  onChange={(e) => setMatchdayCourts(Math.max(1, Number(e.target.value) || 1))}
+                  className="w-full px-2.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-900 dark:text-white min-h-[40px]"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] text-slate-500 dark:text-slate-400 font-bold mb-1">Min. por partido</label>
+                <input
+                  type="number"
+                  min={1}
+                  value={matchdayDuration}
+                  onChange={(e) => setMatchdayDuration(Math.max(1, Number(e.target.value) || 1))}
+                  className="w-full px-2.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-900 dark:text-white min-h-[40px]"
+                />
+              </div>
             </div>
 
-            <div className="space-y-2.5">
-              {stageLabels.map(([label]) => {
-                const matchesInFecha = groupMatches.filter((m) => (m.stageLabel || `Fecha ${m.round}`) === label);
-                const existingDate = matchesInFecha.find((m) => m.date)?.date || '';
-                const existingTime = matchesInFecha
-                  .filter((m) => m.time)
-                  .sort((a, b) => (a.time || '').localeCompare(b.time || ''))[0]?.time || '';
-                const draft = scheduleDrafts[label] || { date: existingDate, time: existingTime || '09:00' };
+            <button
+              onClick={() => {
+                if (!matchdayDate || !matchdayStart || !matchdayEnd) return;
+                onScheduleMatchday(matchdayDate, matchdayStart, matchdayEnd, matchdayCourts, matchdayDuration);
+              }}
+              disabled={!matchdayDate || !nextUnscheduled}
+              className="w-full py-2.5 bg-sky-600 hover:bg-sky-700 active:bg-sky-800 disabled:bg-slate-200 disabled:dark:bg-slate-700 disabled:text-slate-400 text-white rounded-2xl font-bold text-xs flex items-center justify-center gap-1.5 min-h-[44px] transition-all"
+            >
+              <Clock className="w-3.5 h-3.5" />
+              <span>{nextUnscheduled ? `Generar horarios (desde ${nextUnscheduled[0]})` : 'Todas las Fechas ya tienen horario'}</span>
+            </button>
 
-                return (
-                  <div
-                    key={label}
-                    className="p-3 bg-slate-50 dark:bg-slate-800/70 rounded-2xl border border-slate-100 dark:border-slate-700 space-y-2"
-                  >
-                    <div className="flex items-center justify-between">
-                      <p className="text-xs font-bold text-slate-700 dark:text-slate-200">{label}</p>
-                      {existingDate && (
-                        <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">
-                          Actual: {existingDate} {existingTime && `· ${existingTime}`}
-                        </span>
-                      )}
+            {scheduledStages.length > 0 && (
+              <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 space-y-1.5">
+                <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Ya tienen horario</p>
+                {scheduledStages.map(([label]) => {
+                  const sample = groupMatches.find((m) => (m.stageLabel || `Fecha ${m.round}`) === label && m.date);
+                  return (
+                    <div key={label} className="flex items-center justify-between text-xs bg-slate-50 dark:bg-slate-800/70 rounded-xl px-3 py-2">
+                      <span className="font-semibold text-slate-700 dark:text-slate-200">
+                        {label} · {sample?.date} desde {sample?.time}
+                      </span>
+                      <button
+                        onClick={() => onClearStageSchedule(label)}
+                        className="text-[10px] font-bold text-rose-600 dark:text-rose-400 hover:underline"
+                      >
+                        Quitar
+                      </button>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1">
-                        <label className="block text-[10px] text-slate-500 dark:text-slate-400 font-bold mb-1">Fecha (día)</label>
-                        <input
-                          type="date"
-                          value={draft.date}
-                          onChange={(e) =>
-                            setScheduleDrafts((prev) => ({ ...prev, [label]: { ...draft, date: e.target.value } }))
-                          }
-                          className="w-full px-2.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-900 dark:text-white min-h-[40px]"
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <label className="block text-[10px] text-slate-500 dark:text-slate-400 font-bold mb-1">Hora de inicio</label>
-                        <input
-                          type="time"
-                          value={draft.time}
-                          onChange={(e) =>
-                            setScheduleDrafts((prev) => ({ ...prev, [label]: { ...draft, time: e.target.value } }))
-                          }
-                          className="w-full px-2.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-900 dark:text-white min-h-[40px]"
-                        />
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => {
-                        if (!draft.date || !draft.time) return;
-                        onAssignSchedule(label, draft.date, draft.time, scheduleDuration);
-                      }}
-                      disabled={!draft.date || !draft.time}
-                      className="w-full py-2 bg-sky-600 hover:bg-sky-700 active:bg-sky-800 disabled:bg-slate-200 disabled:dark:bg-slate-700 disabled:text-slate-400 text-white rounded-xl font-bold text-[11px] flex items-center justify-center gap-1.5 min-h-[38px] transition-all"
-                    >
-                      <Clock className="w-3.5 h-3.5" />
-                      <span>Asignar horario a {label}</span>
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </CollapsibleSection>
         );
       })()}
