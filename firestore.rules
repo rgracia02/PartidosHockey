@@ -1,0 +1,23 @@
+rules_version = '2';
+
+// Cómo funciona el acceso de este torneo compartido:
+//  - LECTURA: pública. Cualquiera con el link (el código del documento) puede ver el torneo.
+//  - ESCRITURA: solo se acepta si el campo "editPassword" que se manda en el guardado coincide
+//    con el que ya está guardado. Es una traba simple tipo PIN, no una contraseña con seguridad
+//    real: alguien con conocimientos técnicos podría leerla igual. Para un torneo de club está
+//    bien - frena a cualquiera que abra el link sin la clave, que es lo que se busca.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /sharedTournaments/{shareId} {
+      allow read: if true;
+
+      // Crear un torneo nuevo: solo exige que venga con los 3 campos esperados.
+      allow create: if request.resource.data.keys().hasAll(['editPassword', 'payload', 'updatedAt']);
+
+      // Actualizar un torneo existente: la clave enviada tiene que ser igual a la ya guardada.
+      allow update: if request.resource.data.editPassword == resource.data.editPassword;
+
+      allow delete: if false;
+    }
+  }
+}
