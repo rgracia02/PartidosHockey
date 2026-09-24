@@ -49,6 +49,7 @@ interface ConfigViewProps {
   onSetManualCross: (matchId: string, teamAId: string, teamBId: string) => void;
   onResetManualCross: (matchId: string) => void;
   onRescheduleMatch: (matchId: string, newRound: number, newCourt: string) => void;
+  onSetMatchDateTime: (matchId: string, date: string, time: string) => void;
   onScheduleMatchday: (
     date: string,
     startTime: string,
@@ -91,6 +92,7 @@ export function ConfigView({
   onSetManualCross,
   onResetManualCross,
   onRescheduleMatch,
+  onSetMatchDateTime,
   onScheduleMatchday,
   onClearStageSchedule,
 }: ConfigViewProps) {
@@ -837,6 +839,8 @@ export function ConfigView({
           <CollapsibleSection icon={<span>📅</span>} title="Orden de la Fase de Liga">
             <p className="text-xs text-slate-500 dark:text-slate-500 -mt-1 mb-3">
               Cambiá la fecha y/o cancha de cualquier partido de la fase de liga si preferís otro orden al que se generó automático.
+              Si un equipo no puede jugar el día que le tocó (ej: no puede viajar), movés <strong>ese partido puntual</strong> a otro
+              día/horario acá abajo, sin tocar el resto de la Fecha.
             </p>
             <div className="space-y-2.5">
               {sortedGroupMatches.map((m) => {
@@ -879,6 +883,35 @@ export function ConfigView({
                           ))}
                         </select>
                       </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1">
+                        <label className="block text-[10px] text-slate-500 dark:text-slate-400 font-bold mb-1">Día del partido</label>
+                        <input
+                          type="date"
+                          value={m.date || ''}
+                          onChange={(e) => onSetMatchDateTime(m.id, e.target.value, m.time || '')}
+                          className="w-full px-2.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-900 dark:text-white min-h-[40px]"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <label className="block text-[10px] text-slate-500 dark:text-slate-400 font-bold mb-1">Hora</label>
+                        <input
+                          type="time"
+                          value={m.time || ''}
+                          onChange={(e) => onSetMatchDateTime(m.id, m.date || '', e.target.value)}
+                          className="w-full px-2.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-900 dark:text-white min-h-[40px]"
+                        />
+                      </div>
+                      {m.date && (
+                        <button
+                          onClick={() => onSetMatchDateTime(m.id, '', '')}
+                          title="Quitar día/hora de este partido"
+                          className="self-end mb-0.5 px-2.5 py-2 rounded-xl text-[10px] font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 min-h-[40px] shrink-0"
+                        >
+                          ✕
+                        </button>
+                      )}
                     </div>
                   </div>
                 );
