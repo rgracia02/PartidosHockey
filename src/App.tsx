@@ -416,6 +416,16 @@ export default function App() {
     showToast(ok ? `✓ Se le quitó el permiso a ${email}.` : '⚠️ No se pudo quitar el permiso.');
   };
 
+  const isReadOnlyCloud = !!activeShareCode && !isCloudEditor;
+
+  const handleSelectMatchGuarded = (m: Match) => {
+    if (isReadOnlyCloud) {
+      showToast('👁 Estás en modo solo lectura: no tenés permiso para cargar resultados en este torneo.');
+      return;
+    }
+    setSelectedMatch(m);
+  };
+
   // Standings calculation for active tournament
   const standings = useMemo(() => {
     return calculateStandings(currentTournament?.teams || [], currentTournament?.matches || [], currentTournament?.config);
@@ -929,7 +939,7 @@ export default function App() {
           <FixtureView
             matches={currentTournament.matches}
             teams={currentTournament.teams}
-            onSelectMatch={(m) => setSelectedMatch(m)}
+            onSelectMatch={handleSelectMatchGuarded}
             onShareResults={(roundLabel) => handleOpenShareModal('results', roundLabel || 'all')}
             onShareFixtureImage={() => handleOpenImageShareModal('fixture')}
             onShareSingleMatch={(m) => setMatchToShare(m)}
@@ -937,9 +947,20 @@ export default function App() {
             currentTournamentId={currentTournament.config.id}
             currentCategory={currentTournament.config.category || currentTournament.config.name}
             onSelectForeignMatch={(tournamentId, match) => {
+              const foreign = tournaments.find((t) => t.config.id === tournamentId);
+              const foreignReadOnly =
+                !!foreign?.config.shareCode &&
+                !(
+                  googleUser &&
+                  (googleUser.uid === foreign.config.shareOwnerUid ||
+                    (foreign.config.shareEditorEmails || []).includes(googleUser.email))
+                );
+              if (foreignReadOnly) {
+                showToast('👁 No tenés permiso para cargar resultados en esa categoría.');
+                return;
+              }
               setActiveTournamentId(tournamentId);
               setSelectedMatch(match);
-              const foreign = tournaments.find((t) => t.config.id === tournamentId);
               showToast(`🏆 Cambiaste a "${foreign?.config.name}" para cargar este partido`);
             }}
           />
@@ -989,6 +1010,7 @@ export default function App() {
             onPublishTournament={handlePublishTournament}
             onGrantEditor={handleGrantEditor}
             onRevokeEditor={handleRevokeEditor}
+            readOnly={isReadOnlyCloud}
           />
         )}
       </main>
