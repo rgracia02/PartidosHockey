@@ -1416,48 +1416,131 @@ export function calculateStandings(
  * court already has taken - so a men's match at "Cancha 1" won't get scheduled at the same time
  * as a women's match already sitting on "Cancha 1" that day.
  */
-export function assignScheduleToRound(
+/**
+ * Given the physical capacity available for a single playing day (how many courts, and the time
+ * window they're open), figures out on its own how many whole "Fechas" (rounds) of the group stage
+ * fit that day, and assigns a real court + kickoff time to every match in them.
+ *
+ * It always schedules whole Fechas, never splits one across two days: starting from the first Fecha
+ * that doesn't have a date yet, it keeps packing Fechas in as long as they fit in the remaining
+ * capacity, load-balancing matches across the available courts. The first Fecha that doesn't fit is
+ * left untouched (reported as `leftoverStageLabel`) so it can be scheduled on the next playing day
+ * with another call.
+ *
+ * `otherMatches` lets two linked tournaments sharing the same physical courts (e.g. Varones +
+ * Damas playing "Cancha 1", "Cancha 2"... on the same day) share one time grid: pass the other
+ * category's matches and, for that date, its already-taken slots per court are respected.
+ */
+export function scheduleMatchday(
   matches: Match[],
-  stageLabel: string,
-  options: { date: string; startTime: string; durationMinutes: number },
+  options: {
+    date: string;
+    startTime: string; // "HH:MM"
+    endTime: string; // "HH:MM"
+    courtsAvailable: number;
+    durationMinutes: number;
+    courtLabelOffset?: number;
+  },
   otherMatches: Match[] = []
-): Match[] {
-  const { date, startTime, durationMinutes } = options;
-  const roundMatches = matches.filter((m) => (m.stageLabel || `Fecha ${m.round}`) === stageLabel);
-  if (roundMatches.length === 0 || !date || !startTime) return matches;
-
+): { matches: Match[]; scheduledStageLabels: string[]; leftoverStageLabel?: string } {
+  const { date, startTime, endTime, courtsAvailable, durationMinutes, courtLabelOffset = 0 } = options;
   const duration = Math.max(1, Number(durationMinutes) || 40);
-  const [startH, startM] = startTime.split(':').map((n) => Number(n) || 0);
-  const baseMinutes = startH * 60 + startM;
+  const courtsCount = Math.max(1, Number(courtsAvailable) || 1);
 
-  // How many slots each court already has taken on this same date from the OTHER linked
-  // category, so we continue right after them instead of overlapping.
-  const occupiedSlotsByCourt = new Map<string, number>();
-  otherMatches.forEach((m) => {
-    if (m.date === date) {
-      occupiedSlotsByCourt.set(m.court, (occupiedSlotsByCourt.get(m.court) || 0) + 1);
+  const toMinutes = (t: string) => {
+    const [h, m] = (t || '0:0').split(':').map((n) => Number(n) || 0);
+    return h * 60 + m;
+  };
+  const baseMinutes = toMinutes(startTime);
+  const windowMinutes = Math.max(0, toMinutes(endTime) - baseMinutes);
+  const slotsPerCourt = Math.floor(windowMinutes / duration);
+
+  const courtLabels = Array.from({ length: courtsCount }, (_, i) => `Cancha ${courtLabelOffset + i + 1}`);
+
+  if (!date || !startTime || !endTime || slotsPerCourt <= 0) {
+    return { matches, scheduledStageLabels: [] };
+  }
+
+  // How many slots each court already has taken this same date (from a linked category, or a
+  // previous scheduling pass), so a new pass continues right after them.
+  const nextSlotByCourt = new Map<string, number>(courtLabels.map((c) => [c, 0]));
+  courtLabels.forEach((c) => {
+    const used = [...otherMatches, ...matches].filter((m) => m.date === date && m.court === c).length;
+    nextSlotByCourt.set(c, used);
+  });
+
+  // Group the group-stage matches by Fecha, in round order.
+  const groupMatches = matches.filter((m) => m.stage === 'group');
+  const stageOrder: string[] = [];
+  const byStage = new Map<string, Match[]>();
+  groupMatches.forEach((m) => {
+    const label = m.stageLabel || `Fecha ${m.round}`;
+    if (!byStage.has(label)) {
+      byStage.set(label, []);
+      stageOrder.push(label);
     }
+    byStage.get(label)!.push(m);
   });
+  stageOrder.sort((a, b) => byStage.get(a)![0].round - byStage.get(b)![0].round);
 
-  // Group this round's matches by court, keeping their existing order.
-  const byCourt = new Map<string, Match[]>();
-  roundMatches.forEach((m) => {
-    if (!byCourt.has(m.court)) byCourt.set(m.court, []);
-    byCourt.get(m.court)!.push(m);
-  });
+  const unscheduledStages = stageOrder.filter((label) => !byStage.get(label)!.some((m) => m.date));
 
-  const timeById = new Map<string, string>();
-  byCourt.forEach((courtMatches, court) => {
-    const startSlot = occupiedSlotsByCourt.get(court) || 0;
-    courtMatches.forEach((m, idx) => {
-      const totalMinutes = baseMinutes + (startSlot + idx) * duration;
+  const timeById = new Map<string, { date: string; time: string; court: string }>();
+  const scheduledStageLabels: string[] = [];
+  let leftoverStageLabel: string | undefined;
+
+  for (const label of unscheduledStages) {
+    const stageMatches = byStage.get(label)!;
+    const trialNextSlot = new Map(nextSlotByCourt);
+    const trialAssignments: { id: string; court: string; slot: number }[] = [];
+    let fits = true;
+
+    for (const m of stageMatches) {
+      // Load-balance: put each match on whichever available court currently has the fewest slots used.
+      let bestCourt = courtLabels[0];
+      let bestSlot = trialNextSlot.get(bestCourt)!;
+      for (const c of courtLabels) {
+        const s = trialNextSlot.get(c)!;
+        if (s < bestSlot) {
+          bestCourt = c;
+          bestSlot = s;
+        }
+      }
+      if (bestSlot >= slotsPerCourt) {
+        fits = false;
+        break;
+      }
+      trialAssignments.push({ id: m.id, court: bestCourt, slot: bestSlot });
+      trialNextSlot.set(bestCourt, bestSlot + 1);
+    }
+
+    if (!fits) {
+      leftoverStageLabel = label;
+      break;
+    }
+
+    trialAssignments.forEach(({ id, court, slot }) => {
+      const totalMinutes = baseMinutes + slot * duration;
       const h = Math.floor(totalMinutes / 60) % 24;
       const mm = totalMinutes % 60;
-      timeById.set(m.id, `${String(h).padStart(2, '0')}:${String(mm).padStart(2, '0')}`);
+      timeById.set(id, { date, time: `${String(h).padStart(2, '0')}:${String(mm).padStart(2, '0')}`, court });
     });
-  });
+    trialNextSlot.forEach((v, k) => nextSlotByCourt.set(k, v));
+    scheduledStageLabels.push(label);
+  }
 
-  return matches.map((m) => (timeById.has(m.id) ? { ...m, date, time: timeById.get(m.id)! } : m));
+  const updatedMatches = matches.map((m) => (timeById.has(m.id) ? { ...m, ...timeById.get(m.id)! } : m));
+
+  return { matches: updatedMatches, scheduledStageLabels, leftoverStageLabel };
+}
+
+/**
+ * Clears the date/time assigned to every match of a given Fecha, so it can be rescheduled.
+ */
+export function clearScheduleForStage(matches: Match[], stageLabel: string): Match[] {
+  return matches.map((m) =>
+    (m.stageLabel || `Fecha ${m.round}`) === stageLabel ? { ...m, date: undefined, time: undefined } : m
+  );
 }
 
 /**
