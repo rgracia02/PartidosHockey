@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ConfigView } from './components/ConfigView';
 import { FixtureView } from './components/FixtureView';
 import { Header } from './components/Header';
@@ -12,6 +12,9 @@ import { TournamentSwitcherModal } from './components/TournamentSwitcherModal';
 import { ShareType, WhatsAppShareModal } from './components/WhatsAppShareModal';
 import { ImageShareModal, ImageShareType } from './components/ImageShareModal';
 import { Match, Team, TournamentConfig, TournamentData, TournamentFormat, TournamentStatus } from './types';
+import { fetchSharedTournament, publishTournament, pushTournamentUpdate, subscribeToSharedTournament } from './utils/cloudSync';
+import { isFirebaseConfigured } from './utils/firebase';
+import { getSavedPin, savePin } from './utils/sharePins';
 import {
   calculatePlayerCards,
   calculateStandings,
@@ -51,6 +54,7 @@ function sanitizeTournament(t: any): TournamentData {
     eventLabel: t.config?.eventLabel,
     courtLabelOffset: Number(t.config?.courtLabelOffset) || 0,
     matchDurationMinutes: t.config?.matchDurationMinutes ? Number(t.config.matchDurationMinutes) : undefined,
+    shareCode: t.config?.shareCode || undefined,
     pointsWin: t.config?.pointsWin ?? 3,
     pointsDraw: t.config?.pointsDraw ?? 1,
     pointsLoss: t.config?.pointsLoss ?? 0,
@@ -216,6 +220,113 @@ export default function App() {
         return t;
       })
     );
+  };
+
+  // ---------------------------------------------------------------------------------------------
+  // Cloud sync ("Compartir Torneo"): if the app was opened with ?t=CODE in the URL, this device is
+  // viewing/editing a tournament that lives in Firebase instead of (or in addition to) its own
+  // localStorage copy. Reading is open to anyone with the link; editing needs the tournament's PIN.
+  // ---------------------------------------------------------------------------------------------
+  const [cloudLinkCode] = useState<string | null>(() => {
+    try {
+      return new URLSearchParams(window.location.search).get('t');
+    } catch {
+      return null;
+    }
+  });
+  const [cloudStatus, setCloudStatus] = useState<'idle' | 'loading' | 'synced' | 'error'>('idle');
+  const [cloudBootstrapped, setCloudBootstrapped] = useState(false);
+  // While true, an incoming update from Firestore is being applied locally, so the "push local
+  // changes back up" effect below should skip this cycle (otherwise every remote update would
+  // immediately get echoed straight back up as if it were a new local edit).
+  const suppressCloudPushRef = useRef(false);
+
+  const activeShareCode = currentTournament?.config.shareCode || null;
+  const activeCloudPin = activeShareCode ? getSavedPin(activeShareCode) : '';
+
+  // First load via a shared link (?t=CODE): pull that tournament in once and make it the active
+  // one, even if this device never had it locally before. Live updates from then on are handled
+  // by the subscription effect below, since the tournament now carries that same shareCode.
+  useEffect(() => {
+    if (!cloudLinkCode || cloudBootstrapped) return;
+    if (!isFirebaseConfigured()) {
+      showToast('⚠️ Este link necesita que la app tenga Firebase configurado (ver .env.example).');
+      setCloudBootstrapped(true);
+      return;
+    }
+    setCloudStatus('loading');
+    fetchSharedTournament(cloudLinkCode).then((data) => {
+      if (!data) {
+        setCloudStatus('error');
+        setCloudBootstrapped(true);
+        return;
+      }
+      const tagged: TournamentData = { ...data, config: { ...data.config, shareCode: cloudLinkCode } };
+      setTournaments((prev) => {
+        const exists = prev.some((t) => t.config.id === tagged.config.id);
+        return exists ? prev.map((t) => (t.config.id === tagged.config.id ? tagged : t)) : [tagged, ...prev];
+      });
+      setActiveTournamentId(tagged.config.id);
+      setCloudStatus('synced');
+      setCloudBootstrapped(true);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cloudLinkCode, cloudBootstrapped]);
+
+  // While the currently open tournament has a shareCode (whether we got here via a link, or it's
+  // just this device's own tournament that was published earlier), keep it live: apply whatever
+  // change comes down from Firestore, from ANY device.
+  useEffect(() => {
+    if (!activeShareCode || !isFirebaseConfigured()) return;
+    const thisId = currentTournament.config.id;
+    const unsubscribe = subscribeToSharedTournament(activeShareCode, (data) => {
+      if (!data) return;
+      suppressCloudPushRef.current = true;
+      const tagged: TournamentData = { ...data, config: { ...data.config, shareCode: activeShareCode } };
+      setTournaments((prev) => prev.map((t) => (t.config.id === thisId ? tagged : t)));
+      setCloudStatus('synced');
+      setTimeout(() => {
+        suppressCloudPushRef.current = false;
+      }, 50);
+    });
+    return () => unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeShareCode]);
+
+  // Push local edits up to the cloud whenever the active shared tournament changes, as long as we
+  // have its PIN on this device and the change didn't just come FROM the cloud itself.
+  useEffect(() => {
+    if (!activeShareCode || !activeCloudPin) return;
+    if (suppressCloudPushRef.current) return;
+
+    const timer = setTimeout(() => {
+      pushTournamentUpdate(activeShareCode, activeCloudPin, currentTournament).then((ok) => {
+        setCloudStatus(ok ? 'synced' : 'error');
+      });
+    }, 600);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentTournament?.lastUpdated]);
+
+  // Publishes the CURRENT tournament to the cloud for the first time, generating its share link.
+  const handlePublishTournament = async (editPassword: string) => {
+    const result = await publishTournament(currentTournament, editPassword);
+    if (!result) {
+      showToast('⚠️ Falta configurar Firebase para poder compartir (mirá .env.example).');
+      return;
+    }
+    savePin(result.shareCode, result.editPassword);
+    updateCurrentTournament((prev) => ({ ...prev, config: { ...prev.config, shareCode: result.shareCode } }));
+    setCloudStatus('synced');
+    showToast('✓ Torneo publicado. Ya podés compartir el link.');
+  };
+
+  // Lets someone on a fresh device (who already knows the PIN) unlock editing for this shared
+  // tournament, without having to be the one who originally published it.
+  const handleUnlockCloudEditing = (pin: string) => {
+    if (!activeShareCode) return;
+    savePin(activeShareCode, pin);
+    showToast('✓ Clave guardada en este dispositivo. Ya podés cargar resultados.');
   };
 
   // Standings calculation for active tournament
@@ -672,6 +783,7 @@ export default function App() {
         category={currentTournament.config.category}
         season={currentTournament.config.season}
         status={currentTournament.config.status}
+        cloudStatus={activeShareCode ? cloudStatus : 'idle'}
         isDark={isDarkMode}
         onToggleTheme={toggleTheme}
         onShareWhatsApp={() => {
@@ -751,6 +863,11 @@ export default function App() {
             onSetMatchDateTime={handleSetMatchDateTime}
             onScheduleMatchday={handleScheduleMatchday}
             onClearStageSchedule={handleClearStageSchedule}
+            cloudConfigured={isFirebaseConfigured()}
+            cloudStatus={activeShareCode ? cloudStatus : 'idle'}
+            cloudCanEdit={!!activeCloudPin}
+            onPublishTournament={handlePublishTournament}
+            onUnlockCloudEditing={handleUnlockCloudEditing}
           />
         )}
       </main>

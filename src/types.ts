@@ -90,6 +90,7 @@ export interface TournamentConfig {
   eventLabel?: string; // optional display name for the combined event, e.g. "Jornada Interclubes"
   courtLabelOffset?: number; // shifts generated court numbers (e.g. offset=2 -> "Cancha 3", "Cancha 4"...) so linked tournaments don't collide on the same physical courts
   matchDurationMinutes?: number; // default duration used to auto-stack kickoff times when assigning a schedule to a Fecha
+  shareCode?: string; // if set, this tournament is published to the cloud under this code (see "Compartir Torneo")
 }
 
 export interface StandingsRow {
