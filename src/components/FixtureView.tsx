@@ -63,6 +63,11 @@ function MatchCard({ match, teams, onShareSingleMatch, onClick, categoryTag, cat
           <span className="px-2 py-0.5 rounded-md bg-sky-50 dark:bg-sky-950/80 text-sky-700 dark:text-sky-300 font-semibold">
             {match.court}
           </span>
+          {(match.date || match.time) && (
+            <span className="px-2 py-0.5 rounded-md bg-violet-50 dark:bg-violet-950/80 text-violet-700 dark:text-violet-300 font-semibold">
+              🕒 {match.date ? formatShortDate(match.date) : ''}{match.date && match.time ? ' · ' : ''}{match.time || ''}
+            </span>
+          )}
           {match.photoUrl && (
             <span className="px-1.5 py-0.5 rounded-md bg-sky-50 dark:bg-sky-950/80 text-sky-700 dark:text-sky-300 font-bold flex items-center gap-0.5 text-[10px]">
               📸 Foto
@@ -174,6 +179,14 @@ function MatchCard({ match, teams, onShareSingleMatch, onClick, categoryTag, cat
       )}
     </div>
   );
+}
+
+function formatShortDate(isoDate: string): string {
+  // isoDate is "YYYY-MM-DD" from a <input type="date">; parse manually to avoid timezone shifts.
+  const parts = isoDate.split('-');
+  if (parts.length !== 3) return isoDate;
+  const [, month, day] = parts;
+  return `${day}/${month}`;
 }
 
 const CATEGORY_TAG_COLORS = ['#0284c7', '#dc2626', '#059669', '#7c3aed', '#d97706'];
