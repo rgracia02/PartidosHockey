@@ -1404,6 +1404,63 @@ export function calculateStandings(
 }
 
 /**
+ * Assigns a real date + kickoff time to every match of a given "Fecha" (round/stage label),
+ * spreading them out court by court so matches sharing the same court on the same day don't overlap.
+ *
+ * Matches on different courts all start at `startTime` (they're played in parallel).
+ * Matches that share a court are stacked one after another, `durationMinutes` apart.
+ *
+ * `otherMatches` lets two linked tournaments (e.g. Varones + Damas playing the same physical
+ * courts, "Cancha 1", "Cancha 2"...) share a single time grid: pass the OTHER category's matches
+ * here and, for that same date, the new matches will start right after however many slots that
+ * court already has taken - so a men's match at "Cancha 1" won't get scheduled at the same time
+ * as a women's match already sitting on "Cancha 1" that day.
+ */
+export function assignScheduleToRound(
+  matches: Match[],
+  stageLabel: string,
+  options: { date: string; startTime: string; durationMinutes: number },
+  otherMatches: Match[] = []
+): Match[] {
+  const { date, startTime, durationMinutes } = options;
+  const roundMatches = matches.filter((m) => (m.stageLabel || `Fecha ${m.round}`) === stageLabel);
+  if (roundMatches.length === 0 || !date || !startTime) return matches;
+
+  const duration = Math.max(1, Number(durationMinutes) || 40);
+  const [startH, startM] = startTime.split(':').map((n) => Number(n) || 0);
+  const baseMinutes = startH * 60 + startM;
+
+  // How many slots each court already has taken on this same date from the OTHER linked
+  // category, so we continue right after them instead of overlapping.
+  const occupiedSlotsByCourt = new Map<string, number>();
+  otherMatches.forEach((m) => {
+    if (m.date === date) {
+      occupiedSlotsByCourt.set(m.court, (occupiedSlotsByCourt.get(m.court) || 0) + 1);
+    }
+  });
+
+  // Group this round's matches by court, keeping their existing order.
+  const byCourt = new Map<string, Match[]>();
+  roundMatches.forEach((m) => {
+    if (!byCourt.has(m.court)) byCourt.set(m.court, []);
+    byCourt.get(m.court)!.push(m);
+  });
+
+  const timeById = new Map<string, string>();
+  byCourt.forEach((courtMatches, court) => {
+    const startSlot = occupiedSlotsByCourt.get(court) || 0;
+    courtMatches.forEach((m, idx) => {
+      const totalMinutes = baseMinutes + (startSlot + idx) * duration;
+      const h = Math.floor(totalMinutes / 60) % 24;
+      const mm = totalMinutes % 60;
+      timeById.set(m.id, `${String(h).padStart(2, '0')}:${String(mm).padStart(2, '0')}`);
+    });
+  });
+
+  return matches.map((m) => (timeById.has(m.id) ? { ...m, date, time: timeById.get(m.id)! } : m));
+}
+
+/**
  * Updates dynamic playoff match teams based on group stage standings and previous playoff winners
  */
 export function syncPlayoffMatches(
