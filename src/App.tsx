@@ -19,6 +19,7 @@ import {
   clearScheduleForStage,
   createNewTournament,
   DEFAULT_TOURNAMENTS,
+  fillScheduleGap,
   formatWhatsAppResults,
   formatWhatsAppScorers,
   formatWhatsAppStandings,
@@ -424,15 +425,38 @@ export default function App() {
 
   // Manually move a single match to a different day/time (e.g. a team can't travel that day),
   // without touching the rest of that Fecha's schedule. Empty strings clear the match's schedule.
+  // If the match was actually occupying a real slot before, that slot is automatically offered to
+  // the next available not-yet-scheduled match (same date, same court/time) so the court doesn't
+  // sit empty - as long as both of that match's teams are free that day.
   const handleSetMatchDateTime = (matchId: string, date: string, time: string) => {
-    updateCurrentTournament((prev) => ({
-      ...prev,
-      matches: prev.matches.map((m) =>
+    let filledMatch: Match | undefined;
+    updateCurrentTournament((prev) => {
+      const original = prev.matches.find((m) => m.id === matchId);
+      let updatedMatches = prev.matches.map((m) =>
         m.id === matchId ? { ...m, date: date || undefined, time: time || undefined } : m
-      ),
-      lastUpdated: new Date().toISOString(),
-    }));
-    showToast(date ? '✓ Horario del partido actualizado' : '✓ Se quitó el horario del partido');
+      );
+
+      const isLeavingItsSlot = original?.date && original?.time && (original.date !== date || original.time !== time);
+      if (isLeavingItsSlot) {
+        const result = fillScheduleGap(
+          updatedMatches,
+          { date: original!.date!, time: original!.time!, court: original!.court },
+          matchId
+        );
+        updatedMatches = result.matches;
+        filledMatch = result.filledMatch;
+      }
+
+      return { ...prev, matches: updatedMatches, lastUpdated: new Date().toISOString() };
+    });
+
+    if (filledMatch) {
+      const teamA = currentTournament.teams.find((t) => t.id === filledMatch!.teamAId)?.name || 'Equipo';
+      const teamB = currentTournament.teams.find((t) => t.id === filledMatch!.teamBId)?.name || 'Equipo';
+      showToast(`✓ Horario actualizado. Ese lugar libre se completó con ${teamA} vs ${teamB} (${filledMatch.stageLabel}).`);
+    } else {
+      showToast(date ? '✓ Horario del partido actualizado' : '✓ Se quitó el horario del partido');
+    }
   };
 
   // Given the physical capacity of a single playing day (courts available + time window), figures
