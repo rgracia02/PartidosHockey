@@ -29,6 +29,7 @@ import {
   TournamentStatus,
 } from '../types';
 import { CollapsibleSection } from './CollapsibleSection';
+import { getEditorName, setEditorName as saveEditorName } from '../utils/editorIdentity';
 
 interface ConfigViewProps {
   data: TournamentData;
@@ -63,6 +64,18 @@ interface ConfigViewProps {
   cloudCanEdit: boolean;
   onPublishTournament: (editPassword: string) => void;
   onUnlockCloudEditing: (pin: string) => void;
+}
+
+function formatLogTime(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '';
+  const diffMs = Date.now() - date.getTime();
+  const diffMin = Math.round(diffMs / 60000);
+  if (diffMin < 1) return 'recién';
+  if (diffMin < 60) return `hace ${diffMin} min`;
+  const diffH = Math.round(diffMin / 60);
+  if (diffH < 24) return `hace ${diffH} h`;
+  return date.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' }) + ' ' + date.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
 }
 
 const COLOR_PRESETS = [
@@ -112,6 +125,7 @@ export function ConfigView({
   const [newSharePin, setNewSharePin] = useState('');
   const [unlockPinInput, setUnlockPinInput] = useState('');
   const [linkCopied, setLinkCopied] = useState(false);
+  const [editorName, setEditorName] = useState(() => getEditorName());
   // Matchday (Jornada) scheduling state
   const [matchdayDate, setMatchdayDate] = useState('');
   const [matchdayStart, setMatchdayStart] = useState('09:00');
@@ -622,6 +636,23 @@ export function ConfigView({
 
       {/* 1.45 Cloud sharing: view-only link + PIN-gated editing */}
       <CollapsibleSection icon={<span>🔗</span>} title="Compartir Torneo" defaultOpen={!!data.config.shareCode}>
+        {cloudConfigured && (
+          <div className="mb-3">
+            <label className="block text-[10px] text-slate-500 dark:text-slate-400 font-bold mb-1">
+              Tu nombre (para saber quién cargó qué)
+            </label>
+            <input
+              type="text"
+              value={editorName}
+              onChange={(e) => {
+                setEditorName(e.target.value);
+                saveEditorName(e.target.value);
+              }}
+              placeholder="Ej: Ana"
+              className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-semibold text-slate-900 dark:text-white min-h-[44px]"
+            />
+          </div>
+        )}
         {!cloudConfigured ? (
           <p className="text-xs text-slate-500 dark:text-slate-500">
             Esta función todavía no está activada: hace falta conectar un proyecto de Firebase (ver las
@@ -714,6 +745,23 @@ export function ConfigView({
                   >
                     Desbloquear
                   </button>
+                </div>
+              </div>
+            )}
+
+            {(data.activityLog?.length || 0) > 0 && (
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">
+                  Quién fue editando
+                </p>
+                <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
+                  {(data.activityLog || []).map((entry) => (
+                    <div key={entry.id} className="text-[11px] bg-slate-50 dark:bg-slate-800/70 rounded-xl px-3 py-2">
+                      <span className="font-bold text-slate-700 dark:text-slate-200">{entry.by}</span>
+                      <span className="text-slate-500 dark:text-slate-400"> {entry.message}</span>
+                      <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">{formatLogTime(entry.at)}</div>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
