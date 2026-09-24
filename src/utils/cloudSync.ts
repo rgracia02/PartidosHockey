@@ -4,6 +4,14 @@ import { getDb } from './firebase';
 
 const COLLECTION = 'sharedTournaments';
 
+// Firestore rejects any field whose value is `undefined` (it wants the key left out entirely, or
+// deleteField()). Our TournamentData has plenty of optional fields (whatsappHeader, date, time,
+// etc.) that are `undefined` rather than absent, so round-tripping through JSON strips those keys
+// before we ever try to save.
+function sanitizeForFirestore<T>(data: T): T {
+  return JSON.parse(JSON.stringify(data));
+}
+
 // Characters chosen to avoid visual mix-ups when read out loud or typed on a phone (no 0/O, 1/l/I).
 const CODE_CHARS = 'abcdefghjkmnpqrstuvwxyz23456789';
 
@@ -32,7 +40,7 @@ export async function publishTournament(
   const shareCode = randomShareCode();
   await setDoc(doc(db, COLLECTION, shareCode), {
     editPassword,
-    payload: data,
+    payload: sanitizeForFirestore(data),
     updatedAt: serverTimestamp(),
   });
   return { shareCode, editPassword };
@@ -53,7 +61,7 @@ export async function pushTournamentUpdate(
   try {
     await updateDoc(doc(db, COLLECTION, shareCode), {
       editPassword,
-      payload: data,
+      payload: sanitizeForFirestore(data),
       updatedAt: serverTimestamp(),
     });
     return true;
