@@ -1,4 +1,13 @@
-import { doc, getDoc, onSnapshot, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
+import {
+  arrayRemove,
+  arrayUnion,
+  doc,
+  getDoc,
+  onSnapshot,
+  serverTimestamp,
+  setDoc,
+  updateDoc,
+} from 'firebase/firestore';
 import { TournamentData } from '../types';
 import { getDb } from './firebase';
 
@@ -23,50 +32,80 @@ function randomShareCode(length = 6): string {
 
 export interface ShareInfo {
   shareCode: string;
-  editPassword: string;
+  ownerUid: string;
+  ownerEmail: string;
 }
 
 /**
- * Publishes a tournament to the cloud for the first time: picks a short share code and stores the
- * whole tournament under it, gated by the given PIN. Returns null if Firebase isn't configured yet.
+ * Publishes a tournament to the cloud for the first time: picks a short share code and stores it
+ * owned by the signed-in Google account (`ownerUid`/`ownerEmail`). Only the owner, or an email the
+ * owner later adds to `shareEditorEmails`, can push edits back (enforced by firestore.rules).
  */
 export async function publishTournament(
   data: TournamentData,
-  editPassword: string
+  ownerUid: string,
+  ownerEmail: string
 ): Promise<ShareInfo | null> {
   const db = getDb();
   if (!db) return null;
 
   const shareCode = randomShareCode();
   await setDoc(doc(db, COLLECTION, shareCode), {
-    editPassword,
+    ownerUid,
+    ownerEmail,
+    editorEmails: [],
     payload: sanitizeForFirestore(data),
     updatedAt: serverTimestamp(),
   });
-  return { shareCode, editPassword };
+  return { shareCode, ownerUid, ownerEmail };
 }
 
 /**
- * Pushes a local change to an already-published tournament. The Firestore rules only accept the
- * write if `editPassword` matches what's already stored, so this returns false (instead of
- * throwing) when the PIN is wrong, letting the caller show a friendly message.
+ * Pushes a local change up to an already-published tournament. The Firestore rules only accept
+ * the write from the owner's account or an email on the editors list, so this returns false
+ * (instead of throwing) when the signed-in account isn't allowed to edit.
  */
-export async function pushTournamentUpdate(
-  shareCode: string,
-  editPassword: string,
-  data: TournamentData
-): Promise<boolean> {
+export async function pushTournamentUpdate(shareCode: string, data: TournamentData): Promise<boolean> {
   const db = getDb();
   if (!db) return false;
   try {
     await updateDoc(doc(db, COLLECTION, shareCode), {
-      editPassword,
       payload: sanitizeForFirestore(data),
       updatedAt: serverTimestamp(),
     });
     return true;
   } catch (err) {
-    console.error('No se pudo sincronizar con la nube (¿clave incorrecta?):', err);
+    console.error('No se pudo sincronizar con la nube (¿no tenés permiso de edición?):', err);
+    return false;
+  }
+}
+
+/** Owner-only: grants edit access to another Google account by email. */
+export async function grantEditorAccess(shareCode: string, email: string): Promise<boolean> {
+  const db = getDb();
+  if (!db) return false;
+  try {
+    await updateDoc(doc(db, COLLECTION, shareCode), {
+      editorEmails: arrayUnion(email.trim().toLowerCase()),
+    });
+    return true;
+  } catch (err) {
+    console.error('No se pudo dar permiso de edición:', err);
+    return false;
+  }
+}
+
+/** Owner-only: revokes a previously granted editor's access. */
+export async function revokeEditorAccess(shareCode: string, email: string): Promise<boolean> {
+  const db = getDb();
+  if (!db) return false;
+  try {
+    await updateDoc(doc(db, COLLECTION, shareCode), {
+      editorEmails: arrayRemove(email.trim().toLowerCase()),
+    });
+    return true;
+  } catch (err) {
+    console.error('No se pudo quitar el permiso de edición:', err);
     return false;
   }
 }
@@ -80,19 +119,38 @@ export async function fetchSharedTournament(shareCode: string): Promise<Tourname
   return (snap.data().payload as TournamentData) ?? null;
 }
 
+export interface SharedTournamentSnapshot {
+  data: TournamentData;
+  ownerUid: string;
+  ownerEmail: string;
+  editorEmails: string[];
+}
+
 /**
  * Live subscription: calls `onUpdate` immediately and again every time the shared tournament
  * changes, from ANY device. Returns an unsubscribe function.
  */
 export function subscribeToSharedTournament(
   shareCode: string,
-  onUpdate: (data: TournamentData | null) => void
+  onUpdate: (snapshot: SharedTournamentSnapshot | null) => void
 ): () => void {
   const db = getDb();
   if (!db) return () => {};
   return onSnapshot(
     doc(db, COLLECTION, shareCode),
-    (snap) => onUpdate(snap.exists() ? ((snap.data().payload as TournamentData) ?? null) : null),
+    (snap) => {
+      if (!snap.exists()) {
+        onUpdate(null);
+        return;
+      }
+      const raw = snap.data();
+      onUpdate({
+        data: raw.payload as TournamentData,
+        ownerUid: raw.ownerUid || '',
+        ownerEmail: raw.ownerEmail || '',
+        editorEmails: Array.isArray(raw.editorEmails) ? raw.editorEmails : [],
+      });
+    },
     (err) => {
       console.error('Error de sincronización en vivo:', err);
       onUpdate(null);
