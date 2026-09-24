@@ -13,6 +13,7 @@ import { ShareType, WhatsAppShareModal } from './components/WhatsAppShareModal';
 import { ImageShareModal, ImageShareType } from './components/ImageShareModal';
 import { Match, Team, TournamentConfig, TournamentData, TournamentFormat, TournamentStatus } from './types';
 import {
+  assignScheduleToRound,
   calculatePlayerCards,
   calculateStandings,
   calculateTopScorers,
@@ -47,6 +48,7 @@ function sanitizeTournament(t: any): TournamentData {
     eventGroupId: t.config?.eventGroupId,
     eventLabel: t.config?.eventLabel,
     courtLabelOffset: Number(t.config?.courtLabelOffset) || 0,
+    matchDurationMinutes: t.config?.matchDurationMinutes ? Number(t.config.matchDurationMinutes) : undefined,
     pointsWin: t.config?.pointsWin ?? 3,
     pointsDraw: t.config?.pointsDraw ?? 1,
     pointsLoss: t.config?.pointsLoss ?? 0,
@@ -419,6 +421,29 @@ export default function App() {
     showToast('✓ Partido reprogramado');
   };
 
+  // Assign a real date + kickoff time to every match of a given Fecha (round), stacking matches
+  // that share a court so they don't overlap. If this tournament is linked to another category
+  // (e.g. Damas + Varones) sharing the same physical courts, their already-scheduled matches on
+  // that same date are taken into account so the two categories interleave instead of colliding.
+  const handleAssignSchedule = (stageLabel: string, date: string, startTime: string, durationMinutes: number) => {
+    updateCurrentTournament((prev) => {
+      const otherMatches = linkedTournaments.flatMap((t) => t.matches);
+      const updatedMatches = assignScheduleToRound(
+        prev.matches,
+        stageLabel,
+        { date, startTime, durationMinutes },
+        otherMatches
+      );
+      return {
+        ...prev,
+        config: { ...prev.config, matchDurationMinutes: durationMinutes },
+        matches: updatedMatches,
+        lastUpdated: new Date().toISOString(),
+      };
+    });
+    showToast(`✓ Horario asignado a ${stageLabel}`);
+  };
+
   // Manually set the two teams facing off in a playoff match (semi/third_place/final),
   // overriding the automatic standings-based assignment for that match.
   const handleSetManualCross = (matchId: string, teamAId: string, teamBId: string) => {
@@ -651,6 +676,7 @@ export default function App() {
             onSetManualCross={handleSetManualCross}
             onResetManualCross={handleResetManualCross}
             onRescheduleMatch={handleRescheduleMatch}
+            onAssignSchedule={handleAssignSchedule}
           />
         )}
       </main>
