@@ -69,6 +69,7 @@ interface ConfigViewProps {
   onPublishTournament: () => void;
   onGrantEditor: (email: string) => void;
   onRevokeEditor: (email: string) => void;
+  readOnly: boolean;
 }
 
 function formatLogTime(iso: string): string {
@@ -128,6 +129,7 @@ export function ConfigView({
   onPublishTournament,
   onGrantEditor,
   onRevokeEditor,
+  readOnly,
 }: ConfigViewProps) {
   const [linkTargetId, setLinkTargetId] = useState('none');
   const [useSeparateCourts, setUseSeparateCourts] = useState(false);
@@ -351,6 +353,15 @@ export function ConfigView({
 
   return (
     <div className="space-y-4 animate-in fade-in duration-200">
+      {readOnly && (
+        <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-2xl px-4 py-3 text-xs font-semibold text-amber-800 dark:text-amber-300 flex items-center gap-2">
+          <span>👁</span>
+          <span>
+            Estás viendo este torneo en modo solo lectura. Pedile al organizador que te dé permiso en
+            "Compartir Torneo" más abajo para poder editar.
+          </span>
+        </div>
+      )}
       {/* 0. MULTI-TOURNAMENT MANAGEMENT SECTION */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl p-4 shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-3 transition-colors">
         <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
@@ -452,6 +463,7 @@ export function ConfigView({
         </div>
       </div>
 
+      <div className={readOnly ? 'space-y-4 opacity-50 pointer-events-none select-none' : 'space-y-4'}>
       {/* 1. General Tournament Configuration */}
       <CollapsibleSection icon={<span>⚙️</span>} title={`Ajustes del Torneo Activo: ${data.config.name}`} defaultOpen={true}>
         <div className="space-y-3 text-xs">
@@ -643,6 +655,8 @@ export function ConfigView({
         </div>
       </CollapsibleSection>
 
+      </div>
+
       {/* 1.45 Cloud sharing: view-only link + Google-account permissions */}
       <CollapsibleSection icon={<span>🔗</span>} title="Compartir Torneo" defaultOpen={!!data.config.shareCode}>
         {!cloudConfigured ? (
@@ -803,6 +817,7 @@ export function ConfigView({
         )}
       </CollapsibleSection>
 
+      <div className={readOnly ? 'space-y-4 opacity-50 pointer-events-none select-none' : 'space-y-4'}>
       {/* 1.5 Combined Event Linking (e.g. Damas + Varones, same jornada) */}
       <CollapsibleSection icon={<Layers className="w-4 h-4 text-sky-600" />} title="Combinar con Otra Categoría" defaultOpen={true}>
         <p className="text-xs text-slate-500 dark:text-slate-400 -mt-1 mb-3">
@@ -1591,6 +1606,8 @@ export function ConfigView({
         </div>
         </div>
       </CollapsibleSection>
+
+      </div>
 
       {/* 4. Backup, Demo Data and Reset */}
       <CollapsibleSection icon={<span>💾</span>} title="Respaldo & Muestra">
