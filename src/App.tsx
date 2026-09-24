@@ -265,7 +265,9 @@ export default function App() {
   const [cloudStatus, setCloudStatus] = useState<'idle' | 'loading' | 'synced' | 'error'>('idle');
   const [cloudBootstrapped, setCloudBootstrapped] = useState(false);
   const [googleUser, setGoogleUser] = useState<GoogleUser | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
   const [authorizedCreators, setAuthorizedCreators] = useState<string[]>([]);
+  const [creatorsLoaded, setCreatorsLoaded] = useState(false);
   // While true, an incoming update from Firestore is being applied locally, so the "push local
   // changes back up" effect below should skip this cycle (otherwise every remote update would
   // immediately get echoed straight back up as if it were a new local edit).
@@ -285,17 +287,36 @@ export default function App() {
 
   // Keep track of the signed-in Google account across the whole app.
   useEffect(() => {
-    const unsubscribe = subscribeToGoogleUser(setGoogleUser);
+    const unsubscribe = subscribeToGoogleUser((u) => {
+      setGoogleUser(u);
+      setAuthChecked(true);
+    });
     return () => unsubscribe();
   }, []);
 
-  // Keep the list of accounts allowed to publish new tournaments in sync, for as long as Firebase
-  // is configured (no need to be signed in to know the list exists, but reading it does require it).
+  // Keep the list of accounts allowed to publish new tournaments in sync. Re-subscribes whenever
+  // sign-in state changes, since a listener started while signed out won't retry on its own once
+  // the rules would actually allow it (they require request.auth != null to read this document).
   useEffect(() => {
-    if (!isFirebaseConfigured()) return;
-    const unsubscribe = subscribeToAuthorizedCreators(setAuthorizedCreators);
+    if (!isFirebaseConfigured()) {
+      setCreatorsLoaded(true);
+      return;
+    }
+    setCreatorsLoaded(false);
+    const unsubscribe = subscribeToAuthorizedCreators((emails) => {
+      setAuthorizedCreators(emails);
+      setCreatorsLoaded(true);
+    });
     return () => unsubscribe();
-  }, []);
+  }, [!!googleUser]);
+
+  // The bare app (no ?t=CODE, i.e. not just opening someone's shared tournament link) is only for
+  // authorized organizers once Firebase is configured: this is what actually stops a random person
+  // who found the app's URL from poking around and publishing junk to the shared project. A
+  // specific tournament's own share link still works for anyone, unaffected by this gate.
+  const needsAppGate = !cloudLinkCode && isFirebaseConfigured();
+  const appGateReady = !needsAppGate || (authChecked && creatorsLoaded);
+  const appGateBlocked = needsAppGate && appGateReady && !canPublish;
 
   // First load via a shared link (?t=CODE): pull that tournament in once and make it the active
   // one, even if this device never had it locally before. Live updates from then on are handled
@@ -930,6 +951,53 @@ export default function App() {
       setToastMessage(null);
     }, 2600);
   };
+
+  // App-wide access gate (see needsAppGate/appGateReady/appGateBlocked above).
+  if (needsAppGate && !appGateReady) {
+    return (
+      <div className="max-w-lg mx-auto min-h-screen bg-[#F2F2F7] dark:bg-slate-950 flex items-center justify-center px-6">
+        <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">Cargando…</p>
+      </div>
+    );
+  }
+
+  if (appGateBlocked) {
+    return (
+      <div className="max-w-lg mx-auto min-h-screen bg-[#F2F2F7] dark:bg-slate-950 flex items-center justify-center px-6">
+        <div className="w-full bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-200/80 dark:border-slate-800 text-center space-y-4">
+          <div className="text-3xl">🔒</div>
+          <h1 className="text-base font-bold text-slate-900 dark:text-white">Esta app es privada</h1>
+          {!googleUser ? (
+            <>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Iniciá sesión con una cuenta de Google autorizada para usarla. Si alguien te compartió el link
+                de un torneo puntual, abrilo directamente en vez de entrar por acá.
+              </p>
+              <button
+                onClick={handleGoogleSignIn}
+                className="w-full py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl font-bold text-xs"
+              >
+                Iniciar sesión con Google
+              </button>
+            </>
+          ) : (
+            <>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Tu cuenta ({googleUser.email}) no está autorizada para usar esta app. Pedile a un organizador
+                que agregue tu mail en "Compartir Torneo → Quién puede publicar torneos nuevos".
+              </p>
+              <button
+                onClick={handleGoogleSignOut}
+                className="w-full py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-2xl font-bold text-xs"
+              >
+                Probar con otra cuenta
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-lg mx-auto min-h-screen bg-[#F2F2F7] dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col relative pb-safe-tabbar transition-colors">
