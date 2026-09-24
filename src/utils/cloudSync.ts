@@ -12,6 +12,7 @@ import { TournamentData } from '../types';
 import { getDb } from './firebase';
 
 const COLLECTION = 'sharedTournaments';
+const AUTHORIZED_CREATORS_DOC = 'appConfig/authorizedCreators';
 
 // Firestore rejects any field whose value is `undefined` (it wants the key left out entirely, or
 // deleteField()). Our TournamentData has plenty of optional fields (whatsappHeader, date, time,
@@ -28,6 +29,60 @@ function randomShareCode(length = 6): string {
   let out = '';
   for (let i = 0; i < length; i++) out += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
   return out;
+}
+
+/**
+ * Live subscription to the list of Google accounts allowed to publish new tournaments (see
+ * firestore.rules). Calls `onUpdate` with an empty list if the document doesn't exist yet - it
+ * has to be created once, by hand, in the Firebase console (Firestore Database → Data).
+ */
+export function subscribeToAuthorizedCreators(onUpdate: (emails: string[]) => void): () => void {
+  const db = getDb();
+  if (!db) {
+    onUpdate([]);
+    return () => {};
+  }
+  const [collectionName, docId] = AUTHORIZED_CREATORS_DOC.split('/');
+  return onSnapshot(
+    doc(db, collectionName, docId),
+    (snap) => onUpdate(snap.exists() && Array.isArray(snap.data().emails) ? snap.data().emails : []),
+    (err) => {
+      console.error('No se pudo leer la lista de creadores autorizados:', err);
+      onUpdate([]);
+    }
+  );
+}
+
+/** Adds an email to the authorized-creators list. Only works if the caller is already on it. */
+export async function addAuthorizedCreator(email: string): Promise<boolean> {
+  const db = getDb();
+  if (!db) return false;
+  try {
+    const [collectionName, docId] = AUTHORIZED_CREATORS_DOC.split('/');
+    await updateDoc(doc(db, collectionName, docId), {
+      emails: arrayUnion(email.trim().toLowerCase()),
+    });
+    return true;
+  } catch (err) {
+    console.error('No se pudo agregar el mail autorizado:', err);
+    return false;
+  }
+}
+
+/** Removes an email from the authorized-creators list. Only works if the caller is already on it. */
+export async function removeAuthorizedCreator(email: string): Promise<boolean> {
+  const db = getDb();
+  if (!db) return false;
+  try {
+    const [collectionName, docId] = AUTHORIZED_CREATORS_DOC.split('/');
+    await updateDoc(doc(db, collectionName, docId), {
+      emails: arrayRemove(email.trim().toLowerCase()),
+    });
+    return true;
+  } catch (err) {
+    console.error('No se pudo quitar el mail autorizado:', err);
+    return false;
+  }
 }
 
 export interface ShareInfo {
