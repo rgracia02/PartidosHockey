@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
   Archive,
   Check,
+  Clock,
   Code,
   Copy,
   Download,
@@ -48,6 +49,7 @@ interface ConfigViewProps {
   onSetManualCross: (matchId: string, teamAId: string, teamBId: string) => void;
   onResetManualCross: (matchId: string) => void;
   onRescheduleMatch: (matchId: string, newRound: number, newCourt: string) => void;
+  onAssignSchedule: (stageLabel: string, date: string, startTime: string, durationMinutes: number) => void;
 }
 
 const COLOR_PRESETS = [
@@ -82,9 +84,13 @@ export function ConfigView({
   onSetManualCross,
   onResetManualCross,
   onRescheduleMatch,
+  onAssignSchedule,
 }: ConfigViewProps) {
   const [linkTargetId, setLinkTargetId] = useState('none');
   const [useSeparateCourts, setUseSeparateCourts] = useState(false);
+  // Schedule assignment (per Fecha) state
+  const [scheduleDuration, setScheduleDuration] = useState(data.config.matchDurationMinutes || 40);
+  const [scheduleDrafts, setScheduleDrafts] = useState<Record<string, { date: string; time: string }>>({});
   // New team form state
   const [newTeamName, setNewTeamName] = useState('');
   const [newTeamColor, setNewTeamColor] = useState(COLOR_PRESETS[0]);
@@ -685,6 +691,107 @@ export function ConfigView({
           );
         })()}
       </CollapsibleSection>
+
+      {/* 1.55 Schedule Assignment (date + kickoff time per Fecha) */}
+      {(() => {
+        const groupMatches = data.matches.filter((m) => m.stage === 'group');
+        if (groupMatches.length === 0) return null;
+
+        // Distinct Fecha labels, in round order.
+        const stageLabelsMap = new Map<string, number>();
+        groupMatches.forEach((m) => {
+          const label = m.stageLabel || `Fecha ${m.round}`;
+          if (!stageLabelsMap.has(label)) stageLabelsMap.set(label, m.round);
+        });
+        const stageLabels = Array.from(stageLabelsMap.entries()).sort((a, b) => a[1] - b[1]);
+
+        const isCombinedSharedCourts = !!data.config.eventGroupId && !data.config.courtLabelOffset;
+
+        return (
+          <CollapsibleSection icon={<Clock className="w-4 h-4" />} title="Horarios y Duración de Partidos">
+            <p className="text-xs text-slate-500 dark:text-slate-500 -mt-1 mb-3">
+              Elegí la fecha y la hora de inicio de cada Fecha del fixture. La app arma solo el horario de cada
+              partido, encadenándolos por cancha según la duración que pongas.
+              {isCombinedSharedCourts && ' Como este torneo comparte canchas con otra categoría del mismo evento, sus horarios no se van a superponer entre sí.'}
+            </p>
+
+            <div className="mb-3">
+              <label className="block text-[10px] text-slate-500 dark:text-slate-400 font-bold mb-1">
+                Duración de cada partido (minutos)
+              </label>
+              <input
+                type="number"
+                min={1}
+                value={scheduleDuration}
+                onChange={(e) => setScheduleDuration(Math.max(1, Number(e.target.value) || 1))}
+                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-semibold text-slate-900 dark:text-white min-h-[44px]"
+              />
+            </div>
+
+            <div className="space-y-2.5">
+              {stageLabels.map(([label]) => {
+                const matchesInFecha = groupMatches.filter((m) => (m.stageLabel || `Fecha ${m.round}`) === label);
+                const existingDate = matchesInFecha.find((m) => m.date)?.date || '';
+                const existingTime = matchesInFecha
+                  .filter((m) => m.time)
+                  .sort((a, b) => (a.time || '').localeCompare(b.time || ''))[0]?.time || '';
+                const draft = scheduleDrafts[label] || { date: existingDate, time: existingTime || '09:00' };
+
+                return (
+                  <div
+                    key={label}
+                    className="p-3 bg-slate-50 dark:bg-slate-800/70 rounded-2xl border border-slate-100 dark:border-slate-700 space-y-2"
+                  >
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-bold text-slate-700 dark:text-slate-200">{label}</p>
+                      {existingDate && (
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">
+                          Actual: {existingDate} {existingTime && `· ${existingTime}`}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1">
+                        <label className="block text-[10px] text-slate-500 dark:text-slate-400 font-bold mb-1">Fecha (día)</label>
+                        <input
+                          type="date"
+                          value={draft.date}
+                          onChange={(e) =>
+                            setScheduleDrafts((prev) => ({ ...prev, [label]: { ...draft, date: e.target.value } }))
+                          }
+                          className="w-full px-2.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-900 dark:text-white min-h-[40px]"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <label className="block text-[10px] text-slate-500 dark:text-slate-400 font-bold mb-1">Hora de inicio</label>
+                        <input
+                          type="time"
+                          value={draft.time}
+                          onChange={(e) =>
+                            setScheduleDrafts((prev) => ({ ...prev, [label]: { ...draft, time: e.target.value } }))
+                          }
+                          className="w-full px-2.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-900 dark:text-white min-h-[40px]"
+                        />
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        if (!draft.date || !draft.time) return;
+                        onAssignSchedule(label, draft.date, draft.time, scheduleDuration);
+                      }}
+                      disabled={!draft.date || !draft.time}
+                      className="w-full py-2 bg-sky-600 hover:bg-sky-700 active:bg-sky-800 disabled:bg-slate-200 disabled:dark:bg-slate-700 disabled:text-slate-400 text-white rounded-xl font-bold text-[11px] flex items-center justify-center gap-1.5 min-h-[38px] transition-all"
+                    >
+                      <Clock className="w-3.5 h-3.5" />
+                      <span>Asignar horario a {label}</span>
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </CollapsibleSection>
+        );
+      })()}
 
       {/* 1.6 Manual League Phase Ordering */}
       {(() => {
