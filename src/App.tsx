@@ -23,7 +23,7 @@ import {
   revokeEditorAccess,
   subscribeToSharedTournament,
 } from './utils/cloudSync';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { getEditorName } from './utils/editorIdentity';
 import { getDb, isFirebaseConfigured } from './utils/firebase';
 import { GoogleUser, signInWithGoogle, signOutOfGoogle, subscribeToGoogleUser } from './utils/googleAuth';
@@ -1016,6 +1016,21 @@ export default function App() {
                 className="w-full py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl font-bold text-[10px]"
               >
                 🔍 Diagnóstico directo (leer Firestore ahora)
+              </button>
+              <button
+                onClick={async () => {
+                  const db = getDb();
+                  if (!db || !googleUser) return;
+                  try {
+                    await setDoc(doc(db, 'appConfig', 'authorizedCreators'), { emails: [googleUser.email] });
+                    alert('✓ Documento creado con tu mail: ' + googleUser.email + '\nRefrescá la página ahora.');
+                  } catch (err: any) {
+                    alert(`ERROR al crear: ${err?.code || ''} ${err?.message || err}`);
+                  }
+                }}
+                className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-[10px]"
+              >
+                🛠 Crear el documento correcto ahora
               </button>
               <button
                 onClick={handleGoogleSignOut}
