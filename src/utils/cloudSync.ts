@@ -32,25 +32,21 @@ function randomShareCode(length = 6): string {
 }
 
 /**
- * Live subscription to the list of Google accounts allowed to publish new tournaments (see
- * firestore.rules). Calls `onUpdate` with an empty list if the document doesn't exist yet - it
- * has to be created once, by hand, in the Firebase console (Firestore Database → Data).
+ * One-time read of the list of Google accounts allowed to publish new tournaments (see
+ * firestore.rules). Returns an empty list if the document doesn't exist yet - it has to be
+ * created once, by hand, in the Firebase console (Firestore Database → Data).
  */
-export function subscribeToAuthorizedCreators(onUpdate: (emails: string[]) => void): () => void {
+export async function fetchAuthorizedCreators(): Promise<string[]> {
   const db = getDb();
-  if (!db) {
-    onUpdate([]);
-    return () => {};
+  if (!db) return [];
+  try {
+    const [collectionName, docId] = AUTHORIZED_CREATORS_DOC.split('/');
+    const snap = await getDoc(doc(db, collectionName, docId));
+    return snap.exists() && Array.isArray(snap.data().emails) ? snap.data().emails : [];
+  } catch (err) {
+    console.error('No se pudo leer la lista de creadores autorizados:', err);
+    return [];
   }
-  const [collectionName, docId] = AUTHORIZED_CREATORS_DOC.split('/');
-  return onSnapshot(
-    doc(db, collectionName, docId),
-    (snap) => onUpdate(snap.exists() && Array.isArray(snap.data().emails) ? snap.data().emails : []),
-    (err) => {
-      console.error('No se pudo leer la lista de creadores autorizados:', err);
-      onUpdate([]);
-    }
-  );
 }
 
 /** Adds an email to the authorized-creators list. Only works if the caller is already on it. */
