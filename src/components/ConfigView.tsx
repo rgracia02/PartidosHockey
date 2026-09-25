@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
   Archive,
   ArrowLeft,
+  Calendar,
   Check,
   ChevronRight,
   Clock,
@@ -548,7 +549,7 @@ export function ConfigView({
       {activeSection === 'ajustes' && (
       <div className={readOnly ? 'space-y-4 opacity-50 pointer-events-none select-none' : 'space-y-4'}>
       {/* 1. General Tournament Configuration */}
-      <CollapsibleSection icon={<span>⚙️</span>} title={`Ajustes del Torneo Activo: ${data.config.name}`} defaultOpen={true}>
+      <CollapsibleSection icon={<Settings className="w-4 h-4" />} title={`Ajustes del Torneo Activo: ${data.config.name}`} defaultOpen={true}>
         <div className="space-y-3 text-xs">
           <div>
             <label className="block text-slate-500 dark:text-slate-400 font-bold mb-1">Nombre del Torneo</label>
@@ -744,7 +745,7 @@ export function ConfigView({
       {activeSection === 'compartir' && (
         <>
       {/* 1.45 Cloud sharing: view-only link + Google-account permissions */}
-      <CollapsibleSection icon={<span>🔗</span>} title="Compartir Torneo" defaultOpen={!!data.config.shareCode}>
+      <CollapsibleSection icon={<Link2 className="w-4 h-4" />} iconColor="violet" title="Compartir Torneo" defaultOpen={!!data.config.shareCode}>
         {!cloudConfigured ? (
           <p className="text-xs text-slate-500 dark:text-slate-500">
             Esta función todavía no está activada: hace falta conectar un proyecto de Firebase con el login de
@@ -959,7 +960,7 @@ export function ConfigView({
       {activeSection === 'programacion' && (
       <div className={readOnly ? 'space-y-4 opacity-50 pointer-events-none select-none' : 'space-y-4'}>
       {/* 1.5 Combined Event Linking (e.g. Damas + Varones, same jornada) */}
-      <CollapsibleSection icon={<Layers className="w-4 h-4 text-sky-600" />} title="Combinar con Otra Categoría" defaultOpen={true}>
+      <CollapsibleSection icon={<Layers className="w-4 h-4" />} title="Combinar con Otra Categoría" defaultOpen={true}>
         <p className="text-xs text-slate-500 dark:text-slate-400 -mt-1 mb-3">
           Para torneos que juegan el mismo día (ej: Damas y Varones). Cada uno mantiene su propia tabla; solo se
           comparte el horario del día y un mensaje de WhatsApp en común.
@@ -1188,7 +1189,7 @@ export function ConfigView({
         const sortedGroupMatches = [...groupMatches].sort((a, b) => a.round - b.round || a.court.localeCompare(b.court));
 
         return (
-          <CollapsibleSection icon={<span>📅</span>} title="Orden de la Fase de Liga">
+          <CollapsibleSection icon={<Calendar className="w-4 h-4" />} title="Orden de la Fase de Liga">
             <p className="text-xs text-slate-500 dark:text-slate-500 -mt-1 mb-3">
               Cambiá la fecha y/o cancha de cualquier partido de la fase de liga si preferís otro orden al que se generó automático.
               Si un equipo no puede jugar el día que le tocó (ej: no puede viajar), movés <strong>ese partido puntual</strong> a otro
@@ -1280,7 +1281,7 @@ export function ConfigView({
         if (playoffMatches.length === 0) return null;
 
         return (
-          <CollapsibleSection icon={<Trophy className="w-4 h-4 text-sky-600" />} title="Cruces de Playoffs">
+          <CollapsibleSection icon={<Trophy className="w-4 h-4" />} iconColor="amber" title="Cruces de Playoffs">
             <p className="text-xs text-slate-500 dark:text-slate-500 -mt-1 mb-3">
               Por defecto los cruces se arman solos con la tabla de posiciones. Si necesitás armarlos vos (por ejemplo, por un desempate especial), elegí los equipos acá.
             </p>
@@ -1351,7 +1352,7 @@ export function ConfigView({
       {activeSection === 'equipos' && (
       <div className={readOnly ? 'space-y-4 opacity-50 pointer-events-none select-none' : 'space-y-4'}>
       {/* 2. Teams & Roster Manager */}
-      <CollapsibleSection icon={<Users className="w-4 h-4 text-sky-600" />} title={`Equipos y Planteles (${data.teams.length})`} defaultOpen={true}>
+      <CollapsibleSection icon={<Users className="w-4 h-4" />} title={`Equipos y Planteles (${data.teams.length})`} defaultOpen={true}>
         {/* Add Team Form */}
         <form onSubmit={handleAddTeam} className="p-3 bg-slate-50 dark:bg-slate-800/70 rounded-2xl border border-slate-100 dark:border-slate-700 mb-4 space-y-3">
           <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300">Nuevo Equipo</label>
@@ -1641,11 +1642,8 @@ export function ConfigView({
       <div className={readOnly ? 'space-y-4 opacity-50 pointer-events-none select-none' : 'space-y-4'}>
       {/* 3. WhatsApp Messages & Default Templates */}
       <CollapsibleSection
-        icon={
-          <span className="p-1.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl">
-            <MessageCircle className="w-4 h-4" />
-          </span>
-        }
+        icon={<MessageCircle className="w-4 h-4" />}
+        iconColor="emerald"
         title="Mensajes y Plantilla de WhatsApp"
       >
         <div className="space-y-4">
@@ -1763,7 +1761,7 @@ export function ConfigView({
       {activeSection === 'respaldo' && (
         <>
       {/* 4. Backup, Demo Data and Reset */}
-      <CollapsibleSection icon={<span>💾</span>} title="Respaldo & Muestra">
+      <CollapsibleSection icon={<Archive className="w-4 h-4" />} iconColor="slate" title="Respaldo & Muestra">
         <div className="space-y-2.5">
         <div className="grid grid-cols-2 gap-2">
           <button
