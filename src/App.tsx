@@ -25,7 +25,7 @@ import {
 } from './utils/cloudSync';
 import { getEditorName } from './utils/editorIdentity';
 import { isFirebaseConfigured } from './utils/firebase';
-import { GoogleUser, signInWithGoogle, signOutOfGoogle, subscribeToGoogleUser } from './utils/googleAuth';
+import { checkGoogleRedirectResult, GoogleUser, signInWithGoogle, signOutOfGoogle, subscribeToGoogleUser } from './utils/googleAuth';
 import {
   calculatePlayerCards,
   calculateStandings,
@@ -287,6 +287,7 @@ export default function App() {
 
   // Keep track of the signed-in Google account across the whole app.
   useEffect(() => {
+    checkGoogleRedirectResult();
     const unsubscribe = subscribeToGoogleUser((u) => {
       setGoogleUser(u);
       setAuthChecked(true);
