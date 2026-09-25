@@ -79,6 +79,7 @@ interface ConfigViewProps {
   onAddAuthorizedCreator: (email: string) => void;
   onRemoveAuthorizedCreator: (email: string) => void;
   readOnly: boolean;
+  isGuestViaLink: boolean;
 }
 
 function formatLogTime(iso: string): string {
@@ -144,6 +145,7 @@ export function ConfigView({
   onAddAuthorizedCreator,
   onRemoveAuthorizedCreator,
   readOnly,
+  isGuestViaLink,
 }: ConfigViewProps) {
   const [linkTargetId, setLinkTargetId] = useState('none');
   const [useSeparateCourts, setUseSeparateCourts] = useState(false);
@@ -372,13 +374,14 @@ export function ConfigView({
   const isCombined = !!data.config.eventGroupId;
   const hasPlayoffs = data.config.format !== 'groups_only' && data.config.format !== 'knockout_only';
 
-  const HUB_ITEMS: {
+  type HubItem = {
     key: NonNullable<typeof activeSection>;
     icon: React.ReactNode;
     title: string;
     subtitle: string;
     gated: boolean;
-  }[] = [
+  };
+  const ALL_HUB_ITEMS: HubItem[] = [
     { key: 'torneos', icon: <Trophy className="w-4 h-4" />, title: 'Mis Torneos', subtitle: `${tournaments.length} torneo(s) · crear, duplicar, activar`, gated: false },
     { key: 'ajustes', icon: <Settings className="w-4 h-4" />, title: 'Ajustes del Torneo', subtitle: 'Nombre, formato, canchas, regenerar fixture', gated: true },
     { key: 'compartir', icon: <Link2 className="w-4 h-4" />, title: 'Compartir Torneo', subtitle: data.config.shareCode ? 'Publicado · gestionar permisos' : 'Publicar y compartir por link', gated: false },
@@ -387,6 +390,7 @@ export function ConfigView({
     { key: 'whatsapp', icon: <MessageCircle className="w-4 h-4" />, title: 'Mensajes de WhatsApp', subtitle: 'Encabezado y plantillas para compartir', gated: true },
     { key: 'respaldo', icon: <Archive className="w-4 h-4" />, title: 'Respaldo & Datos', subtitle: 'Exportar, importar, datos de muestra', gated: false },
   ];
+  const HUB_ITEMS: HubItem[] = ALL_HUB_ITEMS.filter((item) => !isGuestViaLink || item.key !== 'torneos');
 
   return (
     <div className="space-y-4 animate-in fade-in duration-200">
