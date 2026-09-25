@@ -14,13 +14,13 @@ import { ImageShareModal, ImageShareType } from './components/ImageShareModal';
 import { ActivityLogEntry, Match, Team, TournamentConfig, TournamentData, TournamentFormat, TournamentStatus } from './types';
 import {
   addAuthorizedCreator,
+  fetchAuthorizedCreators,
   fetchSharedTournament,
   grantEditorAccess,
   publishTournament,
   pushTournamentUpdate,
   removeAuthorizedCreator,
   revokeEditorAccess,
-  subscribeToAuthorizedCreators,
   subscribeToSharedTournament,
 } from './utils/cloudSync';
 import { getEditorName } from './utils/editorIdentity';
@@ -294,20 +294,24 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // Keep the list of accounts allowed to publish new tournaments in sync. Re-subscribes whenever
-  // sign-in state changes, since a listener started while signed out won't retry on its own once
-  // the rules would actually allow it (they require request.auth != null to read this document).
-  useEffect(() => {
+  // Keep the list of accounts allowed to publish new tournaments in sync. Re-fetches whenever
+  // sign-in state changes (a plain one-time read, not a live listener - simpler and avoids some
+  // Firestore onSnapshot caching edge cases we hit while building this).
+  const reloadAuthorizedCreators = () => {
     if (!isFirebaseConfigured()) {
       setCreatorsLoaded(true);
       return;
     }
-    setCreatorsLoaded(false);
-    const unsubscribe = subscribeToAuthorizedCreators((emails) => {
+    fetchAuthorizedCreators().then((emails) => {
       setAuthorizedCreators(emails);
       setCreatorsLoaded(true);
     });
-    return () => unsubscribe();
+  };
+
+  useEffect(() => {
+    setCreatorsLoaded(false);
+    reloadAuthorizedCreators();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [!!googleUser]);
 
   // The bare app (no ?t=CODE, i.e. not just opening someone's shared tournament link) is only for
@@ -459,11 +463,13 @@ export default function App() {
   // Owner-of-the-app-level actions: who is allowed to publish NEW tournaments to the cloud at all.
   const handleAddAuthorizedCreator = async (email: string) => {
     const ok = await addAuthorizedCreator(email);
+    if (ok) reloadAuthorizedCreators();
     showToast(ok ? `✓ ${email.trim()} ya puede publicar torneos.` : '⚠️ No se pudo agregar (¿tenés vos permiso?).');
   };
 
   const handleRemoveAuthorizedCreator = async (email: string) => {
     const ok = await removeAuthorizedCreator(email);
+    if (ok) reloadAuthorizedCreators();
     showToast(ok ? `✓ Se le quitó el permiso de publicar a ${email}.` : '⚠️ No se pudo quitar el permiso.');
   };
 
