@@ -7,6 +7,7 @@ import { ScorersView } from './components/ScorersView';
 import { SingleMatchShareModal } from './components/SingleMatchShareModal';
 import { StandaloneExportModal } from './components/StandaloneExportModal';
 import { StandingsView } from './components/StandingsView';
+import { HomeView } from './components/HomeView';
 import { TabBar, TabType } from './components/TabBar';
 import { TournamentSwitcherModal } from './components/TournamentSwitcherModal';
 import { ShareType, WhatsAppShareModal } from './components/WhatsAppShareModal';
@@ -138,7 +139,7 @@ function sanitizeTournament(t: any): TournamentData {
 }
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<TabType>('posiciones');
+  const [activeTab, setActiveTab] = useState<TabType>('inicio');
 
   // Multi-tournament state
   const [tournaments, setTournaments] = useState<TournamentData[]>(() => {
@@ -482,6 +483,15 @@ export default function App() {
 
   const blockGuestAction = (message: string) => {
     showToast(`🔒 ${message}`);
+  };
+
+  const handleOpenCreateTournament = () => {
+    if (isGuestViaLink) {
+      blockGuestAction('Este link es solo para este torneo. Pedile el link de la app completa al organizador para crear uno nuevo.');
+      return;
+    }
+    setSwitcherInitialMode('create');
+    setShowSwitcherModal(true);
   };
 
   const handleSelectMatchGuarded = (m: Match) => {
@@ -1043,6 +1053,22 @@ export default function App() {
 
       {/* Main Tab Views */}
       <main className="flex-1 p-4">
+        {activeTab === 'inicio' && (
+          <HomeView
+            tournamentName={currentTournament.config.name}
+            matches={currentTournament.matches}
+            teams={currentTournament.teams}
+            standings={standings}
+            topScorers={topScorers}
+            activityLog={currentTournament.activityLog}
+            onGoToFixture={() => setActiveTab('fixture')}
+            onGoToStandings={() => setActiveTab('posiciones')}
+            onGoToScorers={() => setActiveTab('goleadores')}
+            onSelectMatch={handleSelectMatchGuarded}
+            onAddTournament={handleOpenCreateTournament}
+          />
+        )}
+
         {activeTab === 'posiciones' && (
           <StandingsView
             standings={standings}
@@ -1221,15 +1247,7 @@ export default function App() {
       )}
 
       {/* Fixed iOS Tab Bar */}
-      <TabBar
-        activeTab={activeTab}
-        onSelectTab={(t) => setActiveTab(t)}
-        pendingMatchesCount={pendingCount}
-        onAddTournament={() => {
-          setSwitcherInitialMode('create');
-          setShowSwitcherModal(true);
-        }}
-      />
+      <TabBar activeTab={activeTab} onSelectTab={(t) => setActiveTab(t)} pendingMatchesCount={pendingCount} />
     </div>
   );
 }
