@@ -101,15 +101,15 @@ export function HomeView({
             {isFavoriteNextMatch ? <Star className="w-3.5 h-3.5 fill-amber-300 text-amber-300" /> : <Calendar className="w-3.5 h-3.5" />}
             <span>{isFavoriteNextMatch ? 'Próximo partido de tu equipo' : 'Próximo partido'}</span>
           </div>
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex-1 min-w-0 flex items-center gap-2">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
               <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: teamColor(nextMatch.teamAId) }} />
               <span className="text-white font-bold text-sm truncate">{nextMatch.placeholderA || teamName(nextMatch.teamAId)}</span>
             </div>
-            <span className="text-sky-200 text-xs font-bold shrink-0">vs</span>
-            <div className="flex-1 min-w-0 flex items-center justify-end gap-2">
-              <span className="text-white font-bold text-sm truncate text-right">{nextMatch.placeholderB || teamName(nextMatch.teamBId)}</span>
+            <p className="text-sky-200/80 text-[10px] font-bold pl-5">vs</p>
+            <div className="flex items-center gap-2">
               <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: teamColor(nextMatch.teamBId) }} />
+              <span className="text-white font-bold text-sm truncate">{nextMatch.placeholderB || teamName(nextMatch.teamBId)}</span>
             </div>
           </div>
           <div className="flex items-center gap-2 mt-3 text-[11px] font-semibold text-sky-100">
