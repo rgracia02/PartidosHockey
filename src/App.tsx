@@ -23,9 +23,8 @@ import {
   revokeEditorAccess,
   subscribeToSharedTournament,
 } from './utils/cloudSync';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { getEditorName } from './utils/editorIdentity';
-import { getDb, isFirebaseConfigured } from './utils/firebase';
+import { isFirebaseConfigured } from './utils/firebase';
 import { GoogleUser, signInWithGoogle, signOutOfGoogle, subscribeToGoogleUser } from './utils/googleAuth';
 import {
   calculatePlayerCards,
@@ -993,45 +992,6 @@ export default function App() {
                 Tu cuenta ({googleUser.email}) no está autorizada para usar esta app. Pedile a un organizador
                 que agregue tu mail en "Compartir Torneo → Quién puede publicar torneos nuevos".
               </p>
-              <p className="text-[10px] text-slate-400 dark:text-slate-600 font-mono break-all border border-dashed border-slate-300 dark:border-slate-700 rounded-lg p-2">
-                DEBUG · authChecked={String(authChecked)} · creatorsLoaded={String(creatorsLoaded)} · lista=[
-                {authorizedCreators.join(' | ')}] · canPublish={String(canPublish)}
-              </p>
-              <button
-                onClick={async () => {
-                  const db = getDb();
-                  if (!db) {
-                    alert('getDb() devolvió null - Firebase no está configurado.');
-                    return;
-                  }
-                  try {
-                    const snap = await getDoc(doc(db, 'appConfig', 'authorizedCreators'));
-                    alert(
-                      `exists: ${snap.exists()}\ndata: ${JSON.stringify(snap.exists() ? snap.data() : null)}\npath: ${snap.ref.path}\nprojectId: ${db.app.options.projectId}`
-                    );
-                  } catch (err: any) {
-                    alert(`ERROR: ${err?.code || ''} ${err?.message || err}`);
-                  }
-                }}
-                className="w-full py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl font-bold text-[10px]"
-              >
-                🔍 Diagnóstico directo (leer Firestore ahora)
-              </button>
-              <button
-                onClick={async () => {
-                  const db = getDb();
-                  if (!db || !googleUser) return;
-                  try {
-                    await setDoc(doc(db, 'appConfig', 'authorizedCreators'), { emails: [googleUser.email] });
-                    alert('✓ Documento creado con tu mail: ' + googleUser.email + '\nRefrescá la página ahora.');
-                  } catch (err: any) {
-                    alert(`ERROR al crear: ${err?.code || ''} ${err?.message || err}`);
-                  }
-                }}
-                className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-[10px]"
-              >
-                🛠 Crear el documento correcto ahora
-              </button>
               <button
                 onClick={handleGoogleSignOut}
                 className="w-full py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-2xl font-bold text-xs"
