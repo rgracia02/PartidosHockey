@@ -1056,6 +1056,7 @@ export default function App() {
         {activeTab === 'inicio' && (
           <HomeView
             tournamentName={currentTournament.config.name}
+            tournamentId={currentTournament.config.id}
             matches={currentTournament.matches}
             teams={currentTournament.teams}
             standings={standings}
@@ -1073,6 +1074,7 @@ export default function App() {
           <StandingsView
             standings={standings}
             format={currentTournament.config.format}
+            tournamentId={currentTournament.config.id}
             onShareStandings={() => handleOpenShareModal('standings')}
             onShareStandingsImage={() => handleOpenImageShareModal('standings')}
           />
@@ -1082,6 +1084,7 @@ export default function App() {
           <FixtureView
             matches={currentTournament.matches}
             teams={currentTournament.teams}
+            tournamentId={currentTournament.config.id}
             onSelectMatch={handleSelectMatchGuarded}
             onShareResults={(roundLabel) => handleOpenShareModal('results', roundLabel || 'all')}
             onShareFixtureImage={() => handleOpenImageShareModal('fixture')}
