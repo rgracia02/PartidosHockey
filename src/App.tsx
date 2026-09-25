@@ -474,6 +474,15 @@ export default function App() {
   };
 
   const isReadOnlyCloud = !!activeShareCode && !isCloudEditor;
+  // Someone who opened the app through a specific tournament's share link, and isn't themselves
+  // an authorized creator, should be locked to just that one tournament - not get the run of the
+  // whole app (switching tournaments, creating new ones, etc.), even though viewing/editing THIS
+  // tournament (per its own editor list) is still fine.
+  const isGuestViaLink = !!cloudLinkCode && !canPublish;
+
+  const blockGuestAction = (message: string) => {
+    showToast(`🔒 ${message}`);
+  };
 
   const handleSelectMatchGuarded = (m: Match) => {
     if (isReadOnlyCloud) {
@@ -1023,6 +1032,10 @@ export default function App() {
           else handleOpenShareModal('summary');
         }}
         onOpenTournamentSwitcher={() => {
+          if (isGuestViaLink) {
+            blockGuestAction('Este link es solo para este torneo. Pedile el link de la app completa al organizador para ver otros.');
+            return;
+          }
           setSwitcherInitialMode('list');
           setShowSwitcherModal(true);
         }}
@@ -1082,6 +1095,7 @@ export default function App() {
           <ConfigView
             data={currentTournament}
             tournaments={tournaments}
+            isGuestViaLink={isGuestViaLink}
             onSelectTournament={handleSelectTournament}
             onOpenCreateTournamentModal={() => {
               setSwitcherInitialMode('create');
