@@ -174,7 +174,7 @@ export function PostMatchModal({ match, teams, onSave, onClose }: PostMatchModal
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="bg-[#F2F2F7] w-full max-w-lg rounded-t-[32px] p-5 pb-safe max-h-[92vh] flex flex-col shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-200">
+      <div className="bg-[#F2F2F7] dark:bg-slate-950 w-full max-w-lg rounded-t-[32px] p-5 pb-safe max-h-[92vh] flex flex-col shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-200">
         {/* iOS Drag Handle indicator */}
         <div className="w-12 h-1.5 bg-slate-300 rounded-full mx-auto mb-3 shrink-0" />
 
