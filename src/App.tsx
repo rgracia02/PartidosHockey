@@ -986,6 +986,10 @@ export default function App() {
                 Tu cuenta ({googleUser.email}) no está autorizada para usar esta app. Pedile a un organizador
                 que agregue tu mail en "Compartir Torneo → Quién puede publicar torneos nuevos".
               </p>
+              <p className="text-[10px] text-slate-400 dark:text-slate-600 font-mono break-all border border-dashed border-slate-300 dark:border-slate-700 rounded-lg p-2">
+                DEBUG · authChecked={String(authChecked)} · creatorsLoaded={String(creatorsLoaded)} · lista=[
+                {authorizedCreators.join(' | ')}] · canPublish={String(canPublish)}
+              </p>
               <button
                 onClick={handleGoogleSignOut}
                 className="w-full py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-2xl font-bold text-xs"
