@@ -23,8 +23,9 @@ import {
   revokeEditorAccess,
   subscribeToSharedTournament,
 } from './utils/cloudSync';
+import { doc, getDoc } from 'firebase/firestore';
 import { getEditorName } from './utils/editorIdentity';
-import { isFirebaseConfigured } from './utils/firebase';
+import { getDb, isFirebaseConfigured } from './utils/firebase';
 import { GoogleUser, signInWithGoogle, signOutOfGoogle, subscribeToGoogleUser } from './utils/googleAuth';
 import {
   calculatePlayerCards,
@@ -996,6 +997,26 @@ export default function App() {
                 DEBUG · authChecked={String(authChecked)} · creatorsLoaded={String(creatorsLoaded)} · lista=[
                 {authorizedCreators.join(' | ')}] · canPublish={String(canPublish)}
               </p>
+              <button
+                onClick={async () => {
+                  const db = getDb();
+                  if (!db) {
+                    alert('getDb() devolvió null - Firebase no está configurado.');
+                    return;
+                  }
+                  try {
+                    const snap = await getDoc(doc(db, 'appConfig', 'authorizedCreators'));
+                    alert(
+                      `exists: ${snap.exists()}\ndata: ${JSON.stringify(snap.exists() ? snap.data() : null)}\npath: ${snap.ref.path}\nprojectId: ${db.app.options.projectId}`
+                    );
+                  } catch (err: any) {
+                    alert(`ERROR: ${err?.code || ''} ${err?.message || err}`);
+                  }
+                }}
+                className="w-full py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl font-bold text-[10px]"
+              >
+                🔍 Diagnóstico directo (leer Firestore ahora)
+              </button>
               <button
                 onClick={handleGoogleSignOut}
                 className="w-full py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-2xl font-bold text-xs"
