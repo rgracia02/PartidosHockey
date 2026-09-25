@@ -83,6 +83,25 @@ interface ConfigViewProps {
   isGuestViaLink: boolean;
 }
 
+const EMAIL_AVATAR_COLORS = ['#0284c7', '#dc2626', '#059669', '#7c3aed', '#d97706', '#db2777', '#0891b2'];
+
+function emailAvatarColor(email: string): string {
+  let hash = 0;
+  for (let i = 0; i < email.length; i++) hash = email.charCodeAt(i) + ((hash << 5) - hash);
+  return EMAIL_AVATAR_COLORS[Math.abs(hash) % EMAIL_AVATAR_COLORS.length];
+}
+
+function EmailAvatar({ email }: { email: string }) {
+  return (
+    <span
+      className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black text-white shrink-0"
+      style={{ backgroundColor: emailAvatarColor(email) }}
+    >
+      {(email.trim()[0] || '?').toUpperCase()}
+    </span>
+  );
+}
+
 function formatLogTime(iso: string): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return '';
@@ -786,8 +805,11 @@ export function ConfigView({
                   Quién puede publicar torneos nuevos
                 </p>
                 {authorizedCreators.map((email) => (
-                  <div key={email} className="flex items-center justify-between text-xs bg-slate-50 dark:bg-slate-800/70 rounded-xl px-3 py-2">
-                    <span className="font-semibold text-slate-700 dark:text-slate-200 truncate">{email}</span>
+                  <div key={email} className="flex items-center gap-2.5 justify-between text-xs bg-slate-50 dark:bg-slate-800/70 rounded-xl px-3 py-2">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <EmailAvatar email={email} />
+                      <span className="font-semibold text-slate-700 dark:text-slate-200 truncate">{email}</span>
+                    </div>
                     {email !== googleUser.email && (
                       <button
                         onClick={() => onRemoveAuthorizedCreator(email)}
@@ -882,13 +904,19 @@ export function ConfigView({
                     <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                       Quién puede cargar resultados
                     </p>
-                    <div className="flex items-center justify-between text-xs bg-slate-50 dark:bg-slate-800/70 rounded-xl px-3 py-2">
-                      <span className="font-semibold text-slate-700 dark:text-slate-200 truncate">{data.config.shareOwnerEmail}</span>
+                    <div className="flex items-center gap-2.5 justify-between text-xs bg-slate-50 dark:bg-slate-800/70 rounded-xl px-3 py-2">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <EmailAvatar email={data.config.shareOwnerEmail || ''} />
+                        <span className="font-semibold text-slate-700 dark:text-slate-200 truncate">{data.config.shareOwnerEmail}</span>
+                      </div>
                       <span className="text-[10px] font-bold text-sky-600 dark:text-sky-400 shrink-0">Organizador</span>
                     </div>
                     {(data.config.shareEditorEmails || []).map((email) => (
-                      <div key={email} className="flex items-center justify-between text-xs bg-slate-50 dark:bg-slate-800/70 rounded-xl px-3 py-2">
-                        <span className="font-semibold text-slate-700 dark:text-slate-200 truncate">{email}</span>
+                      <div key={email} className="flex items-center gap-2.5 justify-between text-xs bg-slate-50 dark:bg-slate-800/70 rounded-xl px-3 py-2">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <EmailAvatar email={email} />
+                          <span className="font-semibold text-slate-700 dark:text-slate-200 truncate">{email}</span>
+                        </div>
                         <button
                           onClick={() => onRevokeEditor(email)}
                           className="shrink-0 text-[10px] font-bold text-rose-600 dark:text-rose-400 hover:underline"

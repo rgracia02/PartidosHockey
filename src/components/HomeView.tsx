@@ -1,8 +1,10 @@
-import { Calendar, ChevronRight, Flame, Plus, Trophy } from 'lucide-react';
+import { Calendar, ChevronRight, Flame, Plus, Star, Trophy } from 'lucide-react';
 import { ActivityLogEntry, Match, ScorerStat, StandingsRow, Team } from '../types';
+import { getFavoriteTeam } from '../utils/favorites';
 
 interface HomeViewProps {
   tournamentName: string;
+  tournamentId: string;
   matches: Match[];
   teams: Team[];
   standings: StandingsRow[];
@@ -23,14 +25,23 @@ function formatShortDate(isoDate?: string): string {
   return `${day}/${month}`;
 }
 
-function getNextMatch(matches: Match[]): Match | null {
+function getNextMatch(matches: Match[], favoriteTeamId: string | null): Match | null {
   const pending = matches.filter((m) => !m.isCompleted && m.teamAId && m.teamBId);
   if (pending.length === 0) return null;
-  const withDate = pending.filter((m) => m.date);
-  if (withDate.length > 0) {
-    return [...withDate].sort((a, b) => `${a.date}${a.time || ''}`.localeCompare(`${b.date}${b.time || ''}`))[0];
+
+  const pickEarliest = (list: Match[]): Match => {
+    const withDate = list.filter((m) => m.date);
+    if (withDate.length > 0) {
+      return [...withDate].sort((a, b) => `${a.date}${a.time || ''}`.localeCompare(`${b.date}${b.time || ''}`))[0];
+    }
+    return list[0];
+  };
+
+  if (favoriteTeamId) {
+    const favoritePending = pending.filter((m) => m.teamAId === favoriteTeamId || m.teamBId === favoriteTeamId);
+    if (favoritePending.length > 0) return pickEarliest(favoritePending);
   }
-  return pending[0];
+  return pickEarliest(pending);
 }
 
 function getLastResult(matches: Match[]): Match | null {
@@ -55,6 +66,7 @@ function formatLogTime(iso: string): string {
 }
 
 export function HomeView({
+  tournamentId,
   matches,
   teams,
   standings,
@@ -68,8 +80,11 @@ export function HomeView({
 }: HomeViewProps) {
   const teamName = (id: string) => teams.find((t) => t.id === id)?.name || 'Por definir';
   const teamColor = (id: string) => teams.find((t) => t.id === id)?.color || '#94A3B8';
+  const favoriteTeamId = getFavoriteTeam(tournamentId);
 
-  const nextMatch = getNextMatch(matches);
+  const nextMatch = getNextMatch(matches, favoriteTeamId);
+  const isFavoriteNextMatch =
+    !!favoriteTeamId && !!nextMatch && (nextMatch.teamAId === favoriteTeamId || nextMatch.teamBId === favoriteTeamId);
   const lastResult = getLastResult(matches);
   const topScorer = topScorers[0];
   const podium = standings.slice(0, 3);
@@ -83,8 +98,8 @@ export function HomeView({
           className="w-full text-left bg-gradient-to-br from-sky-600 to-sky-700 dark:from-sky-700 dark:to-sky-900 rounded-3xl p-4 shadow-sm active:scale-[0.99] transition-all"
         >
           <div className="flex items-center gap-1.5 text-sky-100 text-[11px] font-bold uppercase tracking-wide mb-2">
-            <Calendar className="w-3.5 h-3.5" />
-            <span>Próximo partido</span>
+            {isFavoriteNextMatch ? <Star className="w-3.5 h-3.5 fill-amber-300 text-amber-300" /> : <Calendar className="w-3.5 h-3.5" />}
+            <span>{isFavoriteNextMatch ? 'Próximo partido de tu equipo' : 'Próximo partido'}</span>
           </div>
           <div className="flex items-center justify-between gap-2">
             <div className="flex-1 min-w-0 flex items-center gap-2">

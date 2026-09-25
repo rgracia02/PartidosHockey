@@ -1,15 +1,25 @@
-import { Camera, ChevronRight, Info, Medal, Share2, Trophy } from 'lucide-react';
+import { useState } from 'react';
+import { Camera, ChevronRight, Info, Medal, Share2, Star, Trophy } from 'lucide-react';
 import { StandingsRow, TournamentFormat } from '../types';
+import { getFavoriteTeam, setFavoriteTeam } from '../utils/favorites';
 
 interface StandingsViewProps {
   standings: StandingsRow[];
   format: TournamentFormat;
+  tournamentId: string;
   onSelectTeam?: (teamId: string) => void;
   onShareStandings?: () => void;
   onShareStandingsImage?: () => void;
 }
 
-export function StandingsView({ standings, format, onShareStandings, onShareStandingsImage }: StandingsViewProps) {
+export function StandingsView({ standings, format, tournamentId, onShareStandings, onShareStandingsImage }: StandingsViewProps) {
+  const [favoriteTeamId, setFavoriteTeamIdState] = useState<string | null>(() => getFavoriteTeam(tournamentId));
+
+  const toggleFavorite = (teamId: string) => {
+    const next = favoriteTeamId === teamId ? null : teamId;
+    setFavoriteTeamIdState(next);
+    setFavoriteTeam(tournamentId, next);
+  };
   // Determine cutoff for playoffs
   let playoffCutoff = 0;
   let playoffLabel = '';
@@ -80,7 +90,8 @@ export function StandingsView({ standings, format, onShareStandings, onShareStan
               <thead>
                 <tr className="text-slate-500 dark:text-slate-400 text-[11px] font-bold border-b border-slate-100 dark:border-slate-800 uppercase tracking-wider">
                   <th className="py-2.5 pl-1 w-6 text-center">#</th>
-                  <th className="py-2.5 pl-2">Equipo</th>
+                  <th className="py-2.5 w-6"></th>
+                  <th className="py-2.5 pl-1">Equipo</th>
                   <th className="py-2.5 text-center font-black text-slate-800 dark:text-slate-200 w-10">PTS</th>
                   <th className="py-2.5 text-center w-8">PJ</th>
                   <th className="py-2.5 text-center w-8 text-slate-500 dark:text-slate-400">PG</th>
@@ -94,12 +105,17 @@ export function StandingsView({ standings, format, onShareStandings, onShareStan
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
                 {standings.map((row, idx) => {
                   const isQualified = playoffCutoff > 0 && idx < playoffCutoff;
+                  const isFavorite = row.teamId === favoriteTeamId;
 
                   return (
                     <tr
                       key={row.teamId}
-                      className={`group transition-colors ${
-                        isQualified
+                      className={`group transition-colors border-l-4 ${
+                        isQualified ? 'border-l-emerald-500' : 'border-l-transparent'
+                      } ${
+                        isFavorite
+                          ? 'bg-amber-50/50 dark:bg-amber-950/20 hover:bg-amber-50/70 dark:hover:bg-amber-950/30'
+                          : isQualified
                           ? 'bg-sky-50/30 dark:bg-sky-950/20 hover:bg-sky-50/50 dark:hover:bg-sky-950/40'
                           : 'hover:bg-slate-50/70 dark:hover:bg-slate-800/40'
                       }`}
@@ -115,7 +131,16 @@ export function StandingsView({ standings, format, onShareStandings, onShareStan
                           idx + 1
                         )}
                       </td>
-                      <td className="py-3 pl-2 font-semibold text-slate-900 dark:text-slate-100">
+                      <td className="py-3 text-center">
+                        <button
+                          onClick={() => toggleFavorite(row.teamId)}
+                          className="p-1 -m-1"
+                          title={isFavorite ? 'Quitar de favoritos' : 'Marcar como favorito'}
+                        >
+                          <Star className={`w-3.5 h-3.5 ${isFavorite ? 'fill-amber-400 text-amber-400' : 'text-slate-300 dark:text-slate-700'}`} />
+                        </button>
+                      </td>
+                      <td className="py-3 pl-1 font-semibold text-slate-900 dark:text-slate-100">
                         <div className="flex items-center gap-2">
                           <span
                             className="w-3 h-3 rounded-full shrink-0 shadow-xs ring-1 ring-black/10 dark:ring-white/20"
