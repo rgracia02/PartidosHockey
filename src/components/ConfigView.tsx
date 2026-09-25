@@ -443,9 +443,9 @@ export function ConfigView({
         <>
           <button
             onClick={() => setActiveSection(null)}
-            className="flex items-center gap-1.5 text-xs font-bold text-sky-600 dark:text-sky-400 -mb-1"
+            className="flex items-center gap-1.5 text-sm font-bold text-sky-600 dark:text-sky-400 -ml-1.5 pl-1.5 pr-3 py-2 min-h-[40px] rounded-xl active:bg-sky-50 dark:active:bg-sky-950/40 transition-colors"
           >
-            <ArrowLeft className="w-3.5 h-3.5" />
+            <ArrowLeft className="w-4 h-4" />
             <span>Configuración</span>
           </button>
 
