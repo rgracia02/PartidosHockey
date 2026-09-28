@@ -763,6 +763,7 @@ export function createNewTournament(
     },
     teams,
     matches,
+    referees: [],
     lastUpdated: new Date().toISOString(),
   };
 }
