@@ -9,6 +9,7 @@ import {
   Code,
   Copy,
   Download,
+  Flag,
   FolderOpen,
   Layers,
   Link2,
@@ -27,6 +28,7 @@ import {
 } from 'lucide-react';
 import {
   Player,
+  Referee,
   Team,
   TournamentConfig,
   TournamentData,
@@ -45,6 +47,7 @@ interface ConfigViewProps {
   onDeleteTournament: (id: string) => void;
   onUpdateConfig: (config: TournamentConfig) => void;
   onUpdateTeams: (teams: Team[]) => void;
+  onUpdateReferees: (referees: Referee[]) => void;
   onRegenerateFixture: () => void;
   onRegeneratePlayoffs: () => void;
   onLoadDemoData: () => void;
@@ -136,6 +139,7 @@ export function ConfigView({
   onDeleteTournament,
   onUpdateConfig,
   onUpdateTeams,
+  onUpdateReferees,
   onRegenerateFixture,
   onRegeneratePlayoffs,
   onLoadDemoData,
@@ -170,7 +174,15 @@ export function ConfigView({
   const [linkTargetId, setLinkTargetId] = useState('none');
   const [useSeparateCourts, setUseSeparateCourts] = useState(false);
   const [activeSection, setActiveSection] = useState<
-    'torneos' | 'ajustes' | 'compartir' | 'programacion' | 'equipos' | 'whatsapp' | 'respaldo' | null
+    | 'torneos'
+    | 'ajustes'
+    | 'compartir'
+    | 'programacion'
+    | 'equipos'
+    | 'arbitros'
+    | 'whatsapp'
+    | 'respaldo'
+    | null
   >(null);
   // Cloud sharing state
   const [newSharePin, setNewSharePin] = useState('');
@@ -192,6 +204,11 @@ export function ConfigView({
   const [editingTeamId, setEditingTeamId] = useState<string | null>(null);
   const [editTeamName, setEditTeamName] = useState('');
   const [editTeamColor, setEditTeamColor] = useState(COLOR_PRESETS[0]);
+
+  // New referee form state
+  const [newRefereeName, setNewRefereeName] = useState('');
+  const [editingRefereeId, setEditingRefereeId] = useState<string | null>(null);
+  const [editRefereeName, setEditRefereeName] = useState('');
 
   // New player form state
   const [newPlayerName, setNewPlayerName] = useState('');
@@ -313,6 +330,45 @@ export function ConfigView({
     }
   };
 
+  const handleAddReferee = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newRefereeName.trim()) return;
+
+    const newReferee: Referee = {
+      id: `ref-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      name: newRefereeName.trim(),
+    };
+
+    onUpdateReferees([...(data.referees || []), newReferee]);
+    setNewRefereeName('');
+  };
+
+  const handleStartRefereeEdit = (referee: Referee) => {
+    setEditingRefereeId(referee.id);
+    setEditRefereeName(referee.name);
+  };
+
+  const handleCancelRefereeEdit = () => {
+    setEditingRefereeId(null);
+    setEditRefereeName('');
+  };
+
+  const handleSaveRefereeEdit = (refereeId: string) => {
+    if (!editRefereeName.trim()) return;
+    const updated = (data.referees || []).map((r) =>
+      r.id === refereeId ? { ...r, name: editRefereeName.trim() } : r
+    );
+    onUpdateReferees(updated);
+    setEditingRefereeId(null);
+    setEditRefereeName('');
+  };
+
+  const handleRemoveReferee = (refereeId: string) => {
+    if (confirm('¿Eliminar este árbitro de la lista?')) {
+      onUpdateReferees((data.referees || []).filter((r) => r.id !== refereeId));
+    }
+  };
+
   const handleAddPlayer = (teamId: string) => {
     if (!newPlayerName.trim()) return;
 
@@ -394,6 +450,15 @@ export function ConfigView({
   const isCombined = !!data.config.eventGroupId;
   const hasPlayoffs = data.config.format !== 'groups_only' && data.config.format !== 'knockout_only';
 
+  // How many matches each referee has officiated so far (completed or not - any match they were
+  // assigned to counts), sorted from most to least, for the "Árbitros" section.
+  const refereeCounts = (data.referees || [])
+    .map((referee) => ({
+      referee,
+      count: data.matches.filter((m) => (m.refereeIds || []).includes(referee.id)).length,
+    }))
+    .sort((a, b) => b.count - a.count || a.referee.name.localeCompare(b.referee.name));
+
   type HubItem = {
     key: NonNullable<typeof activeSection>;
     icon: React.ReactNode;
@@ -407,6 +472,7 @@ export function ConfigView({
     { key: 'compartir', icon: <Link2 className="w-4 h-4" />, title: 'Compartir Torneo', subtitle: data.config.shareCode ? 'Publicado · gestionar permisos' : 'Publicar y compartir por link', gated: false },
     { key: 'programacion', icon: <Clock className="w-4 h-4" />, title: 'Programación', subtitle: isCombined ? 'Categorías, jornadas, horarios, playoffs' : 'Jornadas, horarios y orden de partidos', gated: true },
     { key: 'equipos', icon: <Users className="w-4 h-4" />, title: 'Equipos', subtitle: `${data.teams.length} equipo(s) · nombres, colores, planteles`, gated: true },
+    { key: 'arbitros', icon: <Flag className="w-4 h-4" />, title: 'Árbitros', subtitle: `${(data.referees || []).length} árbitro(s) · asignación y conteo de arbitrajes`, gated: true },
     { key: 'whatsapp', icon: <MessageCircle className="w-4 h-4" />, title: 'Mensajes de WhatsApp', subtitle: 'Encabezado y plantillas para compartir', gated: true },
     { key: 'respaldo', icon: <Archive className="w-4 h-4" />, title: 'Respaldo & Datos', subtitle: 'Exportar, importar, datos de muestra', gated: false },
   ];
@@ -449,7 +515,7 @@ export function ConfigView({
             <span>Configuración</span>
           </button>
 
-          {readOnly && ['ajustes', 'programacion', 'equipos', 'whatsapp'].includes(activeSection) && (
+          {readOnly && ['ajustes', 'programacion', 'equipos', 'arbitros', 'whatsapp'].includes(activeSection) && (
             <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-2xl px-4 py-3 text-xs font-semibold text-amber-800 dark:text-amber-300 flex items-center gap-2">
               <span>👁</span>
               <span>
@@ -1663,6 +1729,115 @@ export function ConfigView({
         </div>
       </CollapsibleSection>
 
+      </div>
+      )}
+
+      {activeSection === 'arbitros' && (
+      <div className={readOnly ? 'space-y-4 opacity-50 pointer-events-none select-none' : 'space-y-4'}>
+        <CollapsibleSection icon={<Flag className="w-4 h-4" />} iconColor="amber" title={`Árbitros (${(data.referees || []).length})`} defaultOpen={true}>
+          {/* Add Referee Form */}
+          <form onSubmit={handleAddReferee} className="flex gap-2 p-3 bg-slate-50 dark:bg-slate-800/70 rounded-2xl border border-slate-100 dark:border-slate-700 mb-4">
+            <input
+              type="text"
+              value={newRefereeName}
+              onChange={(e) => setNewRefereeName(e.target.value)}
+              placeholder="Nombre del árbitro"
+              className="flex-1 px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-800 dark:text-white min-h-[44px]"
+            />
+            <button
+              type="submit"
+              disabled={!newRefereeName.trim()}
+              className="px-4 py-2 bg-sky-600 active:bg-sky-700 text-white font-bold rounded-xl text-xs disabled:opacity-40 min-h-[44px] flex items-center gap-1 active:scale-95 transition-all"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Agregar</span>
+            </button>
+          </form>
+
+          {/* Referee List */}
+          <div className="space-y-2">
+            {(data.referees || []).length === 0 ? (
+              <p className="text-xs text-slate-500 py-4 text-center">
+                No hay árbitros cargados todavía. Agregalos arriba para poder asignarlos a cada partido.
+              </p>
+            ) : (
+              (data.referees || []).map((referee) => (
+                <div
+                  key={referee.id}
+                  className="flex items-center gap-2 border border-slate-200 dark:border-slate-800 rounded-2xl p-3 bg-slate-50/50 dark:bg-slate-800/40"
+                >
+                  {editingRefereeId === referee.id ? (
+                    <>
+                      <input
+                        type="text"
+                        value={editRefereeName}
+                        onChange={(e) => setEditRefereeName(e.target.value)}
+                        className="flex-1 px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-900 dark:text-white"
+                        autoFocus
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleSaveRefereeEdit(referee.id)}
+                        disabled={!editRefereeName.trim()}
+                        className="p-2 bg-sky-600 text-white rounded-xl disabled:opacity-40"
+                      >
+                        <Check className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleCancelRefereeEdit}
+                        className="p-2 text-slate-500 hover:text-slate-600 dark:hover:text-slate-200 rounded-xl"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <span className="flex-1 text-xs font-bold text-slate-800 dark:text-white truncate">{referee.name}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleStartRefereeEdit(referee)}
+                        className="text-slate-500 hover:text-sky-600 p-1.5 rounded-lg hover:bg-sky-50 dark:hover:bg-slate-800"
+                        title="Editar árbitro"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveReferee(referee.id)}
+                        className="text-slate-300 dark:text-slate-600 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-slate-800"
+                        title="Eliminar árbitro"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        </CollapsibleSection>
+
+        {(data.referees || []).length > 0 && (
+          <CollapsibleSection icon={<Trophy className="w-4 h-4" />} iconColor="slate" title="Cantidad de Arbitrajes" defaultOpen={true}>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-3">
+              Cuántos partidos cargó cada árbitro (elegilo en la planilla de resultado de cada partido).
+            </p>
+            <div className="space-y-1.5">
+              {refereeCounts.map(({ referee, count }) => (
+                <div
+                  key={referee.id}
+                  className="flex items-center justify-between px-3 py-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl"
+                >
+                  <span className="text-xs font-semibold text-slate-800 dark:text-white truncate">{referee.name}</span>
+                  <span className="text-xs font-black text-sky-600 dark:text-sky-400 shrink-0 ml-2">
+                    {count} {count === 1 ? 'partido' : 'partidos'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </CollapsibleSection>
+        )}
       </div>
       )}
 
