@@ -26,7 +26,13 @@ import {
 } from './utils/cloudSync';
 import { getEditorName } from './utils/editorIdentity';
 import { isFirebaseConfigured } from './utils/firebase';
-import { GoogleUser, signInWithGoogle, signOutOfGoogle, subscribeToGoogleUser } from './utils/googleAuth';
+import {
+  completeGoogleRedirectSignIn,
+  GoogleUser,
+  signInWithGoogle,
+  signOutOfGoogle,
+  subscribeToGoogleUser,
+} from './utils/googleAuth';
 import {
   calculatePlayerCards,
   calculateStandings,
@@ -293,6 +299,18 @@ export default function App() {
       setAuthChecked(true);
     });
     return () => unsubscribe();
+  }, []);
+
+  // Pick up the result of a Google sign-in that used a full-page redirect (needed inside the
+  // installed/home-screen app, where the usual popup can't work). onAuthStateChanged above will
+  // also fire once this resolves, but checking explicitly lets us show an error if the redirect
+  // itself failed instead of silently doing nothing.
+  useEffect(() => {
+    completeGoogleRedirectSignIn().catch((err) => {
+      console.error('Error al completar el inicio de sesión con Google:', err);
+      showToast('⚠️ No se pudo iniciar sesión con Google. Probá de nuevo.');
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Keep the list of accounts allowed to publish new tournaments in sync. Re-fetches whenever
