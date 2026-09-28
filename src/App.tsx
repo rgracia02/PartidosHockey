@@ -12,7 +12,7 @@ import { TabBar, TabType } from './components/TabBar';
 import { TournamentSwitcherModal } from './components/TournamentSwitcherModal';
 import { ShareType, WhatsAppShareModal } from './components/WhatsAppShareModal';
 import { ImageShareModal, ImageShareType } from './components/ImageShareModal';
-import { ActivityLogEntry, Match, Team, TournamentConfig, TournamentData, TournamentFormat, TournamentStatus } from './types';
+import { ActivityLogEntry, Match, Referee, Team, TournamentConfig, TournamentData, TournamentFormat, TournamentStatus } from './types';
 import {
   addAuthorizedCreator,
   fetchAuthorizedCreators,
@@ -917,6 +917,14 @@ export default function App() {
     }));
   };
 
+  const handleUpdateReferees = (newReferees: Referee[]) => {
+    updateCurrentTournament((prev) => ({
+      ...prev,
+      referees: newReferees,
+      lastUpdated: new Date().toISOString(),
+    }));
+  };
+
   // Rebuild only the playoff bracket (e.g. after changing the format) and keep every
   // group-stage match and result that is already loaded.
   const handleRegeneratePlayoffs = () => {
@@ -1152,6 +1160,7 @@ export default function App() {
             onDeleteTournament={handleDeleteTournament}
             onUpdateConfig={handleUpdateConfig}
             onUpdateTeams={handleUpdateTeams}
+            onUpdateReferees={handleUpdateReferees}
             onRegenerateFixture={handleRegenerateFixture}
             onRegeneratePlayoffs={handleRegeneratePlayoffs}
             onLoadDemoData={handleLoadDemo}
@@ -1235,6 +1244,7 @@ export default function App() {
         <PostMatchModal
           match={selectedMatch}
           teams={currentTournament.teams}
+          referees={currentTournament.referees || []}
           onSave={handleSaveMatch}
           onClose={() => setSelectedMatch(null)}
         />
