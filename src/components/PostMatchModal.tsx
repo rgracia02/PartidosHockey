@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import {
   Camera,
   Check,
+  Flag,
   Flame,
   MessageCircle,
   Minus,
@@ -11,16 +12,17 @@ import {
   Upload,
   X,
 } from 'lucide-react';
-import { GoalRecord, HockeyCardType, Match, Player, SanctionRecord, Team } from '../types';
+import { GoalRecord, HockeyCardType, Match, Player, Referee, SanctionRecord, Team } from '../types';
 
 interface PostMatchModalProps {
   match: Match;
   teams: Team[];
+  referees: Referee[];
   onSave: (updatedMatch: Match, andShare?: boolean) => void;
   onClose: () => void;
 }
 
-export function PostMatchModal({ match, teams, onSave, onClose }: PostMatchModalProps) {
+export function PostMatchModal({ match, teams, referees, onSave, onClose }: PostMatchModalProps) {
   const [scoreA, setScoreA] = useState<number>(match.scoreA ?? 0);
   const [scoreB, setScoreB] = useState<number>(match.scoreB ?? 0);
   const [isShootout, setIsShootout] = useState<boolean>(match.isShootout || false);
@@ -36,6 +38,9 @@ export function PostMatchModal({ match, teams, onSave, onClose }: PostMatchModal
   );
   const [photoUrl, setPhotoUrl] = useState<string | undefined>(match.photoUrl);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [referee1Id, setReferee1Id] = useState<string>(match.refereeIds?.[0] || '');
+  const [referee2Id, setReferee2Id] = useState<string>(match.refereeIds?.[1] || '');
 
   // Selected player for sanction form
   const [sanctionPlayerId, setSanctionPlayerId] = useState<string>('');
@@ -161,6 +166,7 @@ export function PostMatchModal({ match, teams, onSave, onClose }: PostMatchModal
       goals,
       sanctions,
       photoUrl,
+      refereeIds: [referee1Id, referee2Id].filter((id) => !!id),
     };
 
     onSave(updated, andShare);
@@ -553,6 +559,57 @@ export function PostMatchModal({ match, teams, onSave, onClose }: PostMatchModal
               )}
             </div>
           </div>
+
+          {/* Referees, for tracking who officiated each match */}
+          {referees.length > 0 && (
+            <div className="bg-white rounded-3xl p-4 shadow-sm border border-slate-200/60 dark:bg-slate-900 dark:border-slate-800">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-7 h-7 rounded-full bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 flex items-center justify-center font-bold">
+                  <Flag className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 leading-none dark:text-white">Árbitros</h3>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Opcional • Para contabilizar arbitrajes</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">
+                    Árbitro 1
+                  </label>
+                  <select
+                    value={referee1Id}
+                    onChange={(e) => setReferee1Id(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-800 dark:text-white min-h-[42px]"
+                  >
+                    <option value="">Sin asignar</option>
+                    {referees.map((r) => (
+                      <option key={r.id} value={r.id}>
+                        {r.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">
+                    Árbitro 2
+                  </label>
+                  <select
+                    value={referee2Id}
+                    onChange={(e) => setReferee2Id(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-800 dark:text-white min-h-[42px]"
+                  >
+                    <option value="">Sin asignar</option>
+                    {referees.map((r) => (
+                      <option key={r.id} value={r.id}>
+                        {r.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Optional Match Photo Upload */}
           <div className="bg-white rounded-3xl p-4 shadow-sm border border-slate-200/60 dark:bg-slate-900 dark:border-slate-800">
