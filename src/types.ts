@@ -14,6 +14,11 @@ export interface Team {
   players: Player[];
 }
 
+export interface Referee {
+  id: string;
+  name: string;
+}
+
 export interface GoalRecord {
   id: string;
   playerId: string;
@@ -59,6 +64,7 @@ export interface Match {
   // Identifies a match inside the fixed 5-team bracket (groups_playoffs_top5) so it can be wired to the right teams
   bracketKey?: 'B' | 'C' | 'D' | 'SF1' | 'SF2';
   isManualCross?: boolean; // true if the user manually picked the teams for this playoff match, so auto-sync from standings should leave it alone
+  refereeIds?: string[]; // 0, 1 or 2 Referee ids who officiated this match (see TournamentData.referees)
 }
 
 export type TournamentFormat = 
@@ -148,6 +154,7 @@ export interface TournamentData {
   config: TournamentConfig;
   teams: Team[];
   matches: Match[];
+  referees?: Referee[]; // pool of referees available to assign to matches, for tracking who officiated what
   lastUpdated: string;
   activityLog?: ActivityLogEntry[]; // most recent first; who did what, for shared/cloud tournaments
 }
