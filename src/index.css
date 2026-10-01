@@ -11,10 +11,17 @@
   }
 
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Plus Jakarta Sans", system-ui, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", system-ui, sans-serif;
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
+  }
+
+  /* Los controles no se seleccionan al tocar; el texto de datos (nombres, resultados) sí. */
+  button,
+  nav,
+  [role="tab"] {
     user-select: none;
+    -webkit-user-select: none;
   }
 }
 
@@ -40,3 +47,27 @@
   scrollbar-width: none;
 }
 
+
+/* Animaciones de entrada (antes se usaban clases "animate-in" sin que existieran). */
+@keyframes hk-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes hk-zoom-in { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+@keyframes hk-slide-up { from { transform: translateY(24px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes hk-slide-up-sm { from { transform: translateY(8px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes hk-slide-down { from { transform: translateY(-12px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+@media (prefers-reduced-motion: no-preference) {
+  .animate-in { animation-duration: 200ms; animation-timing-function: ease-out; animation-fill-mode: both; animation-name: hk-fade-in; }
+  .animate-in.zoom-in-95 { animation-name: hk-zoom-in; }
+  .animate-in.slide-in-from-bottom { animation-name: hk-slide-up; animation-duration: 260ms; }
+  .animate-in.slide-in-from-bottom-5 { animation-name: hk-slide-up-sm; }
+  .animate-in.slide-in-from-top-3 { animation-name: hk-slide-down; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

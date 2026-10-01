@@ -241,6 +241,11 @@ export default function App() {
       localStorage.setItem('hockey_active_tournament_id', activeTournamentId);
     } catch (e) {
       console.error('Error saving tournaments list to localStorage:', e);
+      const isQuota =
+        e instanceof DOMException && (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED');
+      if (isQuota) {
+        showToast('⚠️ No hay espacio para guardar en este dispositivo. Quitá fotos de partidos o borrá torneos viejos.');
+      }
     }
   }, [tournaments, activeTournamentId]);
 
@@ -279,6 +284,7 @@ export default function App() {
   // changes back up" effect below should skip this cycle (otherwise every remote update would
   // immediately get echoed straight back up as if it were a new local edit).
   const suppressCloudPushRef = useRef(false);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const activeShareCode = currentTournament?.config.shareCode || null;
   const activeOwnerUid = currentTournament?.config.shareOwnerUid || '';
@@ -998,16 +1004,19 @@ export default function App() {
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
-    setTimeout(() => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    // Más tiempo para mensajes largos: 3,5 s mínimo, 7 s máximo.
+    const ms = Math.min(7000, Math.max(3500, msg.length * 55));
+    toastTimerRef.current = setTimeout(() => {
       setToastMessage(null);
-    }, 2600);
+    }, ms);
   };
 
   // App-wide access gate (see needsAppGate/appGateReady/appGateBlocked above).
   if (needsAppGate && !appGateReady) {
     return (
       <div className="max-w-lg mx-auto min-h-screen bg-[#F2F2F7] dark:bg-slate-950 flex items-center justify-center px-6">
-        <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">Cargando…</p>
+        <p className="text-sm font-semibold text-slate-600 dark:text-slate-400">Cargando…</p>
       </div>
     );
   }
@@ -1020,7 +1029,7 @@ export default function App() {
           <h1 className="text-base font-bold text-slate-900 dark:text-white">Esta app es privada</h1>
           {!googleUser ? (
             <>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-slate-600 dark:text-slate-400">
                 Iniciá sesión con una cuenta de Google autorizada para usarla. Si alguien te compartió el link
                 de un torneo puntual, abrilo directamente en vez de entrar por acá.
               </p>
@@ -1033,7 +1042,7 @@ export default function App() {
             </>
           ) : (
             <>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-slate-600 dark:text-slate-400">
                 Tu cuenta ({googleUser.email}) no está autorizada para usar esta app. Pedile a un organizador
                 que agregue tu mail en "Compartir Torneo → Quién puede publicar torneos nuevos".
               </p>
@@ -1267,15 +1276,17 @@ export default function App() {
         />
       )}
 
-      {/* Toast notification banner */}
-      {toastMessage && (
-        <div
-          id="toast-notification"
-          className="fixed top-18 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 text-white text-xs font-bold px-4 py-2.5 rounded-full shadow-xl backdrop-blur-md animate-in fade-in slide-in-from-top-3 duration-200 border border-slate-700/50"
-        >
-          {toastMessage}
-        </div>
-      )}
+      {/* Toast notification banner (región viva: los lectores de pantalla lo anuncian) */}
+      <div role="status" aria-live="polite" className="contents">
+        {toastMessage && (
+          <div
+            id="toast-notification"
+            className="fixed top-18 left-1/2 -translate-x-1/2 z-[60] w-max max-w-[92vw] text-center bg-slate-900/95 text-white text-xs font-bold px-4 py-2.5 rounded-2xl shadow-xl backdrop-blur-md animate-in fade-in slide-in-from-top-3 duration-200 border border-slate-700/50"
+          >
+            {toastMessage}
+          </div>
+        )}
+      </div>
 
       {/* Fixed iOS Tab Bar */}
       <TabBar activeTab={activeTab} onSelectTab={(t) => setActiveTab(t)} pendingMatchesCount={pendingCount} />
