@@ -42,7 +42,15 @@ function MatchCard({ match, teams, onShareSingleMatch, onClick, categoryTag, cat
     <div
       id={`match-card-${match.id}`}
       onClick={onClick}
-      className={`bg-white dark:bg-slate-900 rounded-3xl p-4 shadow-sm border active:scale-[0.985] transition-all cursor-pointer hover:shadow-md ${
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
+          e.preventDefault();
+          onClick();
+        }
+      }}
+      className={`bg-white dark:bg-slate-900 rounded-3xl p-4 shadow-sm border active:scale-[0.985] transition-all cursor-pointer hover:shadow-md focus-visible:outline-2 focus-visible:outline-sky-600 ${
         involvesFavorite
           ? 'border-amber-300 dark:border-amber-700 ring-1 ring-amber-200/60 dark:ring-amber-800/40'
           : 'border-slate-200/70 dark:border-slate-800 active:border-sky-300 dark:active:border-sky-700'
@@ -77,7 +85,7 @@ function MatchCard({ match, teams, onShareSingleMatch, onClick, categoryTag, cat
             </span>
           )}
           {match.photoUrl && (
-            <span className="px-1.5 py-0.5 rounded-md bg-sky-50 dark:bg-sky-950/80 text-sky-700 dark:text-sky-300 font-bold flex items-center gap-0.5 text-[10px]">
+            <span className="px-1.5 py-0.5 rounded-md bg-sky-50 dark:bg-sky-950/80 text-sky-700 dark:text-sky-300 font-bold flex items-center gap-0.5 text-[11px]">
               📸 Foto
             </span>
           )}
@@ -92,8 +100,9 @@ function MatchCard({ match, teams, onShareSingleMatch, onClick, categoryTag, cat
                 e.stopPropagation();
                 onShareSingleMatch(match);
               }}
-              className="px-2 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 font-bold text-[10px] flex items-center gap-1 transition-colors active:scale-95 border border-emerald-200/50 dark:border-emerald-800/50"
+              className="px-3 min-h-[44px] -my-2.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 font-bold text-[11px] flex items-center gap-1 transition-colors active:scale-95 border border-emerald-200/50 dark:border-emerald-800/50"
               title="Compartir este partido por WhatsApp"
+              aria-label={`Compartir este partido por WhatsApp`}
             >
               <Share2 className="w-3 h-3 stroke-[2.5]" />
               <span>Compartir</span>
@@ -101,11 +110,11 @@ function MatchCard({ match, teams, onShareSingleMatch, onClick, categoryTag, cat
           )}
 
           {match.isCompleted ? (
-            <span className="inline-flex items-center gap-1 font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-1 rounded-full text-[10px]">
+            <span className="inline-flex items-center gap-1 font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-1 rounded-full text-[11px]">
               Finalizado ✓
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1 font-semibold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 px-2 py-1 rounded-full text-[10px]">
+            <span className="inline-flex items-center gap-1 font-semibold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 px-2 py-1 rounded-full text-[11px]">
               Planilla ✎
             </span>
           )}
@@ -121,7 +130,7 @@ function MatchCard({ match, teams, onShareSingleMatch, onClick, categoryTag, cat
             style={{ backgroundColor: colorA }}
           />
           <span
-            className={`text-sm truncate ${
+            className={`text-sm leading-tight line-clamp-2 break-words ${
               match.teamAId === favoriteTeamId
                 ? 'font-black text-amber-700 dark:text-amber-400'
                 : 'font-bold text-slate-900 dark:text-slate-100'
@@ -129,7 +138,7 @@ function MatchCard({ match, teams, onShareSingleMatch, onClick, categoryTag, cat
           >
             {nameA}
           </span>
-          {match.teamAId === favoriteTeamId && <Star className="w-3 h-3 fill-amber-400 text-amber-400 shrink-0" />}
+          {match.teamAId === favoriteTeamId && <Star aria-label="Equipo favorito" role="img" className="w-3 h-3 fill-amber-400 text-amber-400 shrink-0" />}
         </div>
 
         {/* Big centered score, FotMob-style */}
@@ -145,9 +154,9 @@ function MatchCard({ match, teams, onShareSingleMatch, onClick, categoryTag, cat
 
         {/* Team B */}
         <div className="flex items-center gap-2 flex-1 justify-end min-w-0 text-right">
-          {match.teamBId === favoriteTeamId && <Star className="w-3 h-3 fill-amber-400 text-amber-400 shrink-0" />}
+          {match.teamBId === favoriteTeamId && <Star aria-label="Equipo favorito" role="img" className="w-3 h-3 fill-amber-400 text-amber-400 shrink-0" />}
           <span
-            className={`text-sm truncate ${
+            className={`text-sm leading-tight line-clamp-2 break-words ${
               match.teamBId === favoriteTeamId
                 ? 'font-black text-amber-700 dark:text-amber-400'
                 : 'font-bold text-slate-900 dark:text-slate-100'
@@ -164,7 +173,7 @@ function MatchCard({ match, teams, onShareSingleMatch, onClick, categoryTag, cat
 
       {/* Shoot-out indicator */}
       {match.isShootout && (
-        <div className="mt-1 text-center text-[10px] font-bold text-violet-700 dark:text-violet-300 bg-violet-50 dark:bg-violet-950/50 py-0.5 rounded-md">
+        <div className="mt-1 text-center text-[11px] font-bold text-violet-700 dark:text-violet-300 bg-violet-50 dark:bg-violet-950/50 py-0.5 rounded-md">
           Definición por Shoot-outs (SO: {match.shootoutScoreA ?? 0} - {match.shootoutScoreB ?? 0})
         </div>
       )}
@@ -179,7 +188,7 @@ function MatchCard({ match, teams, onShareSingleMatch, onClick, categoryTag, cat
                   .filter((g) => g.teamId === match.teamAId)
                   .map((g) => (
                     <div key={g.id} className="flex items-center gap-1 truncate">
-                      <span className="text-[10px] shrink-0">🏑</span>
+                      <span className="text-[11px] shrink-0">🏑</span>
                       <span className="truncate">
                         {g.playerName}
                         {g.count > 1 ? ` (x${g.count})` : ''}
@@ -196,7 +205,7 @@ function MatchCard({ match, teams, onShareSingleMatch, onClick, categoryTag, cat
                         {g.playerName}
                         {g.count > 1 ? ` (x${g.count})` : ''}
                       </span>
-                      <span className="text-[10px] shrink-0">🏑</span>
+                      <span className="text-[11px] shrink-0">🏑</span>
                     </div>
                   ))}
               </div>
@@ -207,7 +216,7 @@ function MatchCard({ match, teams, onShareSingleMatch, onClick, categoryTag, cat
               {match.sanctions.map((s) => (
                 <span
                   key={s.id}
-                  className={`inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[10px] font-bold ${
+                  className={`inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[11px] font-bold ${
                     s.cardType === 'green'
                       ? 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300'
                       : s.cardType === 'yellow'
@@ -324,7 +333,7 @@ export function FixtureView({
             className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all min-h-[38px] ${
               viewMode === 'own'
                 ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                : 'text-slate-500 dark:text-slate-400'
+                : 'text-slate-600 dark:text-slate-400'
             }`}
           >
             Solo este torneo
@@ -333,8 +342,8 @@ export function FixtureView({
             onClick={() => setViewMode('combined')}
             className={`flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all min-h-[38px] ${
               viewMode === 'combined'
-                ? 'bg-sky-600 text-white shadow-xs'
-                : 'text-slate-500 dark:text-slate-400'
+                ? 'bg-sky-700 text-white shadow-xs'
+                : 'text-slate-600 dark:text-slate-400'
             }`}
           >
             <Layers className="w-3.5 h-3.5" />
@@ -344,11 +353,12 @@ export function FixtureView({
       )}
 
       {/* Horizontal Round/Stage Selector Scrollbar (iOS Segmented Style) */}
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 no-scrollbar flex-1">
+      <div className="flex flex-col gap-2">
+        <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 no-scrollbar" role="group" aria-label="Filtrar por jornada o fase">
           <button
             onClick={() => setSelectedRoundFilter('all')}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all active:scale-95 min-h-[36px] ${
+            aria-pressed={selectedRoundFilter === 'all'}
+            className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap shrink-0 transition-all active:scale-95 min-h-[44px] ${
               selectedRoundFilter === 'all'
                 ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xs'
                 : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200/80 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800'
@@ -362,9 +372,10 @@ export function FixtureView({
               <button
                 key={label}
                 onClick={() => setSelectedRoundFilter(label)}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all active:scale-95 min-h-[36px] ${
+                aria-pressed={isSelected}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap shrink-0 transition-all active:scale-95 min-h-[44px] ${
                   isSelected
-                    ? 'bg-sky-600 text-white shadow-xs'
+                    ? 'bg-sky-700 text-white shadow-xs'
                     : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200/80 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800'
                 }`}
               >
@@ -374,15 +385,16 @@ export function FixtureView({
           })}
         </div>
 
+        <div className="flex items-center gap-2">
         {!isCombined && onShareResults && matches.length > 0 && (
           <button
             id="btn-share-results-whatsapp"
             onClick={() => onShareResults(selectedRoundFilter)}
-            className="px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 active:bg-emerald-200 font-bold rounded-full text-xs flex items-center gap-1.5 transition-all active:scale-95 shrink-0 min-h-[36px] border border-emerald-200/60 dark:border-emerald-800/60 shadow-xs"
+            className="px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 active:bg-emerald-200 font-bold rounded-full text-xs flex items-center gap-1.5 transition-all active:scale-95 flex-1 justify-center min-h-[44px] border border-emerald-200/60 dark:border-emerald-800/60 shadow-xs"
             title="Compartir resultados de esta jornada en WhatsApp"
           >
             <Share2 className="w-3.5 h-3.5 stroke-[2.5]" />
-            <span className="text-[11px] font-bold">
+            <span className="text-xs font-bold truncate">
               {selectedRoundFilter === 'all' ? 'Compartir' : `Compartir ${selectedRoundFilter}`}
             </span>
           </button>
@@ -391,16 +403,18 @@ export function FixtureView({
           <button
             id="btn-share-fixture-image"
             onClick={onShareFixtureImage}
-            className="p-1.5 bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 hover:bg-sky-100 dark:hover:bg-sky-900/60 active:bg-sky-200 font-bold rounded-full transition-all active:scale-95 shrink-0 border border-sky-200/60 dark:border-sky-800/60 shadow-xs"
+            className="w-11 min-h-[44px] flex items-center justify-center bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 hover:bg-sky-100 dark:hover:bg-sky-900/60 active:bg-sky-200 font-bold rounded-full transition-all active:scale-95 shrink-0 border border-sky-200/60 dark:border-sky-800/60 shadow-xs"
             title="Compartir fixture como imagen"
+            aria-label="Compartir fixture como imagen"
           >
-            <Camera className="w-3.5 h-3.5 stroke-[2.5]" />
+            <Camera className="w-4 h-4 stroke-[2.5]" />
           </button>
         )}
+        </div>
       </div>
 
       {isCombined && (
-        <p className="text-xs text-slate-500 dark:text-slate-400 px-1 -mt-1">
+        <p className="text-xs text-slate-600 dark:text-slate-400 px-1 -mt-1">
           Mostrando: {[currentCategory || 'Este torneo', ...linkedTournaments.map((t) => t.config.category || t.config.name)].join(' · ')}. Tocá un partido de otra categoría para cambiar de torneo y cargar su resultado.
         </p>
       )}
@@ -409,6 +423,7 @@ export function FixtureView({
       {!isCombined && teams.length > 0 && (
         <div className="flex items-center gap-2">
           <select
+            aria-label="Equipo favorito"
             value={favoriteTeamId || ''}
             onChange={(e) => {
               const id = e.target.value || null;
@@ -416,7 +431,7 @@ export function FixtureView({
               setFavoriteTeam(tournamentId, id);
               if (!id) setOnlyFavorite(false);
             }}
-            className="flex-1 px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-full text-xs font-bold text-slate-700 dark:text-slate-200 min-h-[36px]"
+            className="flex-1 px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-full text-xs font-bold text-slate-700 dark:text-slate-200 min-h-[44px]"
           >
             <option value="">⭐ Elegir equipo favorito...</option>
             {teams.map((t) => (
@@ -428,13 +443,14 @@ export function FixtureView({
           {favoriteTeam && (
             <button
               onClick={() => setOnlyFavorite((v) => !v)}
-              className={`shrink-0 px-3 py-2 rounded-full text-xs font-bold flex items-center gap-1.5 min-h-[36px] transition-all active:scale-95 ${
+              aria-pressed={onlyFavorite}
+              className={`shrink-0 px-3 py-2 rounded-full text-xs font-bold flex items-center gap-1.5 min-h-[44px] transition-all active:scale-95 ${
                 onlyFavorite
-                  ? 'bg-amber-500 text-white shadow-xs'
+                  ? 'bg-amber-400 text-slate-900 shadow-xs'
                   : 'bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 text-slate-600 dark:text-slate-300'
               }`}
             >
-              <Star className={`w-3.5 h-3.5 ${onlyFavorite ? 'fill-white' : 'fill-amber-400 text-amber-400'}`} />
+              <Star aria-hidden="true" className={`w-3.5 h-3.5 ${onlyFavorite ? 'fill-slate-900' : 'fill-amber-400 text-amber-400'}`} />
               <span className="truncate max-w-[100px]">{favoriteTeam.name}</span>
             </button>
           )}
@@ -446,7 +462,7 @@ export function FixtureView({
         {isCombined ? (
           combinedEntries.length === 0 ? (
             <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 text-center border border-slate-200/60 dark:border-slate-800 shadow-xs transition-colors">
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">No hay partidos en esta fecha.</p>
+              <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">No hay partidos en esta fecha.</p>
             </div>
           ) : (
             combinedEntries.map(({ match, teams: entryTeams, tournamentId, categoryTag, categoryColor, isOwn }) => (
@@ -470,7 +486,7 @@ export function FixtureView({
           )
         ) : filteredMatches.length === 0 ? (
           <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 text-center border border-slate-200/60 dark:border-slate-800 shadow-xs transition-colors">
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">No hay partidos en esta fecha.</p>
+            <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">No hay partidos en esta fecha.</p>
           </div>
         ) : (
           filteredMatches.map((match) => (

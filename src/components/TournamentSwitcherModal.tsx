@@ -1,4 +1,4 @@
-import React, { useState, type FormEvent } from 'react';
+import React, { useRef, useState, type FormEvent } from 'react';
 import {
   Calendar,
   Check,
@@ -12,6 +12,7 @@ import {
   X,
 } from 'lucide-react';
 import { Team, TournamentConfig, TournamentData, TournamentFormat, TournamentStatus } from '../types';
+import { useDialogA11y } from '../utils/useDialogA11y';
 
 interface TournamentSwitcherModalProps {
   tournaments: TournamentData[];
@@ -75,6 +76,9 @@ export function TournamentSwitcherModal({
     onClose();
   };
 
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialogA11y(dialogRef, onClose);
+
   return (
     <div
       className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4"
@@ -82,7 +86,14 @@ export function TournamentSwitcherModal({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-t-[32px] sm:rounded-3xl p-5 pb-safe shadow-2xl flex flex-col max-h-[90vh] animate-in slide-in-from-bottom-5 duration-200 transition-colors border border-transparent dark:border-slate-800">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="dlg-switcher-title"
+        tabIndex={-1}
+        className="outline-none bg-white dark:bg-slate-900 w-full max-w-lg rounded-t-[32px] sm:rounded-3xl p-5 pb-safe shadow-2xl flex flex-col max-h-[90vh] animate-in slide-in-from-bottom-5 duration-200 transition-colors border border-transparent dark:border-slate-800"
+      >
         {/* Modal Header */}
         <div className="w-12 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full mx-auto mb-3 sm:hidden" />
 
@@ -90,20 +101,22 @@ export function TournamentSwitcherModal({
           <div className="flex items-center gap-2">
             <Trophy className="w-5 h-5 text-amber-500" />
             <div>
-              <h3 className="text-base font-black text-slate-900 dark:text-white">
+              <h3 id="dlg-switcher-title" className="text-base font-black text-slate-900 dark:text-white">
                 {isCreating ? 'Crear Nuevo Torneo' : 'Mis Torneos'}
               </h3>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+              <p className="text-[11px] text-slate-600 dark:text-slate-400 font-medium">
                 {isCreating
-                  ? 'Configura las bases de la nueva competencia'
+                  ? 'Configurá las bases de la nueva competencia'
                   : `${tournaments.length} torneos registrados en la app`}
               </p>
             </div>
           </div>
 
           <button
+            type="button"
             onClick={onClose}
-            className="p-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+            aria-label="Cerrar"
+            className="min-h-[44px] min-w-[44px] -mr-1.5 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
@@ -113,10 +126,10 @@ export function TournamentSwitcherModal({
         {isCreating ? (
           <form onSubmit={handleCreateSubmit} className="py-4 space-y-3.5 overflow-y-auto flex-1">
             <div>
-              <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">
+              <label htmlFor="newt-1" className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">
                 Nombre del Torneo *
               </label>
-              <input
+              <input id="newt-1"
                 type="text"
                 required
                 value={newName}
@@ -128,8 +141,8 @@ export function TournamentSwitcherModal({
 
             <div className="grid grid-cols-2 gap-2.5">
               <div>
-                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Categoría</label>
-                <input
+                <label htmlFor="newt-2" className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Categoría</label>
+                <input id="newt-2"
                   type="text"
                   value={newCategory}
                   onChange={(e) => setNewCategory(e.target.value)}
@@ -139,8 +152,8 @@ export function TournamentSwitcherModal({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Año / Temporada</label>
-                <input
+                <label htmlFor="newt-3" className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Año / Temporada</label>
+                <input id="newt-3"
                   type="text"
                   value={newSeason}
                   onChange={(e) => setNewSeason(e.target.value)}
@@ -152,8 +165,8 @@ export function TournamentSwitcherModal({
 
             <div className="grid grid-cols-2 gap-2.5">
               <div>
-                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Estado</label>
-                <select
+                <label htmlFor="newt-4" className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Estado</label>
+                <select id="newt-4"
                   value={newStatus}
                   onChange={(e) => setNewStatus(e.target.value as TournamentStatus)}
                   className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-semibold text-slate-900 dark:text-white min-h-[44px]"
@@ -165,8 +178,8 @@ export function TournamentSwitcherModal({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Canchas</label>
-                <select
+                <label htmlFor="newt-5" className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Canchas</label>
+                <select id="newt-5"
                   value={newCourtsCount}
                   onChange={(e) => setNewCourtsCount(Number(e.target.value))}
                   className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-semibold text-slate-900 dark:text-white min-h-[44px]"
@@ -181,10 +194,10 @@ export function TournamentSwitcherModal({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <div>
-                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">
+                <label htmlFor="newt-6" className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">
                   Formato de Competición
                 </label>
-                <select
+                <select id="newt-6"
                   value={newFormat}
                   onChange={(e) => setNewFormat(e.target.value as TournamentFormat)}
                   className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-semibold text-slate-900 dark:text-white min-h-[44px]"
@@ -199,10 +212,10 @@ export function TournamentSwitcherModal({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">
+                <label htmlFor="newt-7" className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">
                   Ruedas / Modalidad
                 </label>
-                <select
+                <select id="newt-7"
                   value={newIsDoubleRound ? 'double' : 'single'}
                   onChange={(e) => setNewIsDoubleRound(e.target.value === 'double')}
                   className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-semibold text-slate-900 dark:text-white min-h-[44px]"
@@ -214,11 +227,11 @@ export function TournamentSwitcherModal({
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1 flex items-center justify-between">
+              <label htmlFor="newt-8" className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1 flex items-center justify-between">
                 <span>Copiar Equipos y Jugadores/as</span>
-                <span className="text-[10px] font-normal text-slate-500">Opcional</span>
+                <span className="text-[11px] font-normal text-slate-500">Opcional</span>
               </label>
-              <select
+              <select id="newt-8"
                 value={sourceTournamentId}
                 onChange={(e) => setSourceTournamentId(e.target.value)}
                 className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-semibold text-slate-900 dark:text-white min-h-[44px]"
@@ -242,7 +255,7 @@ export function TournamentSwitcherModal({
               </button>
               <button
                 type="submit"
-                className="flex-1 py-3 bg-sky-600 active:bg-sky-700 text-white font-bold rounded-2xl text-xs min-h-[44px] shadow-sm active:scale-95 transition-all flex items-center justify-center gap-1.5"
+                className="flex-1 py-3 bg-sky-700 active:bg-sky-800 text-white font-bold rounded-2xl text-xs min-h-[44px] shadow-sm active:scale-95 transition-all flex items-center justify-center gap-1.5"
               >
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>Crear Torneo</span>
@@ -259,7 +272,7 @@ export function TournamentSwitcherModal({
                 className={`flex-1 py-1.5 rounded-xl text-[11px] font-bold transition-all ${
                   filter === 'all'
                     ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs'
-                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white'
                 }`}
               >
                 Todos ({tournaments.length})
@@ -269,7 +282,7 @@ export function TournamentSwitcherModal({
                 className={`flex-1 py-1.5 rounded-xl text-[11px] font-bold transition-all ${
                   filter === 'active'
                     ? 'bg-white dark:bg-slate-700 text-emerald-700 dark:text-emerald-400 shadow-xs'
-                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white'
                 }`}
               >
                 En Curso
@@ -279,7 +292,7 @@ export function TournamentSwitcherModal({
                 className={`flex-1 py-1.5 rounded-xl text-[11px] font-bold transition-all ${
                   filter === 'completed'
                     ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs'
-                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white'
                 }`}
               >
                 Anteriores
@@ -289,7 +302,7 @@ export function TournamentSwitcherModal({
                 className={`flex-1 py-1.5 rounded-xl text-[11px] font-bold transition-all ${
                   filter === 'upcoming'
                     ? 'bg-white dark:bg-slate-700 text-amber-700 dark:text-amber-400 shadow-xs'
-                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white'
                 }`}
               >
                 Próximos
@@ -299,7 +312,7 @@ export function TournamentSwitcherModal({
             {/* List of Tournaments */}
             <div className="space-y-2.5 overflow-y-auto flex-1 pr-0.5 no-scrollbar">
               {filteredTournaments.length === 0 ? (
-                <div className="py-12 text-center text-xs text-slate-500 dark:text-slate-400">
+                <div className="py-12 text-center text-xs text-slate-600 dark:text-slate-400">
                   No se encontraron torneos en este estado.
                 </div>
               ) : (
@@ -325,23 +338,23 @@ export function TournamentSwitcherModal({
                       <div className="min-w-0 flex-1 pr-3">
                         <div className="flex items-center gap-1.5 mb-1">
                           {status === 'active' && (
-                            <span className="px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 font-black text-[10px] flex items-center gap-1">
+                            <span className="px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 font-black text-[11px] flex items-center gap-1">
                               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                               En Curso
                             </span>
                           )}
                           {status === 'completed' && (
-                            <span className="px-2 py-0.5 rounded-md bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-300 font-black text-[10px] flex items-center gap-1">
+                            <span className="px-2 py-0.5 rounded-md bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-300 font-black text-[11px] flex items-center gap-1">
                               🏁 Finalizado
                             </span>
                           )}
                           {status === 'upcoming' && (
-                            <span className="px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 font-black text-[10px] flex items-center gap-1">
+                            <span className="px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 font-black text-[11px] flex items-center gap-1">
                               ⏳ Próximo
                             </span>
                           )}
 
-                          <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">
+                          <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
                             {tournament.config.season || '2026'} • {tournament.config.category || 'General'}
                           </span>
                         </div>
@@ -350,7 +363,7 @@ export function TournamentSwitcherModal({
                           {tournament.config.name}
                         </h4>
 
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-3">
+                        <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-1 flex items-center gap-3">
                           <span>{tournament.teams.length} equipos</span>
                           <span>•</span>
                           <span>
@@ -363,7 +376,7 @@ export function TournamentSwitcherModal({
 
                       <div className="flex items-center gap-2 shrink-0">
                         {isActive ? (
-                          <span className="w-7 h-7 rounded-full bg-sky-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                          <span className="w-7 h-7 rounded-full bg-sky-700 text-white flex items-center justify-center font-bold text-xs shadow-xs">
                             <Check className="w-4 h-4 stroke-[3]" />
                           </span>
                         ) : (
@@ -383,7 +396,7 @@ export function TournamentSwitcherModal({
               <button
                 id="btn-create-new-tournament-modal"
                 onClick={() => setIsCreating(true)}
-                className="w-full py-3.5 bg-slate-900 dark:bg-sky-600 active:bg-black dark:active:bg-sky-700 text-white font-bold rounded-2xl text-xs flex items-center justify-center gap-2 shadow-sm active:scale-95 transition-all min-h-[46px]"
+                className="w-full py-3.5 bg-slate-900 dark:bg-sky-700 active:bg-black dark:active:bg-sky-800 text-white font-bold rounded-2xl text-xs flex items-center justify-center gap-2 shadow-sm active:scale-95 transition-all min-h-[46px]"
               >
                 <Plus className="w-4 h-4" />
                 <span>Crear Nuevo Torneo</span>

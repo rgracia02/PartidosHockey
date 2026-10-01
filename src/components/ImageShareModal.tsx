@@ -5,6 +5,7 @@ import { getSortedRoundLabels } from '../utils/tournamentEngine';
 import { svgToPngFile, shareOrDownloadImageFile } from '../utils/imageExport';
 import { ExportableStandingsImage } from './ExportableStandingsImage';
 import { ExportableFixtureImage } from './ExportableFixtureImage';
+import { useDialogA11y } from '../utils/useDialogA11y';
 
 export type ImageShareType = 'standings' | 'fixture';
 
@@ -57,6 +58,9 @@ export function ImageShareModal({
     }
   };
 
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialogA11y(dialogRef, onClose);
+
   return (
     <div
       className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4"
@@ -64,17 +68,26 @@ export function ImageShareModal({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl p-5 shadow-2xl flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-150">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="dlg-image-share-title"
+        tabIndex={-1}
+        className="outline-none bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl p-5 shadow-2xl flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-150"
+      >
         <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
           <div>
-            <span className="text-[10px] font-bold text-sky-600 uppercase tracking-wider">Imagen para compartir</span>
-            <h3 className="text-base font-black text-slate-900 dark:text-white">
+            <span className="text-[11px] font-bold text-sky-700 uppercase tracking-wider">Imagen para compartir</span>
+            <h3 id="dlg-image-share-title" className="text-base font-black text-slate-900 dark:text-white">
               {type === 'standings' ? 'Tabla de Posiciones' : 'Fixture'}
             </h3>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="p-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
+            aria-label="Cerrar"
+            className="min-h-[44px] min-w-[44px] -mr-1.5 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
           >
             <X className="w-4 h-4" />
           </button>
@@ -82,7 +95,7 @@ export function ImageShareModal({
 
         {type === 'fixture' && roundLabels.length > 0 && (
           <div className="pt-3">
-            <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1">
+            <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
               Fechas a incluir en la imagen:
             </label>
             <select
@@ -127,7 +140,7 @@ export function ImageShareModal({
         <button
           onClick={handleShare}
           disabled={isSharing}
-          className="mt-4 w-full py-3.5 bg-sky-600 hover:bg-sky-700 active:bg-sky-800 disabled:opacity-60 text-white font-bold rounded-2xl text-sm flex items-center justify-center gap-2 shadow-sm active:scale-95 transition-all min-h-[48px]"
+          className="mt-4 w-full py-3.5 bg-sky-700 hover:bg-sky-800 active:bg-sky-800 disabled:opacity-60 text-white font-bold rounded-2xl text-sm flex items-center justify-center gap-2 shadow-sm active:scale-95 transition-all min-h-[48px]"
         >
           {isSharing ? (
             <span>Generando imagen...</span>
@@ -138,7 +151,7 @@ export function ImageShareModal({
             </>
           )}
         </button>
-        <p className="text-center text-[10px] text-slate-400 dark:text-slate-500 mt-2 flex items-center justify-center gap-1">
+        <p className="text-center text-[11px] text-slate-400 dark:text-slate-500 mt-2 flex items-center justify-center gap-1">
           <Download className="w-3 h-3" />
           <span>Si no se abre el panel para compartir, la imagen se descarga sola.</span>
         </p>

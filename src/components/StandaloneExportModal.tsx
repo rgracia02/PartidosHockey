@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Check, Copy, Download, X } from 'lucide-react';
 import { generateStandaloneIndexHtml } from '../utils/standaloneHtmlGenerator';
+import { useDialogA11y } from '../utils/useDialogA11y';
 
 interface StandaloneExportModalProps {
   onClose: () => void;
@@ -26,6 +27,9 @@ export function StandaloneExportModal({ onClose }: StandaloneExportModalProps) {
     URL.revokeObjectURL(url);
   };
 
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialogA11y(dialogRef, onClose);
+
   return (
     <div
       className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4"
@@ -33,19 +37,28 @@ export function StandaloneExportModal({ onClose }: StandaloneExportModalProps) {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="bg-white w-full max-w-lg rounded-3xl p-5 shadow-2xl flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-150 dark:bg-slate-900">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="dlg-standalone-title"
+        tabIndex={-1}
+        className="outline-none bg-white w-full max-w-lg rounded-3xl p-5 shadow-2xl flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-150 dark:bg-slate-900"
+      >
         <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
           <div>
-            <span className="text-[10px] font-bold text-sky-600 uppercase tracking-wider">
+            <span className="text-[11px] font-bold text-sky-700 uppercase tracking-wider">
               GitHub Pages Ready
             </span>
-            <h3 className="text-base font-black text-slate-900 dark:text-white">
+            <h3 id="dlg-standalone-title" className="text-base font-black text-slate-900 dark:text-white">
               Archivo index.html Autónomo
             </h3>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="p-1.5 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 dark:text-slate-400 dark:bg-slate-800"
+            aria-label="Cerrar"
+            className="min-h-[44px] min-w-[44px] -mr-1.5 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 dark:text-slate-400 dark:bg-slate-800"
           >
             <X className="w-4 h-4" />
           </button>
@@ -66,7 +79,7 @@ export function StandaloneExportModal({ onClose }: StandaloneExportModalProps) {
         <div className="grid grid-cols-2 gap-2 pt-4">
           <button
             onClick={handleCopy}
-            className="py-3 bg-sky-600 active:bg-sky-700 text-white font-bold rounded-2xl text-xs flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all min-h-[44px]"
+            className="py-3 bg-sky-700 active:bg-sky-800 text-white font-bold rounded-2xl text-xs flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all min-h-[44px]"
           >
             {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
             <span>{copied ? '¡Copiado al Portapapeles!' : 'Copiar Código'}</span>

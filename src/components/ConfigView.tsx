@@ -97,7 +97,7 @@ function emailAvatarColor(email: string): string {
 function EmailAvatar({ email }: { email: string }) {
   return (
     <span
-      className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black text-white shrink-0"
+      className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-black text-white shrink-0"
       style={{ backgroundColor: emailAvatarColor(email) }}
     >
       {(email.trim()[0] || '?').toUpperCase()}
@@ -488,15 +488,15 @@ export function ConfigView({
               onClick={() => setActiveSection(item.key)}
               className="w-full flex items-center gap-3 bg-white dark:bg-slate-900 rounded-2xl p-3.5 shadow-sm border border-slate-200/80 dark:border-slate-800 text-left active:scale-98 transition-all"
             >
-              <div className="shrink-0 w-9 h-9 rounded-xl bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 flex items-center justify-center">
+              <div className="shrink-0 w-9 h-9 rounded-xl bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-400 flex items-center justify-center">
                 {item.icon}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
                   <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{item.title}</p>
-                  {readOnly && item.gated && <span className="text-[10px]">🔒</span>}
+                  {readOnly && item.gated && <span className="text-[11px]">🔒</span>}
                 </div>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{item.subtitle}</p>
+                <p className="text-[11px] text-slate-600 dark:text-slate-400 truncate">{item.subtitle}</p>
               </div>
               <ChevronRight className="w-4 h-4 text-slate-300 dark:text-slate-600 shrink-0" />
             </button>
@@ -509,7 +509,7 @@ export function ConfigView({
         <>
           <button
             onClick={() => setActiveSection(null)}
-            className="flex items-center gap-1.5 text-sm font-bold text-sky-600 dark:text-sky-400 -ml-1.5 pl-1.5 pr-3 py-2 min-h-[40px] rounded-xl active:bg-sky-50 dark:active:bg-sky-950/40 transition-colors"
+            className="flex items-center gap-1.5 text-sm font-bold text-sky-700 dark:text-sky-400 -ml-1.5 pl-1.5 pr-3 py-2 min-h-[40px] rounded-xl active:bg-sky-50 dark:active:bg-sky-950/40 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Configuración</span>
@@ -538,14 +538,14 @@ export function ConfigView({
           </div>
           <button
             onClick={onOpenCreateTournamentModal}
-            className="px-3 py-1.5 bg-sky-600 active:bg-sky-700 text-white rounded-xl text-xs font-bold flex items-center gap-1 shadow-xs active:scale-95 transition-all"
+            className="px-3 py-1.5 bg-sky-700 active:bg-sky-800 text-white rounded-xl text-xs font-bold flex items-center gap-1 shadow-xs active:scale-95 transition-all"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Nuevo Torneo</span>
           </button>
         </div>
 
-        <p className="text-[11px] text-slate-500 dark:text-slate-400">
+        <p className="text-[11px] text-slate-600 dark:text-slate-400">
           Gestiona torneos en curso, históricos y futuros. Toca cualquier torneo para activarlo:
         </p>
 
@@ -571,21 +571,21 @@ export function ConfigView({
                 >
                   <div className="flex items-center gap-1.5 mb-0.5">
                     {status === 'active' && (
-                      <span className="px-1.5 py-0.2 bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 rounded font-black text-[9px]">
+                      <span className="px-1.5 py-0.2 bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 rounded font-black text-[11px]">
                         🟢 En Curso
                       </span>
                     )}
                     {status === 'completed' && (
-                      <span className="px-1.5 py-0.2 bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-300 rounded font-bold text-[9px]">
+                      <span className="px-1.5 py-0.2 bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-300 rounded font-bold text-[11px]">
                         🏁 Finalizado
                       </span>
                     )}
                     {status === 'upcoming' && (
-                      <span className="px-1.5 py-0.2 bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 rounded font-bold text-[9px]">
+                      <span className="px-1.5 py-0.2 bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 rounded font-bold text-[11px]">
                         ⏳ Próximo
                       </span>
                     )}
-                    <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
+                    <span className="text-[11px] text-slate-600 dark:text-slate-400 font-medium">
                       {t.config.season || '2026'} • {t.config.category || 'General'}
                     </span>
                   </div>
@@ -593,12 +593,12 @@ export function ConfigView({
                   <p className="font-bold text-xs text-slate-900 dark:text-slate-100 truncate flex items-center gap-1.5">
                     <span>{t.config.name}</span>
                     {isCurrent && (
-                      <span className="text-[10px] text-sky-700 dark:text-sky-300 font-black bg-sky-100 dark:bg-sky-900/60 px-1.5 py-0.2 rounded-md">
+                      <span className="text-[11px] text-sky-700 dark:text-sky-300 font-black bg-sky-100 dark:bg-sky-900/60 px-1.5 py-0.2 rounded-md">
                         Activo
                       </span>
                     )}
                   </p>
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
                     {t.teams.length} equipos • {completedCount}/{t.matches.length} jugados
                   </p>
                 </div>
@@ -637,8 +637,8 @@ export function ConfigView({
       <CollapsibleSection icon={<Settings className="w-4 h-4" />} title={`Ajustes del Torneo Activo: ${data.config.name}`} defaultOpen={true}>
         <div className="space-y-3 text-xs">
           <div>
-            <label className="block text-slate-500 dark:text-slate-400 font-bold mb-1">Nombre del Torneo</label>
-            <input
+            <label htmlFor="cfg-0" className="block text-slate-600 dark:text-slate-400 font-bold mb-1">Nombre del Torneo</label>
+            <input id="cfg-0"
               type="text"
               value={data.config.name}
               onChange={(e) =>
@@ -654,8 +654,8 @@ export function ConfigView({
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
             <div>
-              <label className="block text-slate-500 dark:text-slate-400 font-bold mb-1">Categoría</label>
-              <input
+              <label htmlFor="cfg-1" className="block text-slate-600 dark:text-slate-400 font-bold mb-1">Categoría</label>
+              <input id="cfg-1"
                 type="text"
                 value={data.config.category || ''}
                 onChange={(e) =>
@@ -670,8 +670,8 @@ export function ConfigView({
             </div>
 
             <div>
-              <label className="block text-slate-500 dark:text-slate-400 font-bold mb-1">Año / Temporada</label>
-              <input
+              <label htmlFor="cfg-2" className="block text-slate-600 dark:text-slate-400 font-bold mb-1">Año / Temporada</label>
+              <input id="cfg-2"
                 type="text"
                 value={data.config.season || ''}
                 onChange={(e) =>
@@ -686,8 +686,8 @@ export function ConfigView({
             </div>
 
             <div>
-              <label className="block text-slate-500 dark:text-slate-400 font-bold mb-1">Estado</label>
-              <select
+              <label htmlFor="cfg-3" className="block text-slate-600 dark:text-slate-400 font-bold mb-1">Estado</label>
+              <select id="cfg-3"
                 value={data.config.status || 'active'}
                 onChange={(e) =>
                   onUpdateConfig({
@@ -706,10 +706,10 @@ export function ConfigView({
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <label className="block text-slate-500 dark:text-slate-400 font-bold mb-1">
+              <label htmlFor="cfg-4" className="block text-slate-600 dark:text-slate-400 font-bold mb-1">
                 Canchas en Simultáneo
               </label>
-              <select
+              <select id="cfg-4"
                 value={data.config.courtsCount}
                 onChange={(e) =>
                   onUpdateConfig({
@@ -727,8 +727,8 @@ export function ConfigView({
             </div>
 
             <div>
-              <label className="block text-slate-500 dark:text-slate-400 font-bold mb-1">Formato</label>
-              <select
+              <label htmlFor="cfg-5" className="block text-slate-600 dark:text-slate-400 font-bold mb-1">Formato</label>
+              <select id="cfg-5"
                 value={data.config.format}
                 onChange={(e) =>
                   onUpdateConfig({
@@ -748,10 +748,10 @@ export function ConfigView({
             </div>
 
             <div>
-              <label className="block text-slate-500 dark:text-slate-400 font-bold mb-1">
+              <label htmlFor="cfg-6" className="block text-slate-600 dark:text-slate-400 font-bold mb-1">
                 Ruedas / Rondas
               </label>
-              <select
+              <select id="cfg-6"
                 value={data.config.isDoubleRound ? 'double' : 'single'}
                 onChange={(e) =>
                   onUpdateConfig({
@@ -770,10 +770,10 @@ export function ConfigView({
               data.config.format === 'groups_playoffs_top5' ||
               data.config.format === 'groups_playoffs_final') && (
               <div>
-                <label className="block text-slate-500 dark:text-slate-400 font-bold mb-1">
+                <label htmlFor="cfg-7" className="block text-slate-600 dark:text-slate-400 font-bold mb-1">
                   Partido por el 3° y 4° Puesto
                 </label>
-                <select
+                <select id="cfg-7"
                   value={data.config.includeThirdPlace ? 'yes' : 'no'}
                   onChange={(e) =>
                     onUpdateConfig({
@@ -800,7 +800,7 @@ export function ConfigView({
                 onRegenerateFixture();
               }
             }}
-            className="w-full py-3 bg-slate-900 dark:bg-sky-600 active:bg-black dark:active:bg-sky-700 text-white font-bold rounded-2xl text-xs flex items-center justify-center gap-2 mt-2 min-h-[44px] active:scale-95 transition-all shadow-xs"
+            className="w-full py-3 bg-slate-900 dark:bg-sky-700 active:bg-black dark:active:bg-sky-800 text-white font-bold rounded-2xl text-xs flex items-center justify-center gap-2 mt-2 min-h-[44px] active:scale-95 transition-all shadow-xs"
           >
             <RefreshCw className="w-3.5 h-3.5" />
             <span>Regenerar Fixture de este Torneo</span>
@@ -858,16 +858,16 @@ export function ConfigView({
               )}
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">{googleUser.displayName}</p>
-                <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{googleUser.email}</p>
+                <p className="text-[11px] text-slate-600 dark:text-slate-400 truncate">{googleUser.email}</p>
               </div>
-              <button onClick={onGoogleSignOut} className="shrink-0 text-[10px] font-bold text-rose-600 dark:text-rose-400 hover:underline">
+              <button onClick={onGoogleSignOut} className="shrink-0 text-[11px] font-bold text-rose-600 dark:text-rose-400 hover:underline">
                 Salir
               </button>
             </div>
 
             {canManageCreators && (
               <div className="space-y-2 pb-2 border-b border-slate-100 dark:border-slate-800">
-                <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                <p className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wide">
                   Quién puede publicar torneos nuevos
                 </p>
                 {authorizedCreators.map((email) => (
@@ -879,7 +879,7 @@ export function ConfigView({
                     {email !== googleUser.email && (
                       <button
                         onClick={() => onRemoveAuthorizedCreator(email)}
-                        className="shrink-0 text-[10px] font-bold text-rose-600 dark:text-rose-400 hover:underline"
+                        className="shrink-0 text-[11px] font-bold text-rose-600 dark:text-rose-400 hover:underline"
                       >
                         Quitar
                       </button>
@@ -920,7 +920,7 @@ export function ConfigView({
                     </p>
                     <button
                       onClick={onPublishTournament}
-                      className="w-full py-2.5 bg-sky-600 hover:bg-sky-700 active:bg-sky-800 text-white rounded-2xl font-bold text-xs flex items-center justify-center gap-1.5 min-h-[44px] transition-all"
+                      className="w-full py-2.5 bg-sky-700 hover:bg-sky-800 active:bg-sky-800 text-white rounded-2xl font-bold text-xs flex items-center justify-center gap-1.5 min-h-[44px] transition-all"
                     >
                       <span>Publicar y generar link</span>
                     </button>
@@ -955,7 +955,7 @@ export function ConfigView({
                           setTimeout(() => setLinkCopied(false), 2000);
                         });
                     }}
-                    className="shrink-0 px-3 py-1.5 bg-sky-600 hover:bg-sky-700 active:bg-sky-800 text-white rounded-xl font-bold text-[11px] min-h-[32px]"
+                    className="shrink-0 px-3 py-1.5 bg-sky-700 hover:bg-sky-800 active:bg-sky-800 text-white rounded-xl font-bold text-[11px] min-h-[32px]"
                   >
                     {linkCopied ? '✓ Copiado' : 'Copiar'}
                   </button>
@@ -967,7 +967,7 @@ export function ConfigView({
 
                 {isCloudOwner ? (
                   <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2">
-                    <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                    <p className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wide">
                       Quién puede cargar resultados
                     </p>
                     <div className="flex items-center gap-2.5 justify-between text-xs bg-slate-50 dark:bg-slate-800/70 rounded-xl px-3 py-2">
@@ -975,7 +975,7 @@ export function ConfigView({
                         <EmailAvatar email={data.config.shareOwnerEmail || ''} />
                         <span className="font-semibold text-slate-700 dark:text-slate-200 truncate">{data.config.shareOwnerEmail}</span>
                       </div>
-                      <span className="text-[10px] font-bold text-sky-600 dark:text-sky-400 shrink-0">Organizador</span>
+                      <span className="text-[11px] font-bold text-sky-700 dark:text-sky-400 shrink-0">Organizador</span>
                     </div>
                     {(data.config.shareEditorEmails || []).map((email) => (
                       <div key={email} className="flex items-center gap-2.5 justify-between text-xs bg-slate-50 dark:bg-slate-800/70 rounded-xl px-3 py-2">
@@ -985,7 +985,7 @@ export function ConfigView({
                         </div>
                         <button
                           onClick={() => onRevokeEditor(email)}
-                          className="shrink-0 text-[10px] font-bold text-rose-600 dark:text-rose-400 hover:underline"
+                          className="shrink-0 text-[11px] font-bold text-rose-600 dark:text-rose-400 hover:underline"
                         >
                           Quitar
                         </button>
@@ -1030,15 +1030,15 @@ export function ConfigView({
 
             {(data.activityLog?.length || 0) > 0 && (
               <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
-                <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">
+                <p className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wide mb-2">
                   Quién fue editando
                 </p>
                 <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
                   {(data.activityLog || []).map((entry) => (
                     <div key={entry.id} className="text-[11px] bg-slate-50 dark:bg-slate-800/70 rounded-xl px-3 py-2">
                       <span className="font-bold text-slate-700 dark:text-slate-200">{entry.by}</span>
-                      <span className="text-slate-500 dark:text-slate-400"> {entry.message}</span>
-                      <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">{formatLogTime(entry.at)}</div>
+                      <span className="text-slate-600 dark:text-slate-400"> {entry.message}</span>
+                      <div className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">{formatLogTime(entry.at)}</div>
                     </div>
                   ))}
                 </div>
@@ -1055,7 +1055,7 @@ export function ConfigView({
       <div className={readOnly ? 'space-y-4 opacity-50 pointer-events-none select-none' : 'space-y-4'}>
       {/* 1.5 Combined Event Linking (e.g. Damas + Varones, same jornada) */}
       <CollapsibleSection icon={<Layers className="w-4 h-4" />} title="Combinar con Otra Categoría" defaultOpen={true}>
-        <p className="text-xs text-slate-500 dark:text-slate-400 -mt-1 mb-3">
+        <p className="text-xs text-slate-600 dark:text-slate-400 -mt-1 mb-3">
           Para torneos que juegan el mismo día (ej: Damas y Varones). Cada uno mantiene su propia tabla; solo se
           comparte el horario del día y un mensaje de WhatsApp en común.
         </p>
@@ -1084,7 +1084,7 @@ export function ConfigView({
                     Combinado con {linked.map((t) => t.config.category || t.config.name).join(', ')} — este torneo usa {courtRange}.
                   </p>
                 </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400 px-1">
+                <p className="text-xs text-slate-600 dark:text-slate-400 px-1">
                   Andá a la pestaña <span className="font-bold">Fixture → Evento Combinado</span> para ver ambos juntos, o compartí el reporte "Jornada Combinada" por WhatsApp.
                 </p>
                 <button
@@ -1100,7 +1100,7 @@ export function ConfigView({
 
           if (linkable.length === 0) {
             return (
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-slate-600 dark:text-slate-400">
                 Creá otro torneo (por ejemplo, la otra categoría) para poder combinarlo con este.
               </p>
             );
@@ -1128,7 +1128,7 @@ export function ConfigView({
                   onChange={(e) => setUseSeparateCourts(e.target.checked)}
                   className="mt-0.5 w-4 h-4 accent-sky-600 shrink-0"
                 />
-                <span className="text-xs text-slate-500 dark:text-slate-400">
+                <span className="text-xs text-slate-600 dark:text-slate-400">
                   Cada categoría juega en canchas físicas distintas (si no marcás esto, las dos comparten la misma numeración de cancha, solo que en horarios distintos).
                 </span>
               </label>
@@ -1142,7 +1142,7 @@ export function ConfigView({
                   }
                 }}
                 disabled={linkTargetId === 'none'}
-                className="w-full py-2.5 bg-sky-600 hover:bg-sky-700 active:bg-sky-800 disabled:bg-slate-200 disabled:dark:bg-slate-800 disabled:text-slate-500 text-white rounded-2xl font-bold text-xs flex items-center justify-center gap-1.5 min-h-[44px] transition-all"
+                className="w-full py-2.5 bg-sky-700 hover:bg-sky-800 active:bg-sky-800 disabled:bg-slate-200 disabled:dark:bg-slate-800 disabled:text-slate-500 text-white rounded-2xl font-bold text-xs flex items-center justify-center gap-1.5 min-h-[44px] transition-all"
               >
                 <Layers className="w-3.5 h-3.5" />
                 <span>Combinar Torneos</span>
@@ -1184,8 +1184,8 @@ export function ConfigView({
 
             <div className="grid grid-cols-2 gap-2.5 mb-3">
               <div className="col-span-2">
-                <label className="block text-[10px] text-slate-500 dark:text-slate-400 font-bold mb-1">Día</label>
-                <input
+                <label htmlFor="cfg-8" className="block text-[11px] text-slate-600 dark:text-slate-400 font-bold mb-1">Día</label>
+                <input id="cfg-8"
                   type="date"
                   value={matchdayDate}
                   onChange={(e) => setMatchdayDate(e.target.value)}
@@ -1193,8 +1193,8 @@ export function ConfigView({
                 />
               </div>
               <div>
-                <label className="block text-[10px] text-slate-500 dark:text-slate-400 font-bold mb-1">Desde</label>
-                <input
+                <label htmlFor="cfg-9" className="block text-[11px] text-slate-600 dark:text-slate-400 font-bold mb-1">Desde</label>
+                <input id="cfg-9"
                   type="time"
                   value={matchdayStart}
                   onChange={(e) => setMatchdayStart(e.target.value)}
@@ -1202,8 +1202,8 @@ export function ConfigView({
                 />
               </div>
               <div>
-                <label className="block text-[10px] text-slate-500 dark:text-slate-400 font-bold mb-1">Hasta</label>
-                <input
+                <label htmlFor="cfg-10" className="block text-[11px] text-slate-600 dark:text-slate-400 font-bold mb-1">Hasta</label>
+                <input id="cfg-10"
                   type="time"
                   value={matchdayEnd}
                   onChange={(e) => setMatchdayEnd(e.target.value)}
@@ -1211,8 +1211,8 @@ export function ConfigView({
                 />
               </div>
               <div>
-                <label className="block text-[10px] text-slate-500 dark:text-slate-400 font-bold mb-1">Canchas disponibles</label>
-                <input
+                <label htmlFor="cfg-11" className="block text-[11px] text-slate-600 dark:text-slate-400 font-bold mb-1">Canchas disponibles</label>
+                <input id="cfg-11"
                   type="number"
                   min={1}
                   value={matchdayCourts}
@@ -1221,8 +1221,8 @@ export function ConfigView({
                 />
               </div>
               <div>
-                <label className="block text-[10px] text-slate-500 dark:text-slate-400 font-bold mb-1">Min. por partido</label>
-                <input
+                <label htmlFor="cfg-12" className="block text-[11px] text-slate-600 dark:text-slate-400 font-bold mb-1">Min. por partido</label>
+                <input id="cfg-12"
                   type="number"
                   min={1}
                   value={matchdayDuration}
@@ -1238,7 +1238,7 @@ export function ConfigView({
                 onScheduleMatchday(matchdayDate, matchdayStart, matchdayEnd, matchdayCourts, matchdayDuration);
               }}
               disabled={!matchdayDate || !nextUnscheduled}
-              className="w-full py-2.5 bg-sky-600 hover:bg-sky-700 active:bg-sky-800 disabled:bg-slate-200 disabled:dark:bg-slate-700 disabled:text-slate-400 text-white rounded-2xl font-bold text-xs flex items-center justify-center gap-1.5 min-h-[44px] transition-all"
+              className="w-full py-2.5 bg-sky-700 hover:bg-sky-800 active:bg-sky-800 disabled:bg-slate-200 disabled:dark:bg-slate-700 disabled:text-slate-400 text-white rounded-2xl font-bold text-xs flex items-center justify-center gap-1.5 min-h-[44px] transition-all"
             >
               <Clock className="w-3.5 h-3.5" />
               <span>{nextUnscheduled ? `Generar horarios (desde ${nextUnscheduled[0]})` : 'Todas las Fechas ya tienen horario'}</span>
@@ -1246,7 +1246,7 @@ export function ConfigView({
 
             {scheduledStages.length > 0 && (
               <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 space-y-1.5">
-                <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Ya tienen horario</p>
+                <p className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wide">Ya tienen horario</p>
                 {scheduledStages.map(([label]) => {
                   const sample = groupMatches.find((m) => (m.stageLabel || `Fecha ${m.round}`) === label && m.date);
                   return (
@@ -1256,7 +1256,7 @@ export function ConfigView({
                       </span>
                       <button
                         onClick={() => onClearStageSchedule(label)}
-                        className="text-[10px] font-bold text-rose-600 dark:text-rose-400 hover:underline"
+                        className="text-[11px] font-bold text-rose-600 dark:text-rose-400 hover:underline"
                       >
                         Quitar
                       </button>
@@ -1304,8 +1304,8 @@ export function ConfigView({
                     </p>
                     <div className="flex items-center gap-2">
                       <div className="flex-1">
-                        <label className="block text-[10px] text-slate-500 dark:text-slate-400 font-bold mb-1">Fecha</label>
-                        <select
+                        <label htmlFor={`cfg-13-${m.id}`} className="block text-[11px] text-slate-600 dark:text-slate-400 font-bold mb-1">Fecha</label>
+                        <select id={`cfg-13-${m.id}`}
                           value={m.round}
                           onChange={(e) => onRescheduleMatch(m.id, Number(e.target.value), m.court)}
                           className="w-full px-2.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-900 dark:text-white min-h-[40px]"
@@ -1318,8 +1318,8 @@ export function ConfigView({
                         </select>
                       </div>
                       <div className="flex-1">
-                        <label className="block text-[10px] text-slate-500 dark:text-slate-400 font-bold mb-1">Cancha</label>
-                        <select
+                        <label htmlFor={`cfg-14-${m.id}`} className="block text-[11px] text-slate-600 dark:text-slate-400 font-bold mb-1">Cancha</label>
+                        <select id={`cfg-14-${m.id}`}
                           value={m.court}
                           onChange={(e) => onRescheduleMatch(m.id, m.round, e.target.value)}
                           className="w-full px-2.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-900 dark:text-white min-h-[40px]"
@@ -1334,8 +1334,8 @@ export function ConfigView({
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="flex-1">
-                        <label className="block text-[10px] text-slate-500 dark:text-slate-400 font-bold mb-1">Día del partido</label>
-                        <input
+                        <label htmlFor={`cfg-15-${m.id}`} className="block text-[11px] text-slate-600 dark:text-slate-400 font-bold mb-1">Día del partido</label>
+                        <input id={`cfg-15-${m.id}`}
                           type="date"
                           value={m.date || ''}
                           onChange={(e) => onSetMatchDateTime(m.id, e.target.value, m.time || '')}
@@ -1343,8 +1343,8 @@ export function ConfigView({
                         />
                       </div>
                       <div className="flex-1">
-                        <label className="block text-[10px] text-slate-500 dark:text-slate-400 font-bold mb-1">Hora</label>
-                        <input
+                        <label htmlFor={`cfg-16-${m.id}`} className="block text-[11px] text-slate-600 dark:text-slate-400 font-bold mb-1">Hora</label>
+                        <input id={`cfg-16-${m.id}`}
                           type="time"
                           value={m.time || ''}
                           onChange={(e) => onSetMatchDateTime(m.id, m.date || '', e.target.value)}
@@ -1355,7 +1355,7 @@ export function ConfigView({
                         <button
                           onClick={() => onSetMatchDateTime(m.id, '', '')}
                           title="Quitar día/hora de este partido"
-                          className="self-end mb-0.5 px-2.5 py-2 rounded-xl text-[10px] font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 min-h-[40px] shrink-0"
+                          className="self-end mb-0.5 px-2.5 py-2 rounded-xl text-[11px] font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 min-h-[40px] shrink-0"
                         >
                           ✕
                         </button>
@@ -1393,7 +1393,7 @@ export function ConfigView({
                       {m.isManualCross && (
                         <button
                           onClick={() => onResetManualCross(m.id)}
-                          className="text-[10px] font-bold text-sky-600 dark:text-sky-400 flex items-center gap-1"
+                          className="text-[11px] font-bold text-sky-700 dark:text-sky-400 flex items-center gap-1"
                         >
                           <RotateCcw className="w-3 h-3" />
                           <span>Automático</span>
@@ -1413,7 +1413,7 @@ export function ConfigView({
                           </option>
                         ))}
                       </select>
-                      <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500">vs</span>
+                      <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500">vs</span>
                       <select
                         value={m.teamBId || ''}
                         onChange={(e) => onSetManualCross(m.id, m.teamAId, e.target.value)}
@@ -1428,7 +1428,7 @@ export function ConfigView({
                       </select>
                     </div>
                     {!teamA && !teamB && !m.isManualCross && (
-                      <p className="text-[10px] text-slate-400 dark:text-slate-500">
+                      <p className="text-[11px] text-slate-400 dark:text-slate-500">
                         Se completa solo cuando termine la fase anterior.
                       </p>
                     )}
@@ -1461,7 +1461,7 @@ export function ConfigView({
             <button
               type="submit"
               disabled={!newTeamName.trim()}
-              className="px-4 py-2 bg-sky-600 active:bg-sky-700 text-white font-bold rounded-xl text-xs disabled:opacity-40 min-h-[44px] flex items-center gap-1 active:scale-95 transition-all"
+              className="px-4 py-2 bg-sky-700 active:bg-sky-800 text-white font-bold rounded-xl text-xs disabled:opacity-40 min-h-[44px] flex items-center gap-1 active:scale-95 transition-all"
             >
               <Plus className="w-4 h-4" />
               <span>Agregar</span>
@@ -1469,7 +1469,7 @@ export function ConfigView({
           </div>
 
           <div>
-            <span className="block text-[10px] text-slate-500 dark:text-slate-400 font-bold mb-1.5 uppercase">
+            <span className="block text-[11px] text-slate-600 dark:text-slate-400 font-bold mb-1.5 uppercase">
               Color Distintivo
             </span>
             <div className="flex items-center gap-2 flex-wrap">
@@ -1492,7 +1492,7 @@ export function ConfigView({
         <div className="space-y-2">
           {data.teams.length === 0 ? (
             <p className="text-xs text-slate-500 py-4 text-center">
-              No hay equipos inscriptos en este torneo. Agrega uno arriba.
+              No hay equipos inscriptos en este torneo. Agregá uno arriba.
             </p>
           ) : (
             data.teams.map((team) => {
@@ -1509,7 +1509,7 @@ export function ConfigView({
                     <div className="p-3 bg-sky-50/70 dark:bg-sky-950/40 border-b border-sky-200 dark:border-sky-800/60 space-y-3">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-sky-900 dark:text-sky-200 flex items-center gap-1.5">
-                          <Pencil className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
+                          <Pencil className="w-3.5 h-3.5 text-sky-700 dark:text-sky-400" />
                           <span>Editar Equipo</span>
                         </span>
                         <button
@@ -1523,10 +1523,10 @@ export function ConfigView({
 
                       <div className="space-y-2">
                         <div>
-                          <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">
+                          <label htmlFor="cfg-18" className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">
                             Nombre del Equipo
                           </label>
-                          <input
+                          <input id="cfg-18"
                             type="text"
                             value={editTeamName}
                             onChange={(e) => setEditTeamName(e.target.value)}
@@ -1536,7 +1536,7 @@ export function ConfigView({
                         </div>
 
                         <div>
-                          <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">
+                          <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">
                             Color Distintivo
                           </label>
                           <div className="flex items-center gap-2 flex-wrap">
@@ -1562,7 +1562,7 @@ export function ConfigView({
                           type="button"
                           onClick={() => handleSaveTeamEdit(team.id)}
                           disabled={!editTeamName.trim()}
-                          className="flex-1 py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 active:scale-95 transition-all shadow-xs"
+                          className="flex-1 py-2 bg-sky-700 hover:bg-sky-800 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 active:scale-95 transition-all shadow-xs"
                         >
                           <Check className="w-3.5 h-3.5" />
                           <span>Guardar Cambios</span>
@@ -1588,7 +1588,7 @@ export function ConfigView({
                         />
                         <div className="min-w-0">
                           <p className="font-bold text-xs text-slate-900 dark:text-slate-100 truncate">{team.name}</p>
-                          <p className="text-[10px] text-slate-500">
+                          <p className="text-[11px] text-slate-500">
                             {team.players.length} {team.players.length === 1 ? 'jugadora/or' : 'jugadoras/es'}
                           </p>
                         </div>
@@ -1642,7 +1642,7 @@ export function ConfigView({
                         <button
                           type="button"
                           onClick={() => handleAddPlayer(team.id)}
-                          className="px-3 py-1.5 bg-sky-600 text-white font-bold rounded-xl text-xs shrink-0"
+                          className="px-3 py-1.5 bg-sky-700 text-white font-bold rounded-xl text-xs shrink-0"
                         >
                           + Agregar
                         </button>
@@ -1691,7 +1691,7 @@ export function ConfigView({
                               ) : (
                                 <>
                                   <span className="font-medium text-slate-800 dark:text-slate-200 truncate">
-                                    <span className="font-bold text-sky-600 dark:text-sky-400 mr-1.5">
+                                    <span className="font-bold text-sky-700 dark:text-sky-400 mr-1.5">
                                       #{player.number}
                                     </span>
                                     {player.name}
@@ -1747,7 +1747,7 @@ export function ConfigView({
             <button
               type="submit"
               disabled={!newRefereeName.trim()}
-              className="px-4 py-2 bg-sky-600 active:bg-sky-700 text-white font-bold rounded-xl text-xs disabled:opacity-40 min-h-[44px] flex items-center gap-1 active:scale-95 transition-all"
+              className="px-4 py-2 bg-sky-700 active:bg-sky-800 text-white font-bold rounded-xl text-xs disabled:opacity-40 min-h-[44px] flex items-center gap-1 active:scale-95 transition-all"
             >
               <Plus className="w-4 h-4" />
               <span>Agregar</span>
@@ -1779,7 +1779,7 @@ export function ConfigView({
                         type="button"
                         onClick={() => handleSaveRefereeEdit(referee.id)}
                         disabled={!editRefereeName.trim()}
-                        className="p-2 bg-sky-600 text-white rounded-xl disabled:opacity-40"
+                        className="p-2 bg-sky-700 text-white rounded-xl disabled:opacity-40"
                       >
                         <Check className="w-3.5 h-3.5" />
                       </button>
@@ -1820,7 +1820,7 @@ export function ConfigView({
 
         {(data.referees || []).length > 0 && (
           <CollapsibleSection icon={<Trophy className="w-4 h-4" />} iconColor="slate" title="Cantidad de Arbitrajes" defaultOpen={true}>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-3">
+            <p className="text-[11px] text-slate-600 dark:text-slate-400 mb-3">
               Cuántos partidos cargó cada árbitro (elegilo en la planilla de resultado de cada partido).
             </p>
             <div className="space-y-1.5">
@@ -1830,7 +1830,7 @@ export function ConfigView({
                   className="flex items-center justify-between px-3 py-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl"
                 >
                   <span className="text-xs font-semibold text-slate-800 dark:text-white truncate">{referee.name}</span>
-                  <span className="text-xs font-black text-sky-600 dark:text-sky-400 shrink-0 ml-2">
+                  <span className="text-xs font-black text-sky-700 dark:text-sky-400 shrink-0 ml-2">
                     {count} {count === 1 ? 'partido' : 'partidos'}
                   </span>
                 </div>
@@ -1850,60 +1850,60 @@ export function ConfigView({
         title="Mensajes y Plantilla de WhatsApp"
       >
         <div className="space-y-4">
-        <span className="inline-block text-[10px] font-bold px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 rounded-full border border-emerald-200/60 dark:border-emerald-800/60 mb-2">
+        <span className="inline-block text-[11px] font-bold px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 rounded-full border border-emerald-200/60 dark:border-emerald-800/60 mb-2">
           Auto-formato
         </span>
 
-        <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+        <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
           Personaliza los textos predeterminados que se añaden al principio y al final de todos los mensajes al compartir resultados, posiciones, fixture o goleadores.
         </p>
 
         <div className="space-y-3.5 text-xs">
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="block text-slate-700 dark:text-slate-300 font-bold">
+              <label htmlFor="cfg-20" className="block text-slate-700 dark:text-slate-300 font-bold">
                 Encabezado / Mensaje Superior
               </label>
-              <span className="text-[10px] text-slate-500">
-                Usa <code className="bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded">*texto*</code> para negrita
+              <span className="text-[11px] text-slate-500">
+                Usá <code className="bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded">*texto*</code> para negrita
               </span>
             </div>
-            <textarea
+            <textarea id="cfg-20"
               value={whatsappHeaderInput}
               onChange={(e) => setWhatsappHeaderInput(e.target.value)}
               placeholder={`🏑 *${data.config.name.toUpperCase()}*${data.config.category ? ` - ${data.config.category}` : ''}\n¡Atención jugadoras y delegados!`}
               rows={2}
               className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-medium text-slate-900 dark:text-white placeholder:text-slate-500 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all"
             />
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-1">
               Si lo dejas vacío, usará automáticamente el nombre y categoría del torneo.
             </p>
           </div>
 
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="block text-slate-700 dark:text-slate-300 font-bold">
+              <label htmlFor="cfg-21" className="block text-slate-700 dark:text-slate-300 font-bold">
                 Firma / Pie de Mensaje
               </label>
-              <span className="text-[10px] text-slate-500">
-                Usa <code className="bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded">_texto_</code> para cursiva
+              <span className="text-[11px] text-slate-500">
+                Usá <code className="bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded">_texto_</code> para cursiva
               </span>
             </div>
-            <textarea
+            <textarea id="cfg-21"
               value={whatsappFooterInput}
               onChange={(e) => setWhatsappFooterInput(e.target.value)}
               placeholder="Organiza: Subcomisión de Hockey • Dudas o cambios por privado 🏑"
               rows={2}
               className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-medium text-slate-900 dark:text-white placeholder:text-slate-500 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all"
             />
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-1">
               Reemplaza la firma estándar al final de cada mensaje enviado a los grupos.
             </p>
           </div>
 
           {/* Live Preview Box */}
           <div className="pt-2">
-            <span className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+            <span className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">
               Vista Previa en WhatsApp:
             </span>
             <div className="bg-[#EFEAE2] dark:bg-[#121B22] p-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-inner font-sans text-xs">
@@ -1919,7 +1919,7 @@ export function ConfigView({
                   🥈 *{data.teams[1]?.name || 'Equipo 2'}* (3 pts)<br />
                   ... [Contenido del mensaje]
                 </div>
-                <div className="text-[11px] text-slate-500 dark:text-slate-400 italic whitespace-pre-line">
+                <div className="text-[11px] text-slate-600 dark:text-slate-400 italic whitespace-pre-line">
                   {whatsappFooterInput.trim()
                     ? whatsappFooterInput.trim()
                     : '_Generado con Hockey Torneos PWA_ 🏑'}
@@ -1934,8 +1934,8 @@ export function ConfigView({
               onClick={handleSaveWhatsAppTemplate}
               className={`flex-1 py-3 px-4 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 min-h-[44px] transition-all active:scale-95 shadow-xs ${
                 whatsappSaveSuccess
-                  ? 'bg-emerald-600 text-white'
-                  : 'bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white'
+                  ? 'bg-emerald-700 text-white'
+                  : 'bg-emerald-700 hover:bg-emerald-800 active:bg-emerald-800 text-white'
               }`}
             >
               <Check className="w-4 h-4" />

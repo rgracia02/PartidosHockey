@@ -17,7 +17,7 @@ export function ScorersView({ scorers, cardStats, onShareScorers }: ScorersViewP
       <div className="bg-slate-200/80 dark:bg-slate-900 p-1 rounded-2xl flex items-center gap-1 border border-transparent dark:border-slate-800 transition-colors">
         <button
           onClick={() => setSubTab('scorers')}
-          className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all min-h-[38px] flex items-center justify-center gap-1.5 ${
+          className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all min-h-[44px] flex items-center justify-center gap-1.5 ${
             subTab === 'scorers'
               ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs scale-[1.01]'
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -29,7 +29,7 @@ export function ScorersView({ scorers, cardStats, onShareScorers }: ScorersViewP
 
         <button
           onClick={() => setSubTab('cards')}
-          className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all min-h-[38px] flex items-center justify-center gap-1.5 ${
+          className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all min-h-[44px] flex items-center justify-center gap-1.5 ${
             subTab === 'cards'
               ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs scale-[1.01]'
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -46,7 +46,7 @@ export function ScorersView({ scorers, cardStats, onShareScorers }: ScorersViewP
           <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 mb-2">
             <div>
               <h3 className="text-sm font-bold text-slate-900 dark:text-white leading-tight">Tabla de Goleadores/as</h3>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400">Goles convertidos en el torneo</p>
+              <p className="text-[11px] text-slate-600 dark:text-slate-400">Goles convertidos en el torneo</p>
             </div>
             
             <div className="flex items-center gap-2">
@@ -54,19 +54,19 @@ export function ScorersView({ scorers, cardStats, onShareScorers }: ScorersViewP
                 <button
                   id="btn-share-scorers-whatsapp"
                   onClick={onShareScorers}
-                  className="px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 active:bg-emerald-200 font-bold rounded-xl text-xs flex items-center gap-1 transition-all active:scale-95"
+                  className="px-3 min-h-[44px] bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 active:bg-emerald-200 font-bold rounded-xl text-xs flex items-center gap-1 transition-all active:scale-95"
                   title="Compartir goleadores en WhatsApp"
                 >
                   <Share2 className="w-3 h-3 stroke-[2.5]" />
                   <span>Compartir</span>
                 </button>
               )}
-              <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Total Goles</span>
+              <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">Total Goles</span>
             </div>
           </div>
 
           {scorers.length === 0 ? (
-            <div className="py-8 text-center text-xs text-slate-500 dark:text-slate-400">
+            <div className="py-8 text-center text-xs text-slate-600 dark:text-slate-400">
               Aún no se han anotado goles en los partidos disputados.
             </div>
           ) : (
@@ -99,11 +99,11 @@ export function ScorersView({ scorers, cardStats, onShareScorers }: ScorersViewP
                       <div>
                         <p className="font-bold text-slate-900 dark:text-slate-100 text-sm flex items-center gap-1.5">
                           <span>{scorer.playerName}</span>
-                          <span className="text-slate-500 dark:text-slate-400 text-xs font-normal">
+                          <span className="text-slate-600 dark:text-slate-400 text-xs font-normal">
                             #{scorer.playerNumber}
                           </span>
                         </p>
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400">{scorer.teamName}</p>
+                        <p className="text-[11px] text-slate-600 dark:text-slate-400">{scorer.teamName}</p>
                       </div>
                     </div>
                   </div>
@@ -126,13 +126,13 @@ export function ScorersView({ scorers, cardStats, onShareScorers }: ScorersViewP
           <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 mb-2">
             <div>
               <h3 className="text-sm font-bold text-slate-900 dark:text-white">Sanciones Acumuladas</h3>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">Verde (2m) • Amarilla (5/10m) • Roja</p>
+              <p className="text-[11px] text-slate-600 dark:text-slate-400">Verde (2m) • Amarilla (5/10m) • Roja</p>
             </div>
-            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Tarjetas</span>
+            <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">Tarjetas</span>
           </div>
 
           {cardStats.length === 0 ? (
-            <div className="py-8 text-center text-xs text-slate-500 dark:text-slate-400">
+            <div className="py-8 text-center text-xs text-slate-600 dark:text-slate-400">
               Excelente conducta: ¡Sin tarjetas ni sanciones registradas!
             </div>
           ) : (
@@ -150,11 +150,11 @@ export function ScorersView({ scorers, cardStats, onShareScorers }: ScorersViewP
                     <div>
                       <p className="font-bold text-slate-900 dark:text-slate-100 text-sm">
                         {cardItem.playerName}{' '}
-                        <span className="text-slate-500 dark:text-slate-400 text-xs font-normal">
+                        <span className="text-slate-600 dark:text-slate-400 text-xs font-normal">
                           #{cardItem.playerNumber}
                         </span>
                       </p>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400">{cardItem.teamName}</p>
+                      <p className="text-[11px] text-slate-600 dark:text-slate-400">{cardItem.teamName}</p>
                     </div>
                   </div>
 

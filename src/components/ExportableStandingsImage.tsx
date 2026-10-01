@@ -29,6 +29,15 @@ function truncate(name: string, max: number): string {
   return name.length > max ? `${name.slice(0, max - 1)}…` : name;
 }
 
+// Parte un nombre largo en hasta 2 renglones (corta en un espacio); recién ahí recorta con "…".
+function wrapName(name: string, max: number): string[] {
+  if (name.length <= max) return [name];
+  const cut = name.lastIndexOf(' ', max);
+  const first = cut > 6 ? name.slice(0, cut) : name.slice(0, max);
+  const rest = name.slice(first.length).trim();
+  return [first, truncate(rest, max)];
+}
+
 export const ExportableStandingsImage = forwardRef<SVGSVGElement, ExportableStandingsImageProps>(
   ({ tournamentName, category, roundLabel, standings, format }, ref) => {
     const qualifyCutoff = QUALIFY_CUTOFF_BY_FORMAT[format] || 0;
@@ -95,13 +104,23 @@ export const ExportableStandingsImage = forwardRef<SVGSVGElement, ExportableStan
                 stroke={isLastQualifier ? '#0284c7' : '#f1f5f9'}
                 strokeWidth={isLastQualifier ? 2 : 1}
               />
-              <text x={PAD} y={midY + 5} fontSize={i < 3 ? 15 : 12} fill="#94a3b8">
+              <text x={PAD} y={midY + 5} fontSize={i < 3 ? 15 : 12} fill="#64748b">
                 {i < 3 ? MEDAL[i] : `${i + 1}.`}
               </text>
               <circle cx={PAD + 32} cy={midY} r={4} fill={row.teamColor} />
-              <text x={NAME_X} y={midY + 4} fontSize={13} fontWeight={700} fill="#0f172a">
-                {truncate(row.teamName, 20)}
-              </text>
+              {(() => {
+                const lines = wrapName(row.teamName, 21);
+                return lines.length === 1 ? (
+                  <text x={NAME_X} y={midY + 4} fontSize={13} fontWeight={700} fill="#0f172a">
+                    {lines[0]}
+                  </text>
+                ) : (
+                  <text x={NAME_X} y={midY - 3} fontSize={11} fontWeight={700} fill="#0f172a">
+                    <tspan x={NAME_X}>{lines[0]}</tspan>
+                    <tspan x={NAME_X} dy={13}>{lines[1]}</tspan>
+                  </text>
+                );
+              })()}
               <text x={COL_PJ_X} y={midY + 4} fontSize={12} fill="#64748b" textAnchor="end">
                 {row.played}
               </text>

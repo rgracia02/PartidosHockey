@@ -14,6 +14,8 @@ import {
 } from 'lucide-react';
 import { Match, Team, TournamentConfig } from '../types';
 import { formatWhatsAppSingleMatch } from '../utils/tournamentEngine';
+import { compressImageFile } from '../utils/imageCompress';
+import { useDialogA11y } from '../utils/useDialogA11y';
 
 interface SingleMatchShareModalProps {
   match: Match;
@@ -99,23 +101,25 @@ export function SingleMatchShareModal({
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-      onToast('⚠️ Por favor selecciona un archivo de imagen válido');
+      onToast('⚠️ Elegí un archivo de imagen válido');
       return;
     }
 
     setPhotoFile(file);
 
-    // Read as Base64 Data URL for preview and optional persistence
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const result = event.target?.result as string;
-      setPhotoUrl(result);
-      if (onSaveMatchPhoto) {
-        onSaveMatchPhoto(match.id, result);
-      }
-      onToast('✓ Foto del partido cargada');
-    };
-    reader.readAsDataURL(file);
+    // Se achica y recodifica como JPEG antes de guardarla (preview + persistencia).
+    compressImageFile(file)
+      .then((result) => {
+        setPhotoUrl(result);
+        if (onSaveMatchPhoto) {
+          onSaveMatchPhoto(match.id, result);
+        }
+        onToast('✓ Foto del partido cargada');
+      })
+      .catch(() => {
+        setPhotoFile(null);
+        onToast('⚠️ No se pudo procesar la foto. Probá con otra.');
+      });
   };
 
   const handleRemovePhoto = () => {
@@ -224,6 +228,9 @@ export function SingleMatchShareModal({
     }
   };
 
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialogA11y(dialogRef, onClose);
+
   return (
     <div
       className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4"
@@ -231,7 +238,14 @@ export function SingleMatchShareModal({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="bg-white w-full max-w-lg rounded-t-[32px] sm:rounded-3xl p-5 pb-safe shadow-2xl flex flex-col max-h-[92vh] animate-in slide-in-from-bottom-5 duration-200 dark:bg-slate-900">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="dlg-single-match-title"
+        tabIndex={-1}
+        className="outline-none bg-white w-full max-w-lg rounded-t-[32px] sm:rounded-3xl p-5 pb-safe shadow-2xl flex flex-col max-h-[92vh] animate-in slide-in-from-bottom-5 duration-200 dark:bg-slate-900"
+      >
         {/* iOS Pull Handle */}
         <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-3 sm:hidden" />
 
@@ -242,7 +256,7 @@ export function SingleMatchShareModal({
               <Share2 className="w-4 h-4 stroke-[2.5]" />
             </div>
             <div>
-              <h3 className="text-base font-black text-slate-900 leading-tight dark:text-white">
+              <h3 id="dlg-single-match-title" className="text-base font-black text-slate-900 leading-tight dark:text-white">
                 Compartir Partido
               </h3>
               <p className="text-[11px] text-slate-500 font-medium dark:text-slate-400">
@@ -252,8 +266,10 @@ export function SingleMatchShareModal({
           </div>
 
           <button
+            type="button"
             onClick={onClose}
-            className="p-1.5 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors dark:text-slate-400 dark:bg-slate-800"
+            aria-label="Cerrar"
+            className="min-h-[44px] min-w-[44px] -mr-1.5 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors dark:text-slate-400 dark:bg-slate-800"
           >
             <X className="w-4 h-4" />
           </button>
@@ -263,7 +279,7 @@ export function SingleMatchShareModal({
         <div className="flex-1 overflow-y-auto min-h-0 space-y-4 py-2">
           {/* Match Scoreboard Summary Card */}
           <div className="bg-slate-900 text-white rounded-2xl p-4 shadow-sm">
-            <div className="text-[10px] uppercase font-black text-emerald-400 tracking-wider mb-2 text-center">
+            <div className="text-[11px] uppercase font-black text-emerald-400 tracking-wider mb-2 text-center">
               {config.name} {config.category ? `• ${config.category}` : ''}
             </div>
 
@@ -285,7 +301,7 @@ export function SingleMatchShareModal({
                       {match.scoreA ?? 0} - {match.scoreB ?? 0}
                     </div>
                     {match.isShootout && (
-                      <div className="text-[9px] text-amber-300 font-bold">
+                      <div className="text-[11px] text-amber-300 font-bold">
                         SO: {match.shootoutScoreA ?? 0}-{match.shootoutScoreB ?? 0}
                       </div>
                     )}
@@ -312,7 +328,7 @@ export function SingleMatchShareModal({
                 {match.goals.map((g, idx) => (
                   <span
                     key={idx}
-                    className="inline-flex items-center gap-1 text-[10px] bg-white/10 px-2 py-0.5 rounded-full text-slate-200 dark:bg-slate-900"
+                    className="inline-flex items-center gap-1 text-[11px] bg-white/10 px-2 py-0.5 rounded-full text-slate-200 dark:bg-slate-900"
                   >
                     <Flame className="w-2.5 h-2.5 text-amber-400" />
                     <span>{g.playerName}</span>
@@ -333,7 +349,7 @@ export function SingleMatchShareModal({
                 </span>
               </div>
               {photoUrl && (
-                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
                   Foto adjunta ✓
                 </span>
               )}
@@ -383,7 +399,7 @@ export function SingleMatchShareModal({
                   onClick={() => fileInputRef.current?.click()}
                   className="w-full py-4 px-3 border-2 border-dashed border-slate-300 hover:border-sky-500 rounded-xl bg-white text-center transition-all flex flex-col items-center justify-center gap-1.5 active:scale-[0.99] dark:bg-slate-900"
                 >
-                  <div className="w-9 h-9 rounded-full bg-sky-50 text-sky-600 flex items-center justify-center">
+                  <div className="w-9 h-9 rounded-full bg-sky-50 text-sky-700 flex items-center justify-center">
                     <Camera className="w-5 h-5" />
                   </div>
                   <div className="text-xs font-bold text-slate-700 dark:text-slate-300">
@@ -422,14 +438,14 @@ export function SingleMatchShareModal({
                   <button
                     type="button"
                     onClick={handleResetToDefault}
-                    className="text-[10px] font-bold text-slate-500 hover:text-emerald-700 flex items-center gap-1 bg-slate-100 hover:bg-slate-200 px-2 py-0.5 rounded-full transition-colors dark:text-slate-400 dark:bg-slate-800"
+                    className="text-[11px] font-bold text-slate-500 hover:text-emerald-700 flex items-center gap-1 bg-slate-100 hover:bg-slate-200 px-2 py-0.5 rounded-full transition-colors dark:text-slate-400 dark:bg-slate-800"
                     title="Restablecer formato original generado"
                   >
                     <RotateCcw className="w-2.5 h-2.5" />
                     <span>Restablecer</span>
                   </button>
                 )}
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
                   isCustomized
                     ? 'bg-amber-100 text-amber-800'
                     : 'bg-emerald-50 text-emerald-600'
@@ -441,7 +457,7 @@ export function SingleMatchShareModal({
 
             {/* Formatting shortcuts bar */}
             <div className="flex items-center gap-1 overflow-x-auto pb-1 px-1 text-[11px]">
-              <span className="text-[10px] text-slate-500 font-bold mr-1">Insertar:</span>
+              <span className="text-[11px] text-slate-500 font-bold mr-1">Insertar:</span>
               <button
                 type="button"
                 onClick={() => insertSnippet('🏑 ')}
@@ -473,7 +489,7 @@ export function SingleMatchShareModal({
               <button
                 type="button"
                 onClick={() => insertSnippet('*texto*')}
-                className="px-1.5 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-bold text-[10px] dark:text-slate-300 dark:bg-slate-800"
+                className="px-1.5 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-bold text-[11px] dark:text-slate-300 dark:bg-slate-800"
                 title="Texto en negrita"
               >
                 *negrita*
@@ -482,18 +498,19 @@ export function SingleMatchShareModal({
 
             {/* WhatsApp Textarea Bubble */}
             <div className="bg-[#EFEAE2] p-2.5 rounded-2xl border border-[#DAD2C7] shadow-inner relative">
-              <div className="bg-white p-2.5 rounded-xl shadow-xs border border-[#E9EDEF] dark:bg-slate-900">
+              <div className="bg-white p-2.5 rounded-xl shadow-xs border border-[#E9EDEF] dark:bg-slate-900 dark:border-slate-700 focus-within:ring-2 focus-within:ring-sky-600 dark:focus-within:ring-sky-400">
                 <textarea
                   ref={textareaRef}
                   value={messageText}
                   onChange={handleTextChange}
                   rows={8}
-                  className="w-full font-mono text-[11px] text-[#111B21] leading-relaxed bg-transparent border-0 focus:outline-hidden focus:ring-0 resize-y"
-                  placeholder="Escribe o edita el mensaje para WhatsApp..."
+                  aria-label="Mensaje para WhatsApp (editable)"
+                  className="w-full font-mono text-xs text-[#111B21] dark:text-slate-100 leading-relaxed bg-transparent border-0 focus:outline-hidden focus:ring-0 resize-y"
+                  placeholder="Escribí o editá el mensaje para WhatsApp..."
                 />
               </div>
             </div>
-            <p className="text-[10px] text-slate-500 px-1 text-right">
+            <p className="text-[11px] text-slate-500 px-1 text-right">
               {messageText.length} caracteres • Puedes editar cualquier línea antes de enviar
             </p>
           </div>
@@ -524,7 +541,7 @@ export function SingleMatchShareModal({
             type="button"
             disabled={isSharing}
             onClick={handleShareToWhatsApp}
-            className="flex-[1.6] py-3.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-black rounded-2xl text-xs flex items-center justify-center gap-2 shadow-sm transition-all min-h-[48px] active:scale-95 disabled:opacity-50"
+            className="flex-[1.6] py-3.5 bg-emerald-700 hover:bg-emerald-800 active:bg-emerald-800 text-white font-black rounded-2xl text-xs flex items-center justify-center gap-2 shadow-sm transition-all min-h-[48px] active:scale-95 disabled:opacity-50"
           >
             <MessageCircle className="w-4 h-4 fill-white/20" />
             <span>{photoUrl ? 'Compartir con Foto' : 'Enviar por WhatsApp'}</span>

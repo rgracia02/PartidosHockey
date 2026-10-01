@@ -20,6 +20,7 @@ export function TabBar({ activeTab, onSelectTab, pendingMatchesCount }: TabBarPr
   return (
     <nav
       id="ios-tab-bar"
+      aria-label="Secciones principales"
       className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto z-40 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl border-t border-slate-200/80 dark:border-slate-800 px-1 pt-1 pb-safe shadow-lg shadow-black/5 dark:shadow-black/40 transition-colors"
     >
       <div className="flex items-center justify-around">
@@ -31,21 +32,23 @@ export function TabBar({ activeTab, onSelectTab, pendingMatchesCount }: TabBarPr
               key={tab.id}
               id={`tab-${tab.id}`}
               onClick={() => onSelectTab(tab.id)}
-              className={`flex flex-col items-center justify-center py-1 px-2 min-w-[58px] min-h-[48px] rounded-xl transition-all duration-150 active:scale-95 ${
+              aria-current={isActive ? 'page' : undefined}
+              aria-label={tab.badge !== undefined ? `${tab.label}, ${tab.badge} pendientes` : tab.label}
+              className={`flex flex-col items-center justify-center py-1 px-2 min-w-[58px] min-h-[52px] rounded-xl transition-all duration-150 active:scale-95 ${
                 isActive
-                  ? 'text-sky-600 dark:text-sky-400 font-bold'
-                  : 'text-slate-500 dark:text-slate-400 font-medium hover:text-slate-600 dark:hover:text-slate-300'
+                  ? 'text-sky-700 dark:text-sky-400 font-bold'
+                  : 'text-slate-600 dark:text-slate-400 font-medium hover:text-slate-700 dark:hover:text-slate-300'
               }`}
             >
               <div className="relative">
-                <Icon className={`w-5 h-5 transition-transform ${isActive ? 'scale-110 stroke-[2.5]' : 'stroke-[1.75]'}`} />
+                <Icon aria-hidden="true" className={`w-5 h-5 transition-transform ${isActive ? 'scale-110 stroke-[2.5]' : 'stroke-[1.75]'}`} />
                 {tab.badge !== undefined && (
-                  <span className="absolute -top-1 -right-2.5 px-1.5 py-0.2 min-w-[16px] h-4 bg-amber-500 text-white text-[10px] font-black rounded-full flex items-center justify-center shadow-xs">
+                  <span aria-hidden="true" className="absolute -top-1.5 -right-3 px-1 min-w-[16px] h-4 bg-amber-400 text-slate-900 text-[11px] font-black rounded-full flex items-center justify-center shadow-xs">
                     {tab.badge}
                   </span>
                 )}
               </div>
-              <span className={`text-[10px] mt-0.5 tracking-tight ${isActive ? 'font-bold text-sky-600 dark:text-sky-400' : 'text-slate-500 dark:text-slate-400'}`}>
+              <span className={`text-[11px] mt-0.5 tracking-tight ${isActive ? 'font-bold text-sky-700 dark:text-sky-400' : 'text-slate-600 dark:text-slate-400'}`}>
                 {tab.label}
               </span>
             </button>

@@ -32,6 +32,8 @@ import {
   formatWhatsAppSummary,
   getSortedRoundLabels,
 } from '../utils/tournamentEngine';
+import { compressImageFile } from '../utils/imageCompress';
+import { useDialogA11y } from '../utils/useDialogA11y';
 
 export type ShareType = 'summary' | 'standings' | 'results' | 'single_match' | 'scorers' | 'combined_event';
 
@@ -226,21 +228,24 @@ export function WhatsAppShareModal({
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-      onToast('⚠️ Por favor selecciona una imagen');
+      onToast('⚠️ Elegí una imagen');
       return;
     }
 
     setPhotoFile(file);
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const result = event.target?.result as string;
-      setMatchPhotoUrl(result);
-      if (selectedMatch && onSaveMatchPhoto) {
-        onSaveMatchPhoto(selectedMatch.id, result);
-      }
-      onToast('✓ Foto del partido cargada');
-    };
-    reader.readAsDataURL(file);
+    // Se achica antes de guardar: una foto de celular en base64 puede llenar el almacenamiento.
+    compressImageFile(file)
+      .then((result) => {
+        setMatchPhotoUrl(result);
+        if (selectedMatch && onSaveMatchPhoto) {
+          onSaveMatchPhoto(selectedMatch.id, result);
+        }
+        onToast('✓ Foto del partido cargada');
+      })
+      .catch(() => {
+        setPhotoFile(null);
+        onToast('⚠️ No se pudo procesar la foto. Probá con otra.');
+      });
   };
 
   const handleRemovePhoto = () => {
@@ -319,6 +324,9 @@ export function WhatsAppShareModal({
     onToast('✓ Abriendo WhatsApp...');
   };
 
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialogA11y(dialogRef, onClose);
+
   return (
     <div
       className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4"
@@ -326,7 +334,14 @@ export function WhatsAppShareModal({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="bg-white w-full max-w-lg rounded-t-[32px] sm:rounded-3xl p-5 pb-safe shadow-2xl flex flex-col max-h-[92vh] animate-in slide-in-from-bottom-5 duration-200 dark:bg-slate-900">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="dlg-whatsapp-title"
+        tabIndex={-1}
+        className="outline-none bg-white w-full max-w-lg rounded-t-[32px] sm:rounded-3xl p-5 pb-safe shadow-2xl flex flex-col max-h-[92vh] animate-in slide-in-from-bottom-5 duration-200 dark:bg-slate-900"
+      >
         {/* iOS Drag Handle */}
         <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-3 sm:hidden" />
 
@@ -337,7 +352,7 @@ export function WhatsAppShareModal({
               <Share2 className="w-4 h-4 stroke-[2.5]" />
             </div>
             <div>
-              <h3 className="text-base font-black text-slate-900 leading-tight dark:text-white">
+              <h3 id="dlg-whatsapp-title" className="text-base font-black text-slate-900 leading-tight dark:text-white">
                 Compartir en WhatsApp
               </h3>
               <p className="text-[11px] text-slate-500 font-medium dark:text-slate-400">
@@ -347,8 +362,10 @@ export function WhatsAppShareModal({
           </div>
 
           <button
+            type="button"
             onClick={onClose}
-            className="p-1.5 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors dark:text-slate-400 dark:bg-slate-800"
+            aria-label="Cerrar"
+            className="min-h-[44px] min-w-[44px] -mr-1.5 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors dark:text-slate-400 dark:bg-slate-800"
           >
             <X className="w-4 h-4" />
           </button>
@@ -365,7 +382,7 @@ export function WhatsAppShareModal({
               onClick={() => handleShareTypeChange('standings')}
               className={`py-2 px-1.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-all min-h-[38px] ${
                 shareType === 'standings'
-                  ? 'bg-sky-600 text-white shadow-xs'
+                  ? 'bg-sky-700 text-white shadow-xs'
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-slate-700'
               }`}
             >
@@ -378,7 +395,7 @@ export function WhatsAppShareModal({
               onClick={() => handleShareTypeChange('single_match')}
               className={`py-2 px-1.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-all min-h-[38px] ${
                 shareType === 'single_match'
-                  ? 'bg-sky-600 text-white shadow-xs'
+                  ? 'bg-sky-700 text-white shadow-xs'
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-slate-700'
               }`}
             >
@@ -391,7 +408,7 @@ export function WhatsAppShareModal({
               onClick={() => handleShareTypeChange('results')}
               className={`py-2 px-1.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-all min-h-[38px] ${
                 shareType === 'results'
-                  ? 'bg-sky-600 text-white shadow-xs'
+                  ? 'bg-sky-700 text-white shadow-xs'
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-slate-700'
               }`}
             >
@@ -404,7 +421,7 @@ export function WhatsAppShareModal({
               onClick={() => handleShareTypeChange('summary')}
               className={`py-2 px-1.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-all min-h-[38px] ${
                 shareType === 'summary'
-                  ? 'bg-sky-600 text-white shadow-xs'
+                  ? 'bg-sky-700 text-white shadow-xs'
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-slate-700'
               }`}
             >
@@ -417,7 +434,7 @@ export function WhatsAppShareModal({
               onClick={() => handleShareTypeChange('scorers')}
               className={`py-2 px-2 col-span-2 sm:col-span-1 rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-all min-h-[38px] ${
                 shareType === 'scorers'
-                  ? 'bg-sky-600 text-white shadow-xs'
+                  ? 'bg-sky-700 text-white shadow-xs'
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-slate-700'
               }`}
             >
@@ -431,7 +448,7 @@ export function WhatsAppShareModal({
                 onClick={() => handleShareTypeChange('combined_event')}
                 className={`py-2 px-2 col-span-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-all min-h-[38px] ${
                   shareType === 'combined_event'
-                    ? 'bg-sky-600 text-white shadow-xs'
+                    ? 'bg-sky-700 text-white shadow-xs'
                     : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-slate-700'
                 }`}
               >
@@ -483,7 +500,7 @@ export function WhatsAppShareModal({
                   </option>
                 ))}
               </select>
-              <p className="text-[10px] text-slate-500 mt-1 px-1">
+              <p className="text-[11px] text-slate-500 mt-1 px-1">
                 Combina los partidos de: {[config, ...linkedTournaments.map((t) => t.config)].map((c) => c.category || c.name).join(', ')}
               </p>
             </div>
@@ -524,7 +541,7 @@ export function WhatsAppShareModal({
                     </span>
                   </div>
                   {matchPhotoUrl && (
-                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                    <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
                       Foto adjunta ✓
                     </span>
                   )}
@@ -596,14 +613,14 @@ export function WhatsAppShareModal({
                   <button
                     type="button"
                     onClick={handleResetToDefault}
-                    className="text-[10px] font-bold text-slate-500 hover:text-emerald-700 flex items-center gap-1 bg-slate-100 hover:bg-slate-200 px-2 py-0.5 rounded-full transition-colors dark:text-slate-400 dark:bg-slate-800"
+                    className="text-[11px] font-bold text-slate-500 hover:text-emerald-700 flex items-center gap-1 bg-slate-100 hover:bg-slate-200 px-2 py-0.5 rounded-full transition-colors dark:text-slate-400 dark:bg-slate-800"
                     title="Restablecer formato original generado"
                   >
                     <RotateCcw className="w-2.5 h-2.5" />
                     <span>Restablecer</span>
                   </button>
                 )}
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
                   isCustomized
                     ? 'bg-amber-100 text-amber-800'
                     : 'bg-emerald-50 text-emerald-600'
@@ -615,7 +632,7 @@ export function WhatsAppShareModal({
 
             {/* Formatting shortcuts bar */}
             <div className="flex items-center gap-1 overflow-x-auto pb-1 px-1 text-[11px]">
-              <span className="text-[10px] text-slate-500 font-bold mr-1">Insertar:</span>
+              <span className="text-[11px] text-slate-500 font-bold mr-1">Insertar:</span>
               <button
                 type="button"
                 onClick={() => insertSnippet('🏑 ')}
@@ -654,7 +671,7 @@ export function WhatsAppShareModal({
               <button
                 type="button"
                 onClick={() => insertSnippet('*texto*')}
-                className="px-1.5 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-bold text-[10px] dark:text-slate-300 dark:bg-slate-800"
+                className="px-1.5 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-bold text-[11px] dark:text-slate-300 dark:bg-slate-800"
                 title="Texto en negrita"
               >
                 *negrita*
@@ -663,18 +680,19 @@ export function WhatsAppShareModal({
 
             {/* WhatsApp Textarea Canvas */}
             <div className="bg-[#EFEAE2] p-2.5 rounded-2xl border border-[#DAD2C7] shadow-inner relative">
-              <div className="bg-white p-2.5 rounded-xl shadow-xs border border-[#E9EDEF] dark:bg-slate-900">
+              <div className="bg-white p-2.5 rounded-xl shadow-xs border border-[#E9EDEF] dark:bg-slate-900 dark:border-slate-700 focus-within:ring-2 focus-within:ring-sky-600 dark:focus-within:ring-sky-400">
                 <textarea
                   ref={textareaRef}
                   value={messageText}
                   onChange={handleTextChange}
                   rows={8}
-                  className="w-full font-mono text-[11px] text-[#111B21] leading-relaxed bg-transparent border-0 focus:outline-hidden focus:ring-0 resize-y"
-                  placeholder="Escribe o edita el mensaje para WhatsApp..."
+                  aria-label="Mensaje para WhatsApp (editable)"
+                  className="w-full font-mono text-xs text-[#111B21] dark:text-slate-100 leading-relaxed bg-transparent border-0 focus:outline-hidden focus:ring-0 resize-y"
+                  placeholder="Escribí o editá el mensaje para WhatsApp..."
                 />
               </div>
             </div>
-            <p className="text-[10px] text-slate-500 px-1 text-right">
+            <p className="text-[11px] text-slate-500 px-1 text-right">
               {messageText.length} caracteres • Puedes editar cualquier línea antes de enviar
             </p>
           </div>
@@ -704,7 +722,7 @@ export function WhatsAppShareModal({
             id="btn-confirm-send-whatsapp"
             type="button"
             onClick={handleSendToWhatsApp}
-            className="flex-[1.5] py-3.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-black rounded-2xl text-xs flex items-center justify-center gap-2 shadow-sm transition-all min-h-[48px] active:scale-95"
+            className="flex-[1.5] py-3.5 bg-emerald-700 hover:bg-emerald-800 active:bg-emerald-800 text-white font-black rounded-2xl text-xs flex items-center justify-center gap-2 shadow-sm transition-all min-h-[48px] active:scale-95"
           >
             <MessageCircle className="w-4 h-4 fill-white/20" />
             <span>
