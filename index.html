@@ -2,11 +2,25 @@
 <html lang="es" class="h-full bg-[#F2F2F7] dark:bg-slate-950">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Hockey Torneos" />
     <meta name="theme-color" content="#F2F2F7" />
+    <script>
+      // Aplica el tema guardado ANTES del primer dibujo (evita el destello claro en modo oscuro).
+      (function () {
+        try {
+          var m = localStorage.getItem('hockey_theme_mode');
+          var dark = m ? m === 'dark' : window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+          if (dark) {
+            document.documentElement.classList.add('dark');
+            var t = document.querySelector('meta[name="theme-color"]');
+            if (t) t.setAttribute('content', '#020617');
+          }
+        } catch (e) {}
+      })();
+    </script>
     <title>Hockey Torneos</title>
     <meta name="description" content="Aplicación PWA estilo iOS para administrar y seguir torneos internos de hockey sobre césped, con carga rápida post-partido y fixture automático." />
     <meta property="og:title" content="Hockey Torneos" />
@@ -14,11 +28,8 @@
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="manifest" href="./manifest.json" />
-    <link rel="apple-touch-icon" href="./icon.svg" />
+    <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
     <link rel="icon" type="image/svg+xml" href="./icon.svg" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script>
       // Diagnostic script: plain JS, not part of the bundle, so it runs even if
       // the React bundle fails to download or throws a parse error. Captures
@@ -46,7 +57,7 @@
       }, 2500);
     </script>
   </head>
-  <body class="h-full bg-[#F2F2F7] dark:bg-slate-950 text-slate-900 antialiased select-none font-sans overflow-x-hidden">
+  <body class="h-full bg-[#F2F2F7] dark:bg-slate-950 text-slate-900 antialiased font-sans overflow-x-hidden">
     <div id="root" class="h-full min-h-screen">
       <div id="initial-splash" style="height:100%;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;">
         <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="1.8">
@@ -54,7 +65,7 @@
           <path d="M12 6v6l4 2" stroke-linecap="round" stroke-linejoin="round" />
         </svg>
         <span style="font-family:-apple-system,sans-serif;font-weight:700;font-size:15px;color:#0284c7;">Hockey Torneos</span>
-        <span style="font-family:-apple-system,sans-serif;font-size:11px;color:#94a3b8;">por Rodrigo Gracia</span>
+        <span style="font-family:-apple-system,sans-serif;font-size:11px;color:#64748b;">por Rodrigo Gracia</span>
       </div>
     </div>
     <script type="module" src="/src/main.tsx"></script>

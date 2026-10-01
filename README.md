@@ -30,7 +30,7 @@ Aplicación web progresiva (PWA) de estilo iOS para la gestión integral y segui
 
 5. **Diseño PWA Mobile-First (Estilo iOS):**
    - Interfaz táctil adaptada para iPhone y iPad con navegación inferior tipo pestaña.
-   - Funciona sin conexión a internet (offline-ready).
+   - Tus datos se guardan en el dispositivo (localStorage), pero la app necesita conexión para abrirse: todavía no tiene modo offline (no usa service worker).
 
 6. **Exportación e Importación:**
    - Copia de seguridad en formato JSON.
